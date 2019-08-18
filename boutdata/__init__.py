@@ -9,6 +9,3 @@ except ImportError:
 from boutdata.collect import collect, attributes
 
 __all__ = ["attributes", "collect", "gen_surface", "pol_slice"]
-
-__version__ = '0.1.0'
-__name__ = 'boutdata'
