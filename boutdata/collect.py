@@ -1,16 +1,13 @@
-from __future__ import print_function
-from __future__ import division
+from __future__ import division, print_function
 
-from builtins import str, range
-
+import glob
 import os
 import sys
-import glob
+from builtins import range, str
 
 import numpy as np
-
-from boututils.datafile import DataFile
 from boututils.boutarray import BoutArray
+from boututils.datafile import DataFile
 
 
 def findVar(varname, varlist):
@@ -41,21 +38,28 @@ def findVar(varname, varlist):
         print("Variable '%s' not found. Using '%s' instead" % (varname, v[0]))
         return v[0]
     elif len(v) > 1:
-        print("Variable '"+varname +
-              "' not found, and is ambiguous. Could be one of: "+str(v))
-        raise ValueError("Variable '"+varname+"' not found")
+        print(
+            "Variable '"
+            + varname
+            + "' not found, and is ambiguous. Could be one of: "
+            + str(v)
+        )
+        raise ValueError("Variable '" + varname + "' not found")
 
     # None found. Check if it's an abbreviation
-    v = [name for name in varlist
-         if name[:len(varname)].lower() == varname.lower()]
+    v = [name for name in varlist if name[: len(varname)].lower() == varname.lower()]
     if len(v) == 1:
         print("Variable '%s' not found. Using '%s' instead" % (varname, v[0]))
         return v[0]
 
     if len(v) > 1:
-        print("Variable '"+varname +
-              "' not found, and is ambiguous. Could be one of: "+str(v))
-    raise ValueError("Variable '"+varname+"' not found")
+        print(
+            "Variable '"
+            + varname
+            + "' not found, and is ambiguous. Could be one of: "
+            + str(v)
+        )
+    raise ValueError("Variable '" + varname + "' not found")
 
 
 def _convert_to_nice_slice(r, N, name="range"):
@@ -86,16 +90,16 @@ def _convert_to_nice_slice(r, N, name="range"):
     """
 
     if N == 0:
-        raise ValueError("No data available in %s"%name)
+        raise ValueError("No data available in %s" % name)
     if r is None:
         temp_slice = slice(N)
     elif isinstance(r, slice):
         temp_slice = r
     elif isinstance(r, (int, np.integer)):
-        if r >= N or r <-N:
+        if r >= N or r < -N:
             # raise out of bounds error as if we'd tried to index the array with r
             # without this, would return an empty array instead
-            raise IndexError(name+" index out of range, value was "+str(r))
+            raise IndexError(name + " index out of range, value was " + str(r))
         elif r == -1:
             temp_slice = slice(r, None)
         else:
@@ -111,13 +115,12 @@ def _convert_to_nice_slice(r, N, name="range"):
         if r2[1] < 0:
             r2[1] = r2[1] + N
         if r2[0] > r2[1]:
-            raise ValueError("{} start ({}) is larger than end ({})"
-                             .format(name, *r2))
+            raise ValueError("{} start ({}) is larger than end ({})".format(name, *r2))
         # Lists uses inclusive end, we need exclusive end
         temp_slice = slice(r2[0], r2[1] + 1)
     elif len(r) == 3:
         # Convert 3 element list to slice object
-        temp_slice = slice(r[0],r[1],r[2])
+        temp_slice = slice(r[0], r[1], r[2])
     else:
         raise ValueError("Couldn't convert {} ('{}') to slice".format(name, r))
 
@@ -125,9 +128,21 @@ def _convert_to_nice_slice(r, N, name="range"):
     return slice(*temp_slice.indices(N))
 
 
-def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
-            yguards=False, xguards=True, info=True, prefix="BOUT.dmp",
-            strict=False, tind_auto=False, datafile_cache=None):
+def collect(
+    varname,
+    xind=None,
+    yind=None,
+    zind=None,
+    tind=None,
+    path=".",
+    yguards=False,
+    xguards=True,
+    info=True,
+    prefix="BOUT.dmp",
+    strict=False,
+    tind_auto=False,
+    datafile_cache=None,
+):
     """Collect a variable from a set of BOUT++ outputs.
 
     Parameters
@@ -216,13 +231,13 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
         if xguards:
             nx = f["nx"]
         else:
-            nx = f["nx"] - 2*mxg
+            nx = f["nx"] - 2 * mxg
         if yguards:
-            ny = f["ny"] + 2*myg
+            ny = f["ny"] + 2 * myg
             if yguards == "include_upper" and f["jyseps2_1"] != f["jyseps1_2"]:
                 # Simulation has a second (upper) target, with a second set of y-boundary
                 # points
-                ny = ny + 2*myg
+                ny = ny + 2 * myg
         else:
             ny = f["ny"]
         nz = f["MZ"]
@@ -244,30 +259,30 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
         tind = _convert_to_nice_slice(tind, nt, "tind")
 
         if not xguards:
-            xind = slice(xind.start+mxg, xind.stop+mxg, xind.step)
+            xind = slice(xind.start + mxg, xind.stop + mxg, xind.step)
         if not yguards:
-            yind = slice(yind.start+myg, yind.stop+myg, yind.step)
+            yind = slice(yind.start + myg, yind.stop + myg, yind.step)
 
         if dimensions == ():
             ranges = []
-        elif dimensions == ('t',):
+        elif dimensions == ("t",):
             ranges = [tind]
-        elif dimensions == ('x', 'y'):
+        elif dimensions == ("x", "y"):
             # Field2D
             ranges = [xind, yind]
-        elif dimensions == ('x', 'z'):
+        elif dimensions == ("x", "z"):
             # FieldPerp
             ranges = [xind, zind]
-        elif dimensions == ('t', 'x', 'y'):
+        elif dimensions == ("t", "x", "y"):
             # evolving Field2D
             ranges = [tind, xind, yind]
-        elif dimensions == ('t', 'x', 'z'):
+        elif dimensions == ("t", "x", "z"):
             # evolving FieldPerp
             ranges = [tind, xind, zind]
-        elif dimensions == ('x', 'y', 'z'):
+        elif dimensions == ("x", "y", "z"):
             # Field3D
             ranges = [xind, yind, zind]
-        elif dimensions == ('t', 'x', 'y', 'z'):
+        elif dimensions == ("t", "x", "y", "z"):
             # evolving Field3D
             ranges = [tind, xind, yind, zind]
         else:
@@ -345,7 +360,7 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
         version = 0
     if version < 3.5:
         # Remove extra point
-        nz = mz-1
+        nz = mz - 1
     else:
         nz = mz
 
@@ -370,22 +385,23 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
             print("WARNING: Some files missing. Expected " + str(npe))
 
     if xguards:
-        nx = nxpe * mxsub + 2*mxg
+        nx = nxpe * mxsub + 2 * mxg
     else:
         nx = nxpe * mxsub
 
     if yguards:
-        ny = mysub * nype + 2*myg
+        ny = mysub * nype + 2 * myg
         if yguards == "include_upper" and f["jyseps2_1"] != f["jyseps1_2"]:
             # Simulation has a second (upper) target, with a second set of y-boundary
             # points
-            ny = ny + 2*myg
+            ny = ny + 2 * myg
             ny_inner = f["ny_inner"]
             yproc_upper_target = ny_inner // mysub - 1
             if f["ny_inner"] % mysub != 0:
-                raise ValueError("Trying to keep upper boundary cells but "
-                                 "mysub={} does not divide ny_inner={}"
-                                 .format(mysub, ny_inner))
+                raise ValueError(
+                    "Trying to keep upper boundary cells but "
+                    "mysub={} does not divide ny_inner={}".format(mysub, ny_inner)
+                )
         else:
             yproc_upper_target = None
     else:
@@ -398,19 +414,19 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
 
     xsize = xind.stop - xind.start
     ysize = yind.stop - yind.start
-    zsize = int(np.ceil(float(zind.stop - zind.start)/zind.step))
-    tsize = int(np.ceil(float(tind.stop - tind.start)/tind.step))
+    zsize = int(np.ceil(float(zind.stop - zind.start) / zind.step))
+    tsize = int(np.ceil(float(tind.stop - tind.start) / tind.step))
 
-    if not any(dim in dimensions for dim in ('x', 'y', 'z')):
+    if not any(dim in dimensions for dim in ("x", "y", "z")):
         # Not a Field (i.e. no spatial dependence) so only read from the 0'th file
-        if 't' in dimensions:
-            if not dimensions[0] == 't':
+        if "t" in dimensions:
+            if not dimensions[0] == "t":
                 # 't' should be the first dimension in the list if present
                 raise ValueError(
                     varname + " has a 't' dimension, but it is not the first dimension "
                     "in dimensions=" + str(dimensions)
                 )
-            data = f.read(varname, ranges = [tind] + (ndims - 1) * [None])
+            data = f.read(varname, ranges=[tind] + (ndims - 1) * [None])
         else:
             # No time or space dimensions, so no slicing
             data = f.read(varname)
@@ -424,7 +440,7 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
         f.close()
 
     # Map between dimension names and output size
-    sizes = {'x': xsize, 'y': ysize, 'z': zsize, 't': tsize}
+    sizes = {"x": xsize, "y": ysize, "z": zsize, "t": tsize}
 
     # Create a list with size of each dimension
     ddims = [sizes[d] for d in dimensions]
@@ -432,22 +448,22 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
     # Create the data array
     data = np.zeros(ddims)
 
-    if dimensions == ('t', 'x', 'z') or dimensions == ('x', 'z'):
+    if dimensions == ("t", "x", "z") or dimensions == ("x", "z"):
         yindex_global = None
         # The pe_yind that this FieldPerp is going to be read from
         fieldperp_yproc = None
 
     for i in range(npe):
         # Get X and Y processor indices
-        pe_yind = int(i/nxpe)
+        pe_yind = int(i / nxpe)
         pe_xind = i % nxpe
 
         inrange = True
 
         if yguards:
             # Get local ranges
-            ystart = yind.start - pe_yind*mysub
-            ystop = yind.stop - pe_yind*mysub
+            ystart = yind.start - pe_yind * mysub
+            ystop = yind.stop - pe_yind * mysub
 
             # Check lower y boundary
             if pe_yind == 0:
@@ -457,7 +473,7 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
                 if ystart < 0:
                     ystart = 0
             else:
-                if ystop < myg-1:
+                if ystop < myg - 1:
                     inrange = False
                 if ystart < myg:
                     ystart = myg
@@ -468,15 +484,15 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
             # Upper y boundary
             if pe_yind == (nype - 1):
                 # Keeping outer boundary
-                if ystart >= (mysub + 2*myg):
+                if ystart >= (mysub + 2 * myg):
                     inrange = False
-                if ystop > (mysub + 2*myg):
-                    ystop = (mysub + 2*myg)
+                if ystop > (mysub + 2 * myg):
+                    ystop = mysub + 2 * myg
             else:
                 if ystart >= (mysub + myg):
                     inrange = False
                 if ystop > (mysub + myg):
-                    ystop = (mysub + myg)
+                    ystop = mysub + myg
             # upper y boundary at upper target
             if yproc_upper_target is not None and pe_yind == yproc_upper_target:
                 ystop = ystop + myg
@@ -486,13 +502,13 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
             ygstop = ystop + pe_yind * mysub
 
             if yproc_upper_target is not None and pe_yind > yproc_upper_target:
-                ygstart = ygstart + 2*myg
-                ygstop = ygstop + 2*myg
+                ygstart = ygstart + 2 * myg
+                ygstop = ygstop + 2 * myg
 
         else:
             # Get local ranges
-            ystart = yind.start - pe_yind*mysub + myg
-            ystop = yind.stop - pe_yind*mysub + myg
+            ystart = yind.start - pe_yind * mysub + myg
+            ystop = yind.stop - pe_yind * mysub + myg
 
             if (ystart >= (mysub + myg)) or (ystop <= myg):
                 inrange = False  # Y out of range
@@ -508,8 +524,8 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
 
         if xguards:
             # Get local ranges
-            xstart = xind.start - pe_xind*mxsub
-            xstop = xind.stop - pe_xind*mxsub
+            xstart = xind.start - pe_xind * mxsub
+            xstop = xind.stop - pe_xind * mxsub
 
             # Check lower x boundary
             if pe_xind == 0:
@@ -527,15 +543,15 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
             # Upper x boundary
             if pe_xind == (nxpe - 1):
                 # Keeping outer boundary
-                if xstart >= (mxsub + 2*mxg):
+                if xstart >= (mxsub + 2 * mxg):
                     inrange = False
-                if xstop > (mxsub + 2*mxg):
-                    xstop = (mxsub + 2*mxg)
+                if xstop > (mxsub + 2 * mxg):
+                    xstop = mxsub + 2 * mxg
             else:
                 if xstart >= (mxsub + mxg):
                     inrange = False
                 if xstop > (mxsub + mxg):
-                    xstop = (mxsub+mxg)
+                    xstop = mxsub + mxg
 
             # Calculate global indices
             xgstart = xstart + pe_xind * mxsub
@@ -543,8 +559,8 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
 
         else:
             # Get local ranges
-            xstart = xind.start - pe_xind*mxsub + mxg
-            xstop = xind.stop - pe_xind*mxsub + mxg
+            xstart = xind.start - pe_xind * mxsub + mxg
+            xstop = xind.stop - pe_xind * mxsub + mxg
 
             if (xstart >= (mxsub + mxg)) or (xstop <= mxg):
                 inrange = False  # X out of range
@@ -566,34 +582,59 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
             continue  # Don't need this file
 
         if info:
-            sys.stdout.write("\rReading from " + file_list[i] + ": [" +
-                             str(xstart) + "-" + str(xstop-1) + "][" +
-                             str(ystart) + "-" + str(ystop-1) + "] -> [" +
-                             str(xgstart) + "-" + str(xgstop-1) + "][" +
-                             str(ygstart) + "-" + str(ygstop-1) + "]")
+            sys.stdout.write(
+                "\rReading from "
+                + file_list[i]
+                + ": ["
+                + str(xstart)
+                + "-"
+                + str(xstop - 1)
+                + "]["
+                + str(ystart)
+                + "-"
+                + str(ystop - 1)
+                + "] -> ["
+                + str(xgstart)
+                + "-"
+                + str(xgstop - 1)
+                + "]["
+                + str(ygstart)
+                + "-"
+                + str(ygstop - 1)
+                + "]"
+            )
 
         f = getDataFile(i)
 
-        if dimensions == ('t', 'x', 'y', 'z'):
-            d = f.read(varname, ranges=[tind,
-                                        slice(xstart, xstop),
-                                        slice(ystart, ystop),
-                                        zind])
-            data[:, (xgstart-xind.start):(xgstart-xind.start+nx_loc),
-                 (ygstart-yind.start):(ygstart-yind.start+ny_loc), :] = d
-        elif dimensions == ('x', 'y', 'z'):
-            d = f.read(varname, ranges=[slice(xstart, xstop),
-                                        slice(ystart, ystop),
-                                        zind])
-            data[(xgstart-xind.start):(xgstart-xind.start+nx_loc),
-                 (ygstart-yind.start):(ygstart-yind.start+ny_loc), :] = d
-        elif dimensions == ('t', 'x', 'y'):
-            d = f.read(varname, ranges=[tind,
-                                        slice(xstart, xstop),
-                                        slice(ystart, ystop)])
-            data[:, (xgstart-xind.start):(xgstart-xind.start+nx_loc),
-                 (ygstart-yind.start):(ygstart-yind.start+ny_loc)] = d
-        elif dimensions == ('t', 'x', 'z'):
+        if dimensions == ("t", "x", "y", "z"):
+            d = f.read(
+                varname, ranges=[tind, slice(xstart, xstop), slice(ystart, ystop), zind]
+            )
+            data[
+                :,
+                (xgstart - xind.start) : (xgstart - xind.start + nx_loc),
+                (ygstart - yind.start) : (ygstart - yind.start + ny_loc),
+                :,
+            ] = d
+        elif dimensions == ("x", "y", "z"):
+            d = f.read(
+                varname, ranges=[slice(xstart, xstop), slice(ystart, ystop), zind]
+            )
+            data[
+                (xgstart - xind.start) : (xgstart - xind.start + nx_loc),
+                (ygstart - yind.start) : (ygstart - yind.start + ny_loc),
+                :,
+            ] = d
+        elif dimensions == ("t", "x", "y"):
+            d = f.read(
+                varname, ranges=[tind, slice(xstart, xstop), slice(ystart, ystop)]
+            )
+            data[
+                :,
+                (xgstart - xind.start) : (xgstart - xind.start + nx_loc),
+                (ygstart - yind.start) : (ygstart - yind.start + ny_loc),
+            ] = d
+        elif dimensions == ("t", "x", "z"):
             # FieldPerp should only be defined on processors which contain its yindex_global
             f_attributes = f.attributes(varname)
             temp_yindex = f_attributes["yindex_global"]
@@ -612,16 +653,15 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
 
                 fieldperp_yproc = pe_yind
 
-                d = f.read(varname, ranges=[tind,
-                                            slice(xstart, xstop),
-                                            zind])
-                data[:, (xgstart-xind.start):(xgstart-xind.start+nx_loc), :] = d
-        elif dimensions == ('x', 'y'):
-            d = f.read(varname, ranges=[slice(xstart, xstop),
-                                        slice(ystart, ystop)])
-            data[(xgstart-xind.start):(xgstart-xind.start+nx_loc),
-                 (ygstart-yind.start):(ygstart-yind.start+ny_loc)] = d
-        elif dimensions == ('x', 'z'):
+                d = f.read(varname, ranges=[tind, slice(xstart, xstop), zind])
+                data[:, (xgstart - xind.start) : (xgstart - xind.start + nx_loc), :] = d
+        elif dimensions == ("x", "y"):
+            d = f.read(varname, ranges=[slice(xstart, xstop), slice(ystart, ystop)])
+            data[
+                (xgstart - xind.start) : (xgstart - xind.start + nx_loc),
+                (ygstart - yind.start) : (ygstart - yind.start + ny_loc),
+            ] = d
+        elif dimensions == ("x", "z"):
             # FieldPerp should only be defined on processors which contain its yindex_global
             f_attributes = f.attributes(varname)
             temp_yindex = f_attributes["yindex_global"]
@@ -641,9 +681,9 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
                 fieldperp_yproc = pe_yind
 
                 d = f.read(varname, ranges=[slice(xstart, xstop), zind])
-                data[(xgstart-xind.start):(xgstart-xind.start+nx_loc), :] = d
+                data[(xgstart - xind.start) : (xgstart - xind.start + nx_loc), :] = d
         else:
-            raise ValueError('Incorrect dimensions '+str(dimensions)+' in collect')
+            raise ValueError("Incorrect dimensions " + str(dimensions) + " in collect")
 
         if datafile_cache is None:
             # close the DataFile if we are not keeping it in a cache
@@ -651,20 +691,22 @@ def collect(varname, xind=None, yind=None, zind=None, tind=None, path=".",
 
     # if a step was requested in x or y, need to apply it here
     if xind.step is not None or yind.step is not None:
-        if dimensions == ('t', 'x', 'y', 'z'):
-            data = data[:, ::xind.step, ::yind.step]
-        elif dimensions == ('x', 'y', 'z'):
-            data = data[::xind.step, ::yind.step, :]
-        elif dimensions == ('t', 'x', 'y'):
-            data = data[:, ::xind.step, ::yind.step]
-        elif dimensions == ('t', 'x', 'z'):
-            data = data[:, ::xind.step, :]
-        elif dimensions == ('x', 'y'):
-            data = data[::xind.step, ::yind.step]
-        elif dimensions == ('x', 'z'):
-            data = data[::xind.step, :]
+        if dimensions == ("t", "x", "y", "z"):
+            data = data[:, :: xind.step, :: yind.step]
+        elif dimensions == ("x", "y", "z"):
+            data = data[:: xind.step, :: yind.step, :]
+        elif dimensions == ("t", "x", "y"):
+            data = data[:, :: xind.step, :: yind.step]
+        elif dimensions == ("t", "x", "z"):
+            data = data[:, :: xind.step, :]
+        elif dimensions == ("x", "y"):
+            data = data[:: xind.step, :: yind.step]
+        elif dimensions == ("x", "z"):
+            data = data[:: xind.step, :]
         else:
-            raise ValueError('Incorrect dimensions '+str(dimensions)+' applying steps in collect')
+            raise ValueError(
+                "Incorrect dimensions " + str(dimensions) + " applying steps in collect"
+            )
 
     # Force the precision of arrays of dimension>1
     if ndims > 1:
@@ -759,35 +801,45 @@ def findFiles(path, prefix):
     file_list_parallel = None
     suffix_parallel = ""
     for test_suffix in suffixes:
-        files = glob.glob(os.path.join(path, prefix+test_suffix))
+        files = glob.glob(os.path.join(path, prefix + test_suffix))
         if files:
             if file_list_parallel:  # Already had a list of files
-                raise IOError("Parallel dump files with both {0} and {1} extensions are present. Do not know which to read.".format(
-                    suffix, test_suffix))
+                raise IOError(
+                    "Parallel dump files with both {0} and {1} extensions are present. Do not know which to read.".format(
+                        suffix, test_suffix
+                    )
+                )
             suffix_parallel = test_suffix
             file_list_parallel = files
 
     file_list = None
     suffix = ""
     for test_suffix in suffixes:
-        files = glob.glob(os.path.join(path, prefix+".*"+test_suffix))
+        files = glob.glob(os.path.join(path, prefix + ".*" + test_suffix))
         if files:
             if file_list:  # Already had a list of files
-                raise IOError("Dump files with both {0} and {1} extensions are present. Do not know which to read.".format(
-                    suffix, test_suffix))
+                raise IOError(
+                    "Dump files with both {0} and {1} extensions are present. Do not know which to read.".format(
+                        suffix, test_suffix
+                    )
+                )
             suffix = test_suffix
             file_list = files
 
     if file_list_parallel and file_list:
-        raise IOError("Both regular (with suffix {0}) and parallel (with suffix {1}) dump files are present. Do not know which to read.".format(
-            suffix_parallel, suffix))
+        raise IOError(
+            "Both regular (with suffix {0}) and parallel (with suffix {1}) dump files are present. Do not know which to read.".format(
+                suffix_parallel, suffix
+            )
+        )
     elif file_list_parallel:
         return file_list_parallel, True, suffix_parallel
     elif file_list:
         # make sure files are in the right order
         nfiles = len(file_list)
-        file_list = [os.path.join(path, prefix+"."+str(i)+suffix)
-                     for i in range(nfiles)]
+        file_list = [
+            os.path.join(path, prefix + "." + str(i) + suffix) for i in range(nfiles)
+        ]
         return file_list, False, suffix
     else:
         raise IOError("ERROR: No data files found in path {0}".format(path))
@@ -814,8 +866,10 @@ def create_cache(path, prefix):
 
     # define namedtuple to return as the result
     from collections import namedtuple
+
     datafile_cache_tuple = namedtuple(
-        "datafile_cache", ["file_list", "parallel", "suffix", "datafile_list"])
+        "datafile_cache", ["file_list", "parallel", "suffix", "datafile_list"]
+    )
 
     file_list, parallel, suffix = findFiles(path, prefix)
 
@@ -823,4 +877,6 @@ def create_cache(path, prefix):
     for f in file_list:
         cache.append(DataFile(f))
 
-    return datafile_cache_tuple(file_list=file_list, parallel=parallel, suffix=suffix, datafile_list=cache)
+    return datafile_cache_tuple(
+        file_list=file_list, parallel=parallel, suffix=suffix, datafile_list=cache
+    )

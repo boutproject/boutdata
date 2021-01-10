@@ -42,51 +42,52 @@ def get(filename, name, section=None):
             found = False
             for line in f:
                 # Strip spaces from left
-                line = line.lstrip(' \t\n\r')
+                line = line.lstrip(" \t\n\r")
                 if len(line) < 1:
                     continue  # Empty line
-                    
+
                 # if line starts with '[' then this is a section
-                if line[0] == '[':
+                if line[0] == "[":
                     # Split on ']'
-                    head, _ = line[1:].split(']', 1)
+                    head, _ = line[1:].split("]", 1)
                     # head is now the section name
                     if head.lower() == section.lower():
                         found = True
                         break
             if not found:
                 raise ValueError("Section '%s' not found" % (section))
-        
+
         # Now in the correct section
-        
+
         for line in f:
             # Strip spaces from left
-            line = line.lstrip(' \t\n\r')
+            line = line.lstrip(" \t\n\r")
             if len(line) < 1:
                 continue  # Empty line
-                
+
             # if line starts with '[' then this is a section
-            if line[0] == '[':
-                raise ValueError("Name '%s' not found in section '%s'" % (name,section))
+            if line[0] == "[":
+                raise ValueError(
+                    "Name '%s' not found in section '%s'" % (name, section)
+                )
             # Check if this line contains an '='
-            if '=' in line:
+            if "=" in line:
                 # Check if contains comment
-                comment = ''
-                if '#' in line:
-                    line, comment = line.split('#', 1)
+                comment = ""
+                if "#" in line:
+                    line, comment = line.split("#", 1)
                 # Split on '='
-                key, value = line.split('=',1)
+                key, value = line.split("=", 1)
                 # Strip whitespace
-                key   = key.strip(' \t\n\r')
-                value = value.strip(' \t\n\r')
-                
+                key = key.strip(" \t\n\r")
+                value = value.strip(" \t\n\r")
+
                 # Strip out quotes if present
-                if value[0] == '"' or value[0] == "'": 
+                if value[0] == '"' or value[0] == "'":
                     value = value[1:]
                 if value[-1] == '"' or value[-1] == "'":
                     value = value[:-1]
-                
-                #print("'%s' = '%s'" % (key, value))
-                if key.lower() == name.lower(): # Case insensitive
-                    return value
 
+                # print("'%s' = '%s'" % (key, value))
+                if key.lower() == name.lower():  # Case insensitive
+                    return value

@@ -8,21 +8,37 @@ and because single files are quicker to download.
 
 """
 
-from boutdata.data import BoutOutputs
-from boututils.datafile import DataFile
-from boututils.boutarray import BoutArray
-import numpy
-import os
 import gc
-import tempfile
-import shutil
 import glob
+import os
+import shutil
+import tempfile
+
+import numpy
+from boututils.boutarray import BoutArray
+from boututils.datafile import DataFile
+
+from boutdata.data import BoutOutputs
 
 
-def squashoutput(datadir=".", outputname="BOUT.dmp.nc", format="NETCDF4", tind=None,
-                 xind=None, yind=None, zind=None, xguards=True, yguards="include_upper",
-                 singleprecision=False, compress=False, least_significant_digit=None,
-                 quiet=False, complevel=None, append=False, delete=False):
+def squashoutput(
+    datadir=".",
+    outputname="BOUT.dmp.nc",
+    format="NETCDF4",
+    tind=None,
+    xind=None,
+    yind=None,
+    zind=None,
+    xguards=True,
+    yguards="include_upper",
+    singleprecision=False,
+    compress=False,
+    least_significant_digit=None,
+    quiet=False,
+    complevel=None,
+    append=False,
+    delete=False,
+):
     """
     Collect all data from BOUT.dmp.* files and create a single output file.
 
@@ -89,11 +105,21 @@ def squashoutput(datadir=".", outputname="BOUT.dmp.nc", format="NETCDF4", tind=N
 
     if os.path.isfile(fullpath) and not append:
         raise ValueError(
-            fullpath + " already exists. Collect may try to read from this file, which is presumably not desired behaviour.")
+            fullpath
+            + " already exists. Collect may try to read from this file, which is presumably not desired behaviour."
+        )
 
     # useful object from BOUT pylib to access output data
-    outputs = BoutOutputs(datadir, info=False, xguards=xguards,
-                          yguards=yguards, tind=tind, xind=xind, yind=yind, zind=zind)
+    outputs = BoutOutputs(
+        datadir,
+        info=False,
+        xguards=xguards,
+        yguards=yguards,
+        tind=tind,
+        xind=xind,
+        yind=yind,
+        zind=zind,
+    )
     outputvars = outputs.keys()
     # Read a value to cache the files
     outputs[outputvars[0]]
@@ -107,23 +133,24 @@ def squashoutput(datadir=".", outputname="BOUT.dmp.nc", format="NETCDF4", tind=N
 
     kwargs = {}
     if compress:
-        kwargs['zlib'] = True
+        kwargs["zlib"] = True
         if least_significant_digit is not None:
-            kwargs['least_significant_digit'] = least_significant_digit
+            kwargs["least_significant_digit"] = least_significant_digit
         if complevel is not None:
-            kwargs['complevel'] = complevel
+            kwargs["complevel"] = complevel
     if append:
         old = DataFile(oldfile)
         # Check if dump on restart was enabled
         # If so, we want to drop the duplicated entry
         cropnew = 0
-        if old['t_array'][-1] == outputs['t_array'][0]:
+        if old["t_array"][-1] == outputs["t_array"][0]:
             cropnew = 1
         # Make sure we don't end up with duplicated data:
-        for ot in old['t_array']:
-            if ot in outputs['t_array'][cropnew:]:
+        for ot in old["t_array"]:
+            if ot in outputs["t_array"][cropnew:]:
                 raise RuntimeError(
-                    "For some reason t_array has some duplicated entries in the new and old file.")
+                    "For some reason t_array has some duplicated entries in the new and old file."
+                )
     # Create single file for output and write data
     with DataFile(fullpath, create=True, write=True, format=format, **kwargs) as f:
         for varname in outputvars:
@@ -133,11 +160,10 @@ def squashoutput(datadir=".", outputname="BOUT.dmp.nc", format="NETCDF4", tind=N
             var = outputs[varname]
             if append:
                 dims = outputs.dimensions[varname]
-                if 't' in dims:
+                if "t" in dims:
                     var = var[cropnew:, ...]
                     varold = old[varname]
-                    var = BoutArray(numpy.append(
-                        varold, var, axis=0), var.attributes)
+                    var = BoutArray(numpy.append(varold, var, axis=0), var.attributes)
 
             if singleprecision:
                 if not isinstance(var, int):

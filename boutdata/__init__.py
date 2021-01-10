@@ -6,16 +6,16 @@ except ImportError:
     raise ImportError("Please install the future module to use Python 2")
 
 # Import this, as this almost always used when calling this package
-from boutdata.collect import collect, attributes
+from boutdata.collect import attributes, collect
 
 __all__ = ["attributes", "collect", "gen_surface", "pol_slice"]
 
-__name__ = 'boutdata'
+__name__ = "boutdata"
 
 try:
-    from importlib.metadata import version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError, version
 except ModuleNotFoundError:
-    from importlib_metadata import version, PackageNotFoundError
+    from importlib_metadata import PackageNotFoundError, version
 try:
     __version__ = version(__name__)
 except PackageNotFoundError:
@@ -30,5 +30,6 @@ except PackageNotFoundError:
         raise ModuleNotFoundError(str(e) + ". " + error_info)
     else:
         from pathlib import Path
+
         path = Path(__file__).resolve()
         __version__ = get_version(root="..", relative_to=path)

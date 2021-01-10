@@ -8,28 +8,28 @@ TODO
 
 """
 
-from __future__ import print_function
-from __future__ import division
-from builtins import str, range
+from __future__ import division, print_function
 
-import os
 import glob
+import multiprocessing
+import os
+from builtins import range, str
+
+import numpy as np
+from boututils.boutarray import BoutArray
+from boututils.datafile import DataFile
+from numpy import arange, mean, zeros
+from numpy.random import normal
+from scipy.interpolate import interp1d
 
 from boutdata.collect import collect, create_cache
-from boututils.datafile import DataFile
-from boututils.boutarray import BoutArray
-from boutdata.processor_rearrange import get_processor_layout, create_processor_layout
+from boutdata.processor_rearrange import create_processor_layout, get_processor_layout
 
-import multiprocessing
-import numpy as np
-from numpy import mean, zeros, arange
-from numpy.random import normal
-
-from scipy.interpolate import interp1d
 try:
     from scipy.interpolate import RegularGridInterpolator
 except ImportError:
     pass
+
 
 def resize3DField(var, data, coordsAndSizesTuple, method, mute):
     """Resize 3D fields
@@ -45,19 +45,31 @@ def resize3DField(var, data, coordsAndSizesTuple, method, mute):
     """
 
     # Unpack the tuple for better readability
-    xCoordOld, yCoordOld, zCoordOld,\
-        xCoordNew, yCoordNew, zCoordNew,\
-        newNx, newNy, newNz = coordsAndSizesTuple
+    (
+        xCoordOld,
+        yCoordOld,
+        zCoordOld,
+        xCoordNew,
+        yCoordNew,
+        zCoordNew,
+        newNx,
+        newNy,
+        newNz,
+    ) = coordsAndSizesTuple
 
-    if not(mute):
-        print("    Resizing "+var +
-              ' to (nx,ny,nz) = ({},{},{})'.format(newNx, newNy, newNz))
+    if not (mute):
+        print(
+            "    Resizing "
+            + var
+            + " to (nx,ny,nz) = ({},{},{})".format(newNx, newNy, newNz)
+        )
 
     # Make the regular grid function (see examples in
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RegularGridInterpolator.html
     # for details)
     gridInterpolator = RegularGridInterpolator(
-        (xCoordOld, yCoordOld, zCoordOld), data, method)
+        (xCoordOld, yCoordOld, zCoordOld), data, method
+    )
 
     # Need to fill with one exrta z plane (will only contain zeros)
     newData = np.zeros((newNx, newNy, newNz))
@@ -71,9 +83,20 @@ def resize3DField(var, data, coordsAndSizesTuple, method, mute):
     return var, newData
 
 
-def resize(newNx, newNy, newNz, mxg=2, myg=2,
-           path="data", output="./", informat="nc", outformat=None,
-           method='linear', maxProc=None, mute=False):
+def resize(
+    newNx,
+    newNy,
+    newNz,
+    mxg=2,
+    myg=2,
+    path="data",
+    output="./",
+    informat="nc",
+    outformat=None,
+    method="linear",
+    maxProc=None,
+    mute=False,
+):
     """Increase/decrease the number of points in restart files.
 
     NOTE: Can't overwrite
@@ -115,7 +138,7 @@ def resize(newNx, newNy, newNz, mxg=2, myg=2,
 
     if method is None:
         # Make sure the method is set
-        method = 'linear'
+        method = "linear"
 
     if outformat is None:
         outformat = informat
@@ -126,13 +149,13 @@ def resize(newNx, newNy, newNz, mxg=2, myg=2,
 
     def is_pow2(x):
         """Returns true if x is a power of 2"""
-        return (x > 0) and ((x & (x-1)) == 0)
+        return (x > 0) and ((x & (x - 1)) == 0)
 
     if not is_pow2(newNz):
         print("ERROR: New Z size {} must be a power of 2".format(newNz))
         return False
 
-    file_list = glob.glob(os.path.join(path, "BOUT.restart.*."+informat))
+    file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
     file_list.sort()
     nfiles = len(file_list)
 
@@ -140,12 +163,12 @@ def resize(newNx, newNy, newNz, mxg=2, myg=2,
         print("ERROR: No data found in {}".format(path))
         return False
 
-    if not(mute):
+    if not (mute):
         print("Number of files found: " + str(nfiles))
 
     for f in file_list:
-        new_f = os.path.join(output, f.split('/')[-1])
-        if not(mute):
+        new_f = os.path.join(output, f.split("/")[-1])
+        if not (mute):
             print("Changing {} => {}".format(f, new_f))
 
         # Open the restart file in read mode and create the new file
@@ -179,9 +202,17 @@ def resize(newNx, newNy, newNz, mxg=2, myg=2,
             # List of jobs and results
             jobs = []
             # Pack input to resize3DField together
-            coordsAndSizesTuple = (xCoordOld, yCoordOld, zCoordOld,
-                                   xCoordNew, yCoordNew, zCoordNew,
-                                   newNx, newNy, newNz)
+            coordsAndSizesTuple = (
+                xCoordOld,
+                yCoordOld,
+                zCoordOld,
+                xCoordNew,
+                yCoordNew,
+                zCoordNew,
+                newNx,
+                newNy,
+                newNz,
+            )
 
             # Loop over the variables in the old file
             for var in old.list():
@@ -193,22 +224,32 @@ def resize(newNx, newNy, newNz, mxg=2, myg=2,
                 if old.ndims(var) == 3:
 
                     # Asynchronous call (locks first at .get())
-                    jobs.append(pool.apply_async(resize3DField,
-                                                 args=(var, data, coordsAndSizesTuple, method, mute, )))
+                    jobs.append(
+                        pool.apply_async(
+                            resize3DField,
+                            args=(
+                                var,
+                                data,
+                                coordsAndSizesTuple,
+                                method,
+                                mute,
+                            ),
+                        )
+                    )
 
                 else:
-                    if not(mute):
-                        print("    Copying "+var)
+                    if not (mute):
+                        print("    Copying " + var)
                         newData = data.copy()
-                    if not(mute):
-                        print("Writing "+var)
+                    if not (mute):
+                        print("Writing " + var)
                     new.write(var, newData)
 
             for job in jobs:
                 var, newData = job.get()
                 newData = BoutArray(newData, attributes=attributes)
-                if not(mute):
-                    print("Writing "+var)
+                if not (mute):
+                    print("Writing " + var)
                 new.write(var, newData)
 
             # Close the pool of workers
@@ -260,13 +301,13 @@ def resizeZ(newNz, path="data", output="./", informat="nc", outformat=None):
 
     def is_pow2(x):
         """Returns true if x is a power of 2"""
-        return (x > 0) and ((x & (x-1)) == 0)
+        return (x > 0) and ((x & (x - 1)) == 0)
 
     if not is_pow2(newNz):
         print("ERROR: New Z size must be a power of 2")
         return False
 
-    file_list = glob.glob(os.path.join(path, "BOUT.restart.*."+informat))
+    file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
     file_list.sort()
     nfiles = len(file_list)
 
@@ -277,12 +318,11 @@ def resizeZ(newNz, path="data", output="./", informat="nc", outformat=None):
     print("Number of files found: " + str(nfiles))
 
     for f in file_list:
-        new_f = os.path.join(output, f.split('/')[-1])
+        new_f = os.path.join(output, f.split("/")[-1])
         print("Changing {} => {}".format(f, new_f))
 
         # Open the restart file in read mode and create the new file
-        with DataFile(f) as old,\
-                DataFile(new_f, write=True, create=True) as new:
+        with DataFile(f) as old, DataFile(new_f, write=True, create=True) as new:
             # Loop over the variables in the old file
             for var in old.list():
                 # Read the data
@@ -291,7 +331,7 @@ def resizeZ(newNz, path="data", output="./", informat="nc", outformat=None):
 
                 # Find 3D variables
                 if old.ndims(var) == 3:
-                    print("    Resizing "+var)
+                    print("    Resizing " + var)
 
                     nx, ny, nz = data.shape
 
@@ -305,11 +345,11 @@ def resizeZ(newNz, path="data", output="./", informat="nc", outformat=None):
 
                             # Copy coefficients across (ignoring Nyquist)
                             f_new[0] = f_old[0]  # DC
-                            for m in range(1, int(nz/2)):
+                            for m in range(1, int(nz / 2)):
                                 # + ve frequencies
                                 f_new[m] = f_old[m]
                                 # - ve frequencies
-                                f_new[newNz-m] = f_old[nz-m]
+                                f_new[newNz - m] = f_old[nz - m]
 
                             # Invert fft
                             newdata[x, y, :] = np.fft.ifft(f_new).real
@@ -322,9 +362,9 @@ def resizeZ(newNz, path="data", output="./", informat="nc", outformat=None):
                     # 1/N is the inverse transform in np.fft
                     # Note that ifft(fft(a)) = a for the same number of
                     # points in both IDL and np.ftt
-                    newdata *= (newNz/nz)
+                    newdata *= newNz / nz
                 else:
-                    print("    Copying "+var)
+                    print("    Copying " + var)
                     newdata = data.copy()
 
                 newdata = BoutArray(newdata, attributes=attributes)
@@ -362,13 +402,13 @@ def addnoise(path=".", var=None, scale=1e-5):
             if var is None:
                 for v in d.list():
                     if d.ndims(v) == 3:
-                        print(" -> "+v)
+                        print(" -> " + v)
                         data = d.read(v, asBoutArray=True)
                         data += normal(scale=scale, size=data.shape)
                         d.write(v, data)
             else:
                 # Modify a single variable
-                print(" -> "+var)
+                print(" -> " + var)
                 data = d.read(var)
                 data += normal(scale=scale, size=data.shape)
                 d.write(var, data)
@@ -402,7 +442,9 @@ def scalevar(var, factor, path="."):
             d[var] = d[var] * factor
 
 
-def create(averagelast=1, final=-1, path="data", output="./", informat="nc", outformat=None):
+def create(
+    averagelast=1, final=-1, path="data", output="./", informat="nc", outformat=None
+):
     """Create restart files from data (dmp) files.
 
     Parameters
@@ -426,15 +468,15 @@ def create(averagelast=1, final=-1, path="data", output="./", informat="nc", out
     if outformat is None:
         outformat = informat
 
-    file_list = glob.glob(os.path.join(path, "BOUT.dmp.*."+informat))
+    file_list = glob.glob(os.path.join(path, "BOUT.dmp.*." + informat))
     nfiles = len(file_list)
 
     print(("Number of data files: ", nfiles))
 
     for i in range(nfiles):
         # Open each data file
-        infname = os.path.join(path, "BOUT.dmp."+str(i)+"."+informat)
-        outfname = os.path.join(output, "BOUT.restart."+str(i)+"."+outformat)
+        infname = os.path.join(path, "BOUT.dmp." + str(i) + "." + informat)
+        outfname = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
 
         print((infname, " -> ", outfname))
 
@@ -475,8 +517,7 @@ def create(averagelast=1, final=-1, path="data", output="./", informat="nc", out
                 if averagelast == 1:
                     slice = data[final, :, :, :]
                 else:
-                    slice = mean(data[(final - averagelast)
-                                 :final, :, :, :], axis=0)
+                    slice = mean(data[(final - averagelast) : final, :, :, :], axis=0)
 
                 print(slice.shape)
 
@@ -486,7 +527,16 @@ def create(averagelast=1, final=-1, path="data", output="./", informat="nc", out
         outfile.close()
 
 
-def redistribute(npes, path="data", nxpe=None, output=".", informat=None, outformat=None, mxg=2, myg=2):
+def redistribute(
+    npes,
+    path="data",
+    nxpe=None,
+    output=".",
+    informat=None,
+    outformat=None,
+    mxg=2,
+    myg=2,
+):
     """Resize restart files across NPES processors.
 
     Does not check if new processor arrangement is compatible with the
@@ -537,7 +587,7 @@ def redistribute(npes, path="data", nxpe=None, output=".", informat=None, outfor
     if informat is None:
         file_list = glob.glob(os.path.join(path, "BOUT.restart.*"))
     else:
-        file_list = glob.glob(os.path.join(path, "BOUT.restart.*."+informat))
+        file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
 
     nfiles = len(file_list)
 
@@ -551,8 +601,12 @@ def redistribute(npes, path="data", nxpe=None, output=".", informat=None, outfor
         return False
 
     old_processor_layout = get_processor_layout(f, has_t_dimension=False)
-    print("Grid sizes: ", old_processor_layout.nx,
-          old_processor_layout.ny, old_processor_layout.mz)
+    print(
+        "Grid sizes: ",
+        old_processor_layout.nx,
+        old_processor_layout.ny,
+        old_processor_layout.mz,
+    )
 
     if nfiles != old_processor_layout.npes:
         print("WARNING: Number of restart files inconsistent with NPES")
@@ -569,7 +623,8 @@ def redistribute(npes, path="data", nxpe=None, output=".", informat=None, outfor
 
     try:
         new_processor_layout = create_processor_layout(
-            old_processor_layout, npes, nxpe=nxpe)
+            old_processor_layout, npes, nxpe=nxpe
+        )
     except ValueError as e:
         print("Could not find valid processor split. " + e.what())
 
@@ -592,7 +647,7 @@ def redistribute(npes, path="data", nxpe=None, output=".", informat=None, outfor
 
     outfile_list = []
     for i in range(npes):
-        outpath = os.path.join(output, "BOUT.restart."+str(i)+"."+outformat)
+        outpath = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
         outfile_list.append(DataFile(outpath, write=True, create=True))
 
     DataFileCache = create_cache(path, "BOUT.restart")
@@ -602,13 +657,14 @@ def redistribute(npes, path="data", nxpe=None, output=".", informat=None, outfor
         ndims = len(dimensions)
 
         # collect data
-        data = collect(v, xguards=True, yguards=True, info=False,
-                datafile_cache=DataFileCache)
+        data = collect(
+            v, xguards=True, yguards=True, info=False, datafile_cache=DataFileCache
+        )
 
         # write data
         for i in range(npes):
             ix = i % nxpe
-            iy = int(i/nxpe)
+            iy = int(i / nxpe)
             outfile = outfile_list[i]
             if v == "NPES":
                 outfile.write(v, npes)
@@ -622,28 +678,49 @@ def redistribute(npes, path="data", nxpe=None, output=".", informat=None, outfor
                 outfile.write(v, mysub)
             elif v == "MZSUB":
                 outfile.write(v, mzsub)
-            elif dimensions == ('x', 'y'):
+            elif dimensions == ("x", "y"):
                 # Field2D
                 outfile.write(
-                    v, data[ix*mxsub:(ix+1)*mxsub+2*mxg, iy*mysub:(iy+1)*mysub+2*myg])
-            elif dimensions == ('x', 'z'):
+                    v,
+                    data[
+                        ix * mxsub : (ix + 1) * mxsub + 2 * mxg,
+                        iy * mysub : (iy + 1) * mysub + 2 * myg,
+                    ],
+                )
+            elif dimensions == ("x", "z"):
                 # FieldPerp
-                yindex_global = data.attributes['yindex_global']
-                if yindex_global + myg >= iy*mysub and yindex_global + myg < (iy+1)*mysub+2*myg:
-                    outfile.write(v, data[ix*mxsub:(ix+1)*mxsub+2*mxg, :])
+                yindex_global = data.attributes["yindex_global"]
+                if (
+                    yindex_global + myg >= iy * mysub
+                    and yindex_global + myg < (iy + 1) * mysub + 2 * myg
+                ):
+                    outfile.write(v, data[ix * mxsub : (ix + 1) * mxsub + 2 * mxg, :])
                 else:
-                    nullarray = BoutArray(np.zeros([mxsub+2*mxg, mysub+2*myg]), attributes={"bout_type":"FieldPerp", "yindex_global":-myg-1})
+                    nullarray = BoutArray(
+                        np.zeros([mxsub + 2 * mxg, mysub + 2 * myg]),
+                        attributes={
+                            "bout_type": "FieldPerp",
+                            "yindex_global": -myg - 1,
+                        },
+                    )
                     outfile.write(v, nullarray)
-            elif dimensions == ('x', 'y', 'z'):
+            elif dimensions == ("x", "y", "z"):
                 # Field3D
                 outfile.write(
-                    v, data[ix*mxsub:(ix+1)*mxsub+2*mxg, iy*mysub:(iy+1)*mysub+2*myg, :])
-            elif not any(d in dimensions for d in ('x', 'y', 'z')):
+                    v,
+                    data[
+                        ix * mxsub : (ix + 1) * mxsub + 2 * mxg,
+                        iy * mysub : (iy + 1) * mysub + 2 * myg,
+                        :,
+                    ],
+                )
+            elif not any(d in dimensions for d in ("x", "y", "z")):
                 # scalar or other non-spatially-dependent variable
                 outfile.write(v, data)
             else:
                 print(
-                    "ERROR: variable found with unexpected dimensions,", dimensions, v)
+                    "ERROR: variable found with unexpected dimensions,", dimensions, v
+                )
 
     f.close()
     for outfile in outfile_list:
@@ -687,7 +764,7 @@ def resizeY(newy, path="data", output=".", informat="nc", outformat=None, myg=2)
     if outformat is None:
         outformat = informat
 
-    file_list = glob.glob(os.path.join(path, "BOUT.restart.*."+informat))
+    file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
 
     nfiles = len(file_list)
 
@@ -697,8 +774,8 @@ def resizeY(newy, path="data", output=".", informat="nc", outformat=None, myg=2)
 
     for i in range(nfiles):
         # Open each data file
-        infname = os.path.join(path, "BOUT.restart."+str(i)+"."+informat)
-        outfname = os.path.join(output, "BOUT.restart."+str(i)+"."+outformat)
+        infname = os.path.join(path, "BOUT.restart." + str(i) + "." + informat)
+        outfname = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
 
         print("Processing %s -> %s" % (infname, outfname))
 
@@ -720,7 +797,7 @@ def resizeY(newy, path="data", output=".", informat="nc", outformat=None, myg=2)
 
         for var in varnames:
             dimensions = infile.dimensions(var)
-            if dimensions == ('x', 'y', 'z'):
+            if dimensions == ("x", "y", "z"):
                 # Could be an evolving variable [x,y,z]
 
                 print(" -> Resizing " + var)
@@ -731,19 +808,20 @@ def resizeY(newy, path="data", output=".", informat="nc", outformat=None, myg=2)
                 nx, ny, nz = indata.shape
 
                 # y coordinate in input and output data
-                iny = (arange(ny) - myg + 0.5) / (ny - 2*myg)
-                outy = (arange(newy) - myg + 0.5) / (newy - 2*myg)
+                iny = (arange(ny) - myg + 0.5) / (ny - 2 * myg)
+                outy = (arange(newy) - myg + 0.5) / (newy - 2 * myg)
 
                 outdata = zeros([nx, newy, nz])
 
                 for x in range(nx):
                     for z in range(nz):
                         f = interp1d(
-                            iny, indata[x, :, z], bounds_error=False, fill_value=0.0)
+                            iny, indata[x, :, z], bounds_error=False, fill_value=0.0
+                        )
                         outdata[x, :, z] = f(outy)
 
                 outfile.write(var, outdata)
-            elif dimensions == ('x', 'y'):
+            elif dimensions == ("x", "y"):
                 # Assume evolving variable [x,y]
                 print(" -> Resizing " + var)
 
@@ -753,14 +831,13 @@ def resizeY(newy, path="data", output=".", informat="nc", outformat=None, myg=2)
                 nx, ny = indata.shape
 
                 # y coordinate in input and output data
-                iny = (arange(ny) - myg + 0.5) / (ny - 2*myg)
-                outy = (arange(newy) - myg + 0.5) / (newy - 2*myg)
+                iny = (arange(ny) - myg + 0.5) / (ny - 2 * myg)
+                outy = (arange(newy) - myg + 0.5) / (newy - 2 * myg)
 
                 outdata = zeros([nx, newy])
 
                 for x in range(nx):
-                    f = interp1d(iny, indata[x, :],
-                                 bounds_error=False, fill_value=0.0)
+                    f = interp1d(iny, indata[x, :], bounds_error=False, fill_value=0.0)
                     outdata[x, :] = f(outy)
 
                 outfile.write(var, outdata)

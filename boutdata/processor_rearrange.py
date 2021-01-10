@@ -3,12 +3,13 @@ processors
 
 """
 
-from math import sqrt
 from collections import namedtuple
+from math import sqrt
 
-processor_layout_ = namedtuple("BOUT_processor_layout",
-                               ["nxpe", "nype", "npes", "mxsub", "mysub",
-                                "nx", "ny", "mz", "mxg", "myg"])
+processor_layout_ = namedtuple(
+    "BOUT_processor_layout",
+    ["nxpe", "nype", "npes", "mxsub", "mysub", "nx", "ny", "mz", "mxg", "myg"],
+)
 
 
 # Subclass the namedtuple above so we can add a docstring
@@ -31,6 +32,7 @@ class processor_layout(processor_layout_):
         The number of guard cells in x and y
 
     """
+
     pass
 
 
@@ -54,7 +56,7 @@ def get_processor_layout(boutfile, has_t_dimension=True, mxg=2, myg=2):
 
     """
 
-    nxpe = boutfile.read('NXPE')
+    nxpe = boutfile.read("NXPE")
     nype = boutfile.read("NYPE")
     npes = nxpe * nype
 
@@ -105,7 +107,18 @@ def get_processor_layout(boutfile, has_t_dimension=True, mxg=2, myg=2):
     nx = mxsub * nxpe
     ny = mysub * nype
 
-    result = processor_layout(nxpe=nxpe, nype=nype, npes=npes, mxsub=mxsub, mysub=mysub, nx=nx, ny=ny, mz=mz, mxg=mxg, myg=myg)
+    result = processor_layout(
+        nxpe=nxpe,
+        nype=nype,
+        npes=npes,
+        mxsub=mxsub,
+        mysub=mysub,
+        nx=nx,
+        ny=ny,
+        mz=mz,
+        mxg=mxg,
+        myg=myg,
+    )
 
     return result
 
@@ -134,11 +147,20 @@ def create_processor_layout(old_processor_layout, npes, nxpe=None):
     """
 
     if nxpe is None:  # Copy algorithm from BoutMesh for selecting nxpe
-        ideal = sqrt(float(old_processor_layout.nx) * float(npes) / float(old_processor_layout.ny))
-                     # Results in square domain
+        ideal = sqrt(
+            float(old_processor_layout.nx)
+            * float(npes)
+            / float(old_processor_layout.ny)
+        )
+        # Results in square domain
 
         for i in range(1, npes + 1):
-            if npes % i == 0 and old_processor_layout.nx % i == 0 and int(old_processor_layout.nx / i) >= old_processor_layout.mxg and old_processor_layout.ny % (npes / i) == 0:
+            if (
+                npes % i == 0
+                and old_processor_layout.nx % i == 0
+                and int(old_processor_layout.nx / i) >= old_processor_layout.mxg
+                and old_processor_layout.ny % (npes / i) == 0
+            ):
                 # Found an acceptable value
                 # Warning: does not check branch cuts!
 
@@ -148,14 +170,24 @@ def create_processor_layout(old_processor_layout, npes, nxpe=None):
         if nxpe is None:
             raise ValueError("ERROR: could not find a valid value for nxpe")
     elif npes % nxpe != 0:
-        raise ValueError(
-            "ERROR: requested nxpe is invalid, it does not divide npes")
+        raise ValueError("ERROR: requested nxpe is invalid, it does not divide npes")
 
     nype = int(npes / nxpe)
 
     mxsub = int(old_processor_layout.nx / nxpe)
     mysub = int(old_processor_layout.ny / nype)
 
-    result = processor_layout(nxpe=nxpe, nype=nype, npes=npes, mxsub=mxsub, mysub=mysub, nx=old_processor_layout.nx, ny=old_processor_layout.ny, mz=old_processor_layout.mz, mxg=old_processor_layout.mxg, myg=old_processor_layout.myg)
+    result = processor_layout(
+        nxpe=nxpe,
+        nype=nype,
+        npes=npes,
+        mxsub=mxsub,
+        mysub=mysub,
+        nx=old_processor_layout.nx,
+        ny=old_processor_layout.ny,
+        mz=old_processor_layout.mz,
+        mxg=old_processor_layout.mxg,
+        myg=old_processor_layout.myg,
+    )
 
     return result
