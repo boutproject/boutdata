@@ -1,0 +1,42 @@
+name: Lint
+
+on:
+  # Run each time we push and pull requests
+  push:
+  pull_request:
+  # Cron job
+  # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/events-that-trigger-workflows#scheduled-events-schedule
+  schedule:
+    # https://crontab.guru/#0_0_1_*_*
+    - cron: "0 0 1 * *"
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Use the v2 tag of: https://github.com/actions/checkout
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Set up Python ${{ matrix.python-version }}
+        # Use the v2 tag of: https://github.com/actions/setup-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        # https://github.com/PyCQA/pylint/issues/352
+        # pylint need the requirements to do the checks as the pre-commit repo is local
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade pre-commit
+          pip install .
+
+      - name: Lint
+        run: pre-commit run --all-files
