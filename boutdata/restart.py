@@ -632,7 +632,13 @@ def redistribute(npes, path="data", nxpe=None, output=".", informat=None, outfor
                 if yindex_global + myg >= iy*mysub and yindex_global + myg < (iy+1)*mysub+2*myg:
                     outfile.write(v, data[ix*mxsub:(ix+1)*mxsub+2*mxg, :])
                 else:
-                    nullarray = BoutArray(np.zeros([mxsub+2*mxg, mysub+2*myg]), attributes={"bout_type":"FieldPerp", "yindex_global":-myg-1})
+                    nullarray = BoutArray(
+                        np.zeros([mxsub + 2 * mxg, mz]),
+                        attributes={
+                            "bout_type": "FieldPerp",
+                            "yindex_global": -myg - 1,
+                        },
+                    )
                     outfile.write(v, nullarray)
             elif dimensions == ('x', 'y', 'z'):
                 # Field3D
