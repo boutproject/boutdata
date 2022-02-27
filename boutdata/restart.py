@@ -638,11 +638,6 @@ def redistribute(
     mysub = new_processor_layout.mysub
     mzsub = new_processor_layout.mz
 
-    jyseps2_1 = f["jyseps2_1"]
-    ny_inner = f["ny_inner"]
-    jyseps1_2 = f["jyseps1_2"]
-    is_doublenull = jyseps2_1 == jyseps1_2
-
     outfile_list = []
     for i in range(npes):
         outpath = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
@@ -734,28 +729,9 @@ def redistribute(
             elif dimensions == ("x", "z"):
                 # FieldPerp
                 yindex_global = data.attributes["yindex_global"]
-                this_proc_yglobal_min = iy * mysub + myg
-                this_proc_yglobal_max = (iy + 1) * mysub + myg
-                if is_doublenull and this_proc_yglobal_max > ny_inner:
-                    # Above upper x-point, so need to add offset for upper boundary
-                    # cells
-                    this_proc_yglobal_min += 2 * myg
-                    this_proc_yglobal_max += 2 * myg
-                if iy == 0 or (
-                    is_doublenull and this_proc_yglobal_min == ny_inner + 3 * myg
-                ):
-                    # Has lower y-boundary, so include boundary cells in local yglobal
-                    # range
-                    this_proc_yglobal_min -= myg
-                if iy == nype - 1 or (
-                    is_doublenull and this_proc_yglobal_max == ny_inner + myg
-                ):
-                    # Has upper y-boundary, so include boundary cells in local yglobal
-                    # range
-                    this_proc_yglobal_max += myg
                 if (
-                    yindex_global >= this_proc_yglobal_min
-                    and yindex_global < this_proc_yglobal_max
+                    yindex_global + myg >= iy * mysub
+                    and yindex_global + myg < (iy + 1) * mysub + 2 * myg
                 ):
                     outfile.write(v, data[ix * mxsub : (ix + 1) * mxsub + 2 * mxg, :])
                 else:
