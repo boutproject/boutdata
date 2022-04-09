@@ -45,7 +45,8 @@ jobs:
                 libxt6
                 libgl1-mesa-glx
                 libfontconfig
-                libxkbcommon-x11-0
+                libxkbcommon-x11-0 &&
+             sudo mount tmpfs -t tmpfs tmpfs
 
       - name: Install dependencies
         run: |
@@ -54,12 +55,13 @@ jobs:
 
       - name: Test local run
         run: |
-          pytest -v --cov=./
+          mv * tmpfs
+          cd tmpfs ; pytest -v --cov=./
 
       - name: Upload to codecov
         run: |
           pip install codecov
-          codecov
+          cd tmpfs ; codecov
 
   lint:
     runs-on: ubuntu-latest
