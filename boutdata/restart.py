@@ -174,7 +174,6 @@ def resize(
 
         # Open the restart file in read mode and create the new file
         with DataFile(f) as old, DataFile(new_f, write=True, create=True) as new:
-
             # Find the dimension
             for var in old.list():
                 # Read the data
@@ -223,7 +222,6 @@ def resize(
 
                 # Find 3D variables
                 if old.ndims(var) == 3:
-
                     # Asynchronous call (locks first at .get())
                     jobs.append(
                         pool.apply_async(
@@ -1125,9 +1123,11 @@ def change_grid(
         elif interpolator == "linear":
             # Linear interpolator
             from scipy.interpolate import LinearNDInterpolator
+
             interp = LinearNDInterpolator(
-                list(zip(from_Rxy.flatten(), from_Zxy.flatten())), from_data.flatten(),
-                fill_value = 0.0
+                list(zip(from_Rxy.flatten(), from_Zxy.flatten())),
+                from_data.flatten(),
+                fill_value=0.0,
             )
         else:
             raise ValueError("Invalid interpolator")
@@ -1146,11 +1146,11 @@ def change_grid(
         )
 
         if floor:
-            if var[0] == 'N' and var[1] != 'V':
+            if var[0] == "N" and var[1] != "V":
                 # A density
                 to_data = np.clip(to_data, 1e-5, None)
                 print("\t\t floor -> {}:{}".format(np.amin(to_data), np.amax(to_data)))
-            elif var[0] == 'P':
+            elif var[0] == "P":
                 # Pressure
                 to_data = np.clip(to_data, 1e-8, None)
                 print("\t\t floor -> {}:{}".format(np.amin(to_data), np.amax(to_data)))

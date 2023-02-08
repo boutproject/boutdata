@@ -44,7 +44,6 @@ def aligned_points(grid, nz=1, period=1.0, maxshift=0.4):
 
 
 def create_grid(grid, data, period=1):
-
     s = np.shape(data)
 
     nx = grid["nx"]
