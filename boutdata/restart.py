@@ -972,6 +972,7 @@ def change_grid(
     output=".",
     interpolator="nearest",
     show=False,
+    floor=True,
 ):
     """
     Convert a set of restart files from one grid to another
@@ -990,9 +991,11 @@ def change_grid(
     output : str, optional
          Directory where output restart files will be written
     interpolator : str, optional
-         Interpolation method to use. Options are 'nearest', 'CloughTocher', 'RBF'
+         Interpolation method to use. Options are 'nearest', 'CloughTocher', 'RBF', 'linear'
     show : bool, optional
          Display the interpolated fields using Matplotlib
+    floor : bool, optional
+         Apply floor to interpolated densities and pressures
 
     """
 
@@ -1045,7 +1048,10 @@ def change_grid(
     # Read information from a restart file
     with DataFile(file_list[0]) as f:
         for var in copy_vars:
-            copy_data[var] = f[var]
+            try:
+                copy_data[var] = f[var]
+            except:
+                print("Failed to copy variable '{}'".format(var))
 
         # Get a list of variables
         varnames = f.list()
@@ -1107,13 +1113,21 @@ def change_grid(
                 from_data.flatten(),
                 neighbors=50,
             )
-
         elif interpolator == "nearest":
             # Nearest neighbour. Tends to be robust
             from scipy.interpolate import NearestNDInterpolator
 
             interp = NearestNDInterpolator(
                 list(zip(from_Rxy.flatten(), from_Zxy.flatten())), from_data.flatten()
+            )
+        elif interpolator == "linear":
+            # Linear interpolator
+            from scipy.interpolate import LinearNDInterpolator
+
+            interp = LinearNDInterpolator(
+                list(zip(from_Rxy.flatten(), from_Zxy.flatten())),
+                from_data.flatten(),
+                fill_value=0.0,
             )
         else:
             raise ValueError("Invalid interpolator")
@@ -1130,6 +1144,17 @@ def change_grid(
                 np.amax(to_data),
             )
         )
+
+        if floor:
+            if var[0] == "N" and var[1] != "V":
+                # A density
+                to_data = np.clip(to_data, 1e-5, None)
+                print("\t\t floor -> {}:{}".format(np.amin(to_data), np.amax(to_data)))
+            elif var[0] == "P":
+                # Pressure
+                to_data = np.clip(to_data, 1e-8, None)
+                print("\t\t floor -> {}:{}".format(np.amin(to_data), np.amax(to_data)))
+
         if show:
             import matplotlib.pyplot as plt
 
