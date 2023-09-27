@@ -408,7 +408,6 @@ class SimpleTokamak(object):
             ("sinty", self.sinty),
             ("zShift", self.zShift),
         ]:
-
             # Note: This is slow, and could be improved using something like lambdify
             values = zeros([ngx, ngy])
             for i, x in enumerate(xarr):

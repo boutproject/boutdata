@@ -174,7 +174,6 @@ def resize(
 
         # Open the restart file in read mode and create the new file
         with DataFile(f) as old, DataFile(new_f, write=True, create=True) as new:
-
             # Find the dimension
             for var in old.list():
                 # Read the data
@@ -223,7 +222,6 @@ def resize(
 
                 # Find 3D variables
                 if old.ndims(var) == 3:
-
                     # Asynchronous call (locks first at .get())
                     jobs.append(
                         pool.apply_async(
