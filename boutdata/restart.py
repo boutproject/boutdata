@@ -484,12 +484,12 @@ def create(
         # Get the data always needed in restart files
         # hist_hi should be an integer in the restart files
         hist_hi = infile.read("iteration")
-        try:
+        if hist_hi is not None:
             hist_hi = hist_hi[final]
-        except:
-            pass
-        print(("hist_hi = ", hist_hi))
-        outfile.write("hist_hi", hist_hi)
+            print(("hist_hi = ", hist_hi))
+            outfile.write("hist_hi", hist_hi)
+        else:
+            print(("hist_hi not found"))
 
         t_array = infile.read("t_array")
         tt = t_array[final]
