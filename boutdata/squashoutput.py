@@ -238,7 +238,7 @@ def squashoutput(
                 f.write(varname, var)
 
         var = None
-        gc.collect()
+        # gc.collect()
 
     # Copy file attributes
     for attrname in outputs.list_file_attributes():
@@ -252,7 +252,6 @@ def squashoutput(
         f.close()
 
     del outputs
-    gc.collect()
 
     if delete:
         if append:
