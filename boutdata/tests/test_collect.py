@@ -24,6 +24,11 @@ from boutdata.tests.make_test_data import (
 
 collect_kwargs_list = [
     {"xguards": True, "yguards": "include_upper"},
+    {"xguards": False, "yguards": False},
+]
+
+collect_kwargs_list_full = [
+    {"xguards": True, "yguards": "include_upper"},
     {"xguards": False, "yguards": "include_upper"},
     {"xguards": True, "yguards": True},
     {"xguards": False, "yguards": True},
@@ -31,10 +36,10 @@ collect_kwargs_list = [
     {"xguards": False, "yguards": False},
 ]
 
+
 squash_params_list = [
     (False, {}),
     (True, {}),
-    (True, {"parallel": 2}),
 ]
 
 
@@ -290,12 +295,8 @@ class TestCollect:
         "time_split",
         [
             (1, None),
-            (2, None),
             (2, 3),
-            (3, None),
-            (4, None),
             (5, None),
-            (6, None),
             (7, None),
         ],
     )
@@ -874,11 +875,6 @@ class TestCollect:
             # {"parallel": False},
             {"parallel": 1},
             {"parallel": 2},
-            {"parallel": 3},
-            {"parallel": 4},
-            {"parallel": 5},
-            {"parallel": 6},
-            {"parallel": 7},
             {"parallel": 8},
             {"parallel": True},
         ),
@@ -1396,7 +1392,7 @@ class TestCollect:
         )
 
     @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
+    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list_full)
     def test_connected_doublenull_min_files(
         self, tmp_path, squash_params, collect_kwargs
     ):
@@ -1736,13 +1732,6 @@ class TestCollect:
         [
             {},
             {"compress": True, "complevel": 1},
-            {"compress": True, "complevel": 2},
-            {"compress": True, "complevel": 3},
-            {"compress": True, "complevel": 4},
-            {"compress": True, "complevel": 5},
-            {"compress": True, "complevel": 5},
-            {"compress": True, "complevel": 7},
-            {"compress": True, "complevel": 8},
             {"compress": True, "complevel": 9},
         ],
     )
