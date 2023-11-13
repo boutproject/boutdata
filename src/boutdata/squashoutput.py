@@ -110,7 +110,6 @@ def squashoutput(
         is used.
     """
     # use local imports to allow fast import for tab-completion
-    import gc
     import glob
     import os
     import shutil
@@ -240,7 +239,6 @@ def squashoutput(
                 f.write(varname, var)
 
         var = None
-        # gc.collect()
 
     # Copy file attributes
     for attrname in outputs.list_file_attributes():
