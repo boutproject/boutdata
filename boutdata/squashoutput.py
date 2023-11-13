@@ -115,7 +115,6 @@ def squashoutput(
     from boututils.boutarray import BoutArray
     import numpy
     import os
-    import gc
     import tempfile
     import shutil
     import glob
@@ -238,7 +237,6 @@ def squashoutput(
                 f.write(varname, var)
 
         var = None
-        # gc.collect()
 
     # Copy file attributes
     for attrname in outputs.list_file_attributes():
