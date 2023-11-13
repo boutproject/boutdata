@@ -43,7 +43,6 @@ dynamic = ["version"]
 [project.optional-dependencies]
 tests = [
     "pytest",
-    "pytest-cov",
 ]
 docs = [
     "sphinx>=3.4,<5",
@@ -60,6 +59,3 @@ version = { attr = "setuptools_scm.get_version" }
 
 [tool.setuptools_scm]
 write_to = "boutdata/_version.py"
-
-[tool.pytest.ini_options]
-addopts = "--cov=boutdata"
