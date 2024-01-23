@@ -1,9 +1,32 @@
 """ Routines for exchanging data to/from BOUT++ """
 
-# Import this, as this almost always used when calling this package
 from boutdata.collect import collect, attributes
+from boututils.boutarray import BoutArray
+from boututils.boutwarnings import alwayswarn
+from boututils.run_wrapper import (
+    launch,
+    launch_safe,
+    shell,
+    shell_safe,
+    determineNumberOfCPUs,
+    build_and_log,
+)
 
-__all__ = ["attributes", "collect", "gen_surface", "pol_slice"]
+
+__all__ = [
+    "attributes",
+    "collect",
+    "gen_surface",
+    "pol_slice",
+    "BoutArray",
+    "alwayswarn",
+    "launch",
+    "launch_safe",
+    "shell",
+    "shell_safe",
+    "determineNumberOfCPUs",
+    "build_and_log",
+]
 
 __name__ = "boutdata"
 
