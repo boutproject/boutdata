@@ -695,9 +695,9 @@ class BoutOptionsFile(BoutOptions):
                         comments = []
                     if inline_comment is not None:
                         parent_section.inline_comments[sectionname] = inline_comment
-                        parent_section._comment_whitespace[
-                            sectionname
-                        ] = comment_whitespace
+                        parent_section._comment_whitespace[sectionname] = (
+                            comment_whitespace
+                        )
                 else:
                     # A key=value pair
 
