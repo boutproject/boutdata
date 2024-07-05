@@ -1048,10 +1048,10 @@ def change_grid(
     # Read information from a restart file
     with DataFile(file_list[0]) as f:
         for var in copy_vars:
-            try:
-                copy_data[var] = f[var]
-            except:
-                print("Failed to copy variable '{}'".format(var))
+            if var not in f:
+                print(f"{var} not present - skipping")
+                continue
+            copy_data[var] = f[var]
 
         # Get a list of variables
         varnames = f.list()
