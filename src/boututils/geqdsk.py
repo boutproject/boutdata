@@ -1,20 +1,15 @@
-import re
-
-import numpy
-
 """
-@brief G-Eqdsk reader class
-@version $Id$
-
-Copyright &copy; 2006-2008, Tech-X Corporation, Boulder, CO
-See LICENSE file for conditions of use.
+G-Eqdsk reader class
 
 The official document describing g-eqdsk files:
 https://fusion.gat.com/conferences/snowmass/working/mfe/physics/p3/equilibria/g_eqdsk_s.pdf
 """
 
+import freeqdsk
+import numpy
 
-class Geqdsk(object):
+
+class Geqdsk:
     def __init__(self):
         """
         Constructor
@@ -26,155 +21,91 @@ class Geqdsk(object):
         open geqdsk file and parse its content
         """
 
-        lines = open(filename, "r").readlines()
+        with open(filename, "r") as f:
+            data = freeqdsk.geqdsk.read(f)
 
-        # first line
-        m = re.search(r"^\s*(.*)\s+\d+\s+(\d+)\s+(\d+)\s*$", lines[0])
-        self.data["case"] = m.group(1), "Identification character string"
-        self.data["nw"] = int(m.group(2)), "Number of horizontal R grid points"
-        self.data["nh"] = int(m.group(3)), "Number of vertical Z grid points"
-
-        fltsPat = (
-            r"^\s*([ \-]\d\.\d+[Ee][\+\-]\d\d)([ \-]\d\.\d+[Ee][\+\-]\d\d)"
-            r"([ \-]\d\.\d+[Ee][\+\-]\d\d)([ \-]\d\.\d+[Ee][\+\-]\d\d)"
-            r"([ \-]\d\.\d+[Ee][\+\-]\d\d)\s*$"
-        )
-
-        # 2nd line
-        m = re.search(fltsPat, lines[1])
-        self.data["rdim"] = (
-            float(m.group(1)),
-            "Horizontal dimension in meter of computational box",
-        )
-        self.data["zdim"] = (
-            float(m.group(2)),
-            "Vertical dimension in meter of computational box",
-        )
-        self.data["rcentr"] = (
-            float(m.group(3)),
-            "R in meter of vacuum toroidal magnetic field BCENTR",
-        )
-        self.data["rleft"] = (
-            float(m.group(4)),
-            "Minimum R in meter of rectangular computational box",
-        )
-        self.data["zmid"] = (
-            float(m.group(5)),
-            "Z of center of computational box in meter",
-        )
-
-        # 3rd line
-        m = re.search(fltsPat, lines[2])
-        self.data["rmaxis"] = float(m.group(1)), "R of magnetic axis in meter"
-        self.data["zmaxis"] = float(m.group(2)), "Z of magnetic axis in meter"
-        self.data["simag"] = (
-            float(m.group(3)),
-            "poloidal flux at magnetic axis in Weber /rad",
-        )
-        self.data["sibry"] = (
-            float(m.group(4)),
-            "poloidal flux at the plasma boundary in Weber /rad",
-        )
-        self.data["bcentr"] = (
-            float(m.group(5)),
-            "Vacuum toroidal magnetic field in Tesla at RCENTR",
-        )
-
-        # 4th line
-        m = re.search(fltsPat, lines[3])
-        self.data["current"] = float(m.group(1)), "Plasma current in Ampere"
-        # self.data['simag'] = float(m.group(2)), ""
-
-        # self.data['rmaxis'] = float(m.group(4)), ""
-
-        # 5th line
-        m = re.search(fltsPat, lines[4])
-        # self.data['zmaxis'] = float(m.group(1)), ""
-
-        # self.data['sibry'] = float(m.group(3)), ""
-
-        # read remaining data
-        data = []
-        counter = 5
-        while 1:
-            line = lines[counter]
-            m = re.match(r"^\s*[ \-]\d\.\d+[Ee][\+\-]\d\d", line)
-            if not m:
-                break
-            data += eval("[" + re.sub(r"(\d)([ \-]\d\.)", "\\1,\\2", line) + "]")
-            counter += 1
-
-        nw = self.data["nw"][0]
-        nh = self.data["nh"][0]
-
-        self.data["fpol"] = (
-            numpy.array(data[0:nw]),
-            "Poloidal current function in m-T, F = RBT on flux grid",
-        )
-        self.data["pres"] = (
-            numpy.array(data[nw : 2 * nw]),
-            "Plasma pressure in nt / m 2 on uniform flux grid",
-        )
-
-        self.data["ffprime"] = (
-            numpy.array(data[2 * nw : 3 * nw]),
-            "FF'(psi) in (mT)^2/(Weber/rad) on uniform flux grid",
-        )
-
-        self.data["pprime"] = (
-            numpy.array(data[3 * nw : 4 * nw]),
-            "P'(psi) in (nt/m2)/(Weber/rad) on uniform flux grid",
-        )
-
-        self.data["psirz"] = (
-            numpy.reshape(data[4 * nw : 4 * nw + nw * nh], (nh, nw)),
-            "Poloidal flux in Weber / rad on the rectangular grid points",
-        )
-        self.data["qpsi"] = (
-            numpy.array(data[4 * nw + nw * nh : 5 * nw + nw * nh]),
-            "q values on uniform flux grid from axis to boundary",
-        )
-
-        line = lines[counter]
-        m = re.search(r"^\s*(\d+)\s+(\d+)", line)
-        print(line)
-        nbbbs = int(m.group(1))
-        limitr = int(m.group(2))
-        self.data["nbbbs"] = nbbbs, "Number of boundary points"
-        self.data["limitr"] = limitr, "Number of limiter points"
-        counter += 1
-
-        data = []
-        while 1:
-            line = lines[counter]
-            m = re.search(r"^\s*[ \-]\d\.\d+[Ee][\+\-]\d\d", line)
-            counter += 1
-            if not m:
-                break
-            data += eval("[" + re.sub(r"(\d)([ \-]\d\.)", "\\1,\\2", line) + "]")
-        self.data["rbbbs"] = (
-            numpy.zeros((nbbbs,), numpy.float64),
-            "R of boundary points in meter",
-        )
-        self.data["zbbbs"] = (
-            numpy.zeros((nbbbs,), numpy.float64),
-            "Z of boundary points in meter",
-        )
-        for i in range(nbbbs):
-            self.data["rbbbs"][0][i] = data[2 * i]
-            self.data["zbbbs"][0][i] = data[2 * i + 1]
-
-        self.data["rlim"] = (
-            numpy.zeros((limitr,), numpy.float64),
-            "R of surrounding limiter contour in meter",
-        )
-        self.data["zlim"] = (
-            numpy.zeros((limitr,), numpy.float64),
-            "Z of surrounding limiter contour in meter",
-        )
-        for i in range(limitr):
-            self.data["rlim"][0][i] = data[2 * nbbbs + 2 * i]
-            self.data["zlim"][0][i] = data[2 * nbbbs + 2 * i + 1]
+        self.data = {
+            "case": (data["comment"], "Identification character string"),
+            "nw": (data["nw"], "Number of horizontal R grid points"),
+            "nh": (data["nh"], "Number of vertical Z grid points"),
+            "rdim": (
+                data["rdim"],
+                "Horizontal dimension in meter of computational box",
+            ),
+            "zdim": (
+                data["zdim"],
+                "Vertical dimension in meter of computational box",
+            ),
+            "rcentr": (
+                data["rcentr"],
+                "R in meter of vacuum toroidal magnetic field BCENTR",
+            ),
+            "rleft": (
+                data["rleft"],
+                "Minimum R in meter of rectangular computational box",
+            ),
+            "zmid": (
+                data["zmid"],
+                "Z of center of computational box in meter",
+            ),
+            "rmaxis": (data["rmagx"], "R of magnetic axis in meter"),
+            "zmaxis": (data["zmagx"], "Z of magnetic axis in meter"),
+            "simag": (
+                data["simagx"],
+                "poloidal flux at magnetic axis in Weber /rad",
+            ),
+            "sibry": (
+                data["sibdry"],
+                "poloidal flux at the plasma boundary in Weber /rad",
+            ),
+            "bcentr": (
+                data["bcentr"],
+                "Vacuum toroidal magnetic field in Tesla at RCENTR",
+            ),
+            "current": (data["cpasma"], "Plasma current in Ampere"),
+            "fpol": (
+                data["fpol"],
+                "Poloidal current function in m-T, F = RBT on flux grid",
+            ),
+            "pres": (
+                data["pres"],
+                "Plasma pressure in nt / m 2 on uniform flux grid",
+            ),
+            "ffprime": (
+                data["ffprime"],
+                "FF'(psi), in (mT),^2/(Weber/rad), on uniform flux grid",
+            ),
+            "pprime": (
+                data["pprime"],
+                "P'(psi), in (nt/m2),/(Weber/rad), on uniform flux grid",
+            ),
+            "psirz": (
+                data["psi"],
+                "Poloidal flux in Weber / rad on the rectangular grid points",
+            ),
+            "qpsi": (
+                data["qpsi"],
+                "q values on uniform flux grid from axis to boundary",
+            ),
+            "nbbbs": (data["nbdry"], "Number of boundary points"),
+            "limitr": (data["nlim"], "Number of limiter points"),
+            "rbbbs": (
+                data["rbdry"],
+                "R of boundary points in meter",
+            ),
+            "zbbbs": (
+                data["zbdry"],
+                "Z of boundary points in meter",
+            ),
+            "rlim": (
+                data["rlim"],
+                "R of surrounding limiter contour in meter",
+            ),
+            "zlim": (
+                data["zlim"],
+                "Z of surrounding limiter contour in meter",
+            ),
+        }
 
     def getAll(self):
         return self.data
@@ -244,7 +175,7 @@ def main():
         vs = options.vars.split(",")
 
     for v in vs:
-        print("%s: %s" % (v, str(geq.get(v))))
+        print(f"{v}: {geq.get(v)}")
 
     if options.plot:
         from matplotlib import pylab
@@ -284,7 +215,6 @@ def main():
         pylab.figure()
         pylab.pcolor(rs, zs, geq.get("psirz"), shading="interp")
         pylab.plot(geq.get("rbbbs"), geq.get("zbbbs"), "w-")
-        # pylab.plot(geq.get('rlim'), geq.get('zlim'), 'k--')
         pylab.axis("image")
         pylab.title("poloidal flux")
         pylab.xlabel("R")
