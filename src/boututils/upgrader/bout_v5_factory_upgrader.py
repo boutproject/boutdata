@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import boutupgrader
+from .common import default_args, apply_or_display_patch
 
 import argparse
 import copy
@@ -226,7 +226,7 @@ def apply_fixes(factories, source, all_declarations=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fix types of factory-created objects")
-    parser = boutupgrader.default_args(parser)
+    parser = default_args(parser)
 
     parser.add_argument(
         "--all-declarations",
@@ -246,6 +246,6 @@ if __name__ == "__main__":
             factories, contents, all_declarations=args.all_declarations
         )
 
-        boutupgrader.apply_or_display_patch(
+        apply_or_display_patch(
             filename, original, modified, args.patch_only, args.quiet, args.force
         )

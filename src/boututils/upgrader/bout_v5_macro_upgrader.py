@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import boutupgrader
+from .common import default_args, apply_or_display_patch
 
 import argparse
 import copy
@@ -343,7 +343,7 @@ if __name__ == "__main__":
             """
         ),
     )
-    parser = boutupgrader.default_args(parser)
+    parser = default_args(parser)
 
     args = parser.parse_args()
 
@@ -356,6 +356,6 @@ if __name__ == "__main__":
         original = copy.deepcopy(contents)
 
         modified = apply_fixes(MACRO_REPLACEMENTS, contents)
-        boutupgrader.apply_or_display_patch(
+        apply_or_display_patch(
             filename, original, modified, args.patch_only, args.quiet, args.force
         )

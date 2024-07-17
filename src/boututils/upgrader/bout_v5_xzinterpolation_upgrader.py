@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import boutupgrader
+from .common import default_args, apply_or_display_patch
 
 import argparse
 import copy
@@ -183,7 +183,7 @@ def clang_apply_fixes(headers, interpolations, factories, filename, source):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fix types of Interpolation objects")
-    parser = boutupgrader.default_args(parser)
+    parser = default_args(parser)
     parser.add_argument(
         "--clang", action="store_true", help="Use libclang if available"
     )
@@ -207,6 +207,6 @@ if __name__ == "__main__":
         else:
             modified = apply_fixes(headers, interpolations, factories, contents)
 
-        boutupgrader.apply_or_display_patch(
+        apply_or_display_patch(
             filename, original, modified, args.patch_only, args.quiet, args.force
         )

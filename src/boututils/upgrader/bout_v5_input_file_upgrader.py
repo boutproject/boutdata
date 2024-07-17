@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from boutupgrader import create_patch, yes_or_no, default_args
+from .common import create_patch, yes_or_no, default_args
 
 import argparse
 import copy
@@ -9,7 +9,7 @@ import textwrap
 import warnings
 
 from boutdata.data import BoutOptionsFile, BoutOptions
-from boututils.boutwarnings import AlwaysWarning
+from ..boutwarnings import AlwaysWarning
 
 
 def case_sensitive_init(self, name="root", parent=None):

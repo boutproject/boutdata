@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import boutupgrader
+from .common import default_args, apply_or_display_patch
 
 import argparse
 import copy
@@ -131,7 +131,7 @@ def apply_fixes(format_replacements, source):
 
 
 if __name__ == "__main__":
-    parser = boutupgrader.default_args(
+    parser = default_args(
         argparse.ArgumentParser(description="Fix format specifiers")
     )
     args = parser.parse_args()
@@ -146,6 +146,6 @@ if __name__ == "__main__":
 
         modified = apply_fixes(format_replacements, contents)
 
-        boutupgrader.apply_or_display_patch(
+        apply_or_display_patch(
             filename, original, modified, args.patch_only, args.quiet, args.force
         )
