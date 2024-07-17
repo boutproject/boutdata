@@ -10,11 +10,13 @@ import numpy
 
 
 class Geqdsk:
-    def __init__(self):
+    def __init__(self, filename: str):
         """
         Constructor
         """
         self.data = {}
+
+        self.openFile(filename)
 
     def openFile(self, filename):
         """
@@ -115,6 +117,9 @@ class Geqdsk:
 
     def get(self, varname):
         return self.data[varname.lower()][0]
+
+    def __getitem__(self, item):
+        return self.get(item)
 
     def getDescriptor(self, varname):
         return self.data[varname.lower()][1]
