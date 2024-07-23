@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-from .common import default_args, apply_or_display_patch
+from .common import apply_or_display_patch
 
-import argparse
 import copy
 import re
 
@@ -224,19 +223,24 @@ def apply_fixes(factories, source, all_declarations=False):
     return modified
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Fix types of factory-created objects")
-    parser = default_args(parser)
-
+def add_parser(subcommand, default_args, files_args):
+    factory_help = "Fix types of factory-created objects"
+    parser = subcommand.add_parser(
+        "factory",
+        help=factory_help,
+        description=factory_help,
+        parents=[default_args, files_args],
+    )
     parser.add_argument(
         "--all-declarations",
         "-a",
         action="store_true",
         help="Fix all declarations of factory types, not just variables created from factories",
     )
+    parser.set_defaults(func=run)
 
-    args = parser.parse_args()
 
+def run(args):
     for filename in args.files:
         with open(filename, "r") as f:
             contents = f.read()

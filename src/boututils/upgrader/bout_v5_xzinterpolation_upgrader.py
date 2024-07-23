@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-from .common import default_args, apply_or_display_patch
+from .common import apply_or_display_patch
 
-import argparse
 import copy
 import re
 
@@ -181,15 +180,20 @@ def clang_apply_fixes(headers, interpolations, factories, filename, source):
     return modified
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Fix types of Interpolation objects")
-    parser = default_args(parser)
+def add_parser(subcommand, default_args, files_args):
+    parser = subcommand.add_parser(
+        "xzinterp",
+        help="Fix types of Interpolation objects",
+        description="Fix types of Interpolation objects",
+        parents=[default_args, files_args],
+    )
     parser.add_argument(
         "--clang", action="store_true", help="Use libclang if available"
     )
+    parser.set_defaults(func=run)
 
-    args = parser.parse_args()
 
+def run(args):
     if args.clang and not has_clang:
         raise RuntimeError(
             "libclang is not available. Please install libclang Python bindings"

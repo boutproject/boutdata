@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-from .common import default_args, apply_or_display_patch
+from .common import apply_or_display_patch
 
-import argparse
 import copy
 import re
 
@@ -130,15 +129,18 @@ def apply_fixes(format_replacements, source):
     return modified
 
 
-if __name__ == "__main__":
-    parser = default_args(
-        argparse.ArgumentParser(description="Fix format specifiers")
+def add_parser(subcommand, default_args, files_args):
+    format_help = "Fix format specifiers"
+    parser = subcommand.add_parser(
+        "format",
+        description=format_help,
+        help=format_help,
+        parents=[default_args, files_args],
     )
-    args = parser.parse_args()
+    parser.set_defaults(func=run)
 
-    if args.force and args.patch_only:
-        raise ValueError("Incompatible options: --force and --patch")
 
+def run(args):
     for filename in args.files:
         with open(filename, "r") as f:
             contents = f.read()

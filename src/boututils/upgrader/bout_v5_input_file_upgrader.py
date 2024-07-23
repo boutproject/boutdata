@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .common import create_patch, yes_or_no, default_args
+from .common import create_patch, yes_or_no
 
 import argparse
 import copy
@@ -243,9 +243,11 @@ def possibly_apply_patch(patch, options_file, quiet=False, force=False):
     return make_change
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
+def add_parser(subcommand, default_args, files_args):
+    parser = subcommand.add_parser(
+        "input",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        help="Fix input files",
         description=textwrap.dedent(
             """\
             Fix input files for BOUT++ v5+
@@ -277,8 +279,8 @@ if __name__ == "__main__":
             presented first. If you choose not to apply this patch, the "upgrade
             fixer" patch will still include it."""
         ),
+        parents=[default_args, files_args],
     )
-    parser = default_args(parser)
 
     parser.add_argument(
         "--accept-canonical",
@@ -292,8 +294,10 @@ if __name__ == "__main__":
         action="store_true",
         help="Only check/fix canonicalisation",
     )
+    parser.set_defaults(func=run)
 
-    args = parser.parse_args()
+
+def run(args):
 
     warnings.simplefilter("ignore", AlwaysWarning)
 

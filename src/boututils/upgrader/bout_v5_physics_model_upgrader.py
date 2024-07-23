@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .common import default_args, apply_or_display_patch
+from .common import apply_or_display_patch
 
 import argparse
 import copy
@@ -367,8 +367,10 @@ def convert_legacy_model(source, name, error_on_warning):
     return "\n".join(source_lines)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
+def add_parser(subcommand, default_args, files_args):
+    parser = subcommand.add_parser(
+        "model",
+        help="Upgrade legacy physics models",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=textwrap.dedent(
             """\
@@ -386,8 +388,8 @@ if __name__ == "__main__":
             name>' to give a different name.
             """
         ),
+        parents=[default_args, files_args],
     )
-    parser = default_args(parser)
     parser.add_argument(
         "--name",
         "-n",
@@ -396,9 +398,10 @@ if __name__ == "__main__":
         type=str,
         help="Name for new PhysicsModel class, default is from filename",
     )
+    parser.set_defaults(func=run)
 
-    args = parser.parse_args()
 
+def run(args):
     for filename in args.files:
         with open(filename, "r") as f:
             contents = f.read()

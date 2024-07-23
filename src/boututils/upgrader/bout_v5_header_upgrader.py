@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .common import default_args, apply_or_display_patch
+from .common import apply_or_display_patch
 
 import argparse
 import copy
@@ -8,7 +8,7 @@ import re
 import textwrap
 from pathlib import Path
 from typing import List
-from subprocess import run
+import subprocess
 
 
 header_shim_sentinel = "// BOUT++ header shim"
@@ -16,7 +16,7 @@ header_shim_sentinel = "// BOUT++ header shim"
 header_warning = f"""\
 #pragma once
 {header_shim_sentinel}
-#warning Header "{{0}}" has moved to "bout/{{0}}". Run `bin/bout-v5-header-upgrader.py` to fix
+#warning Header "{{0}}" has moved to "bout/{{0}}". Run `bout-upgrader header` to fix
 #include "bout/{{0}}"
 """
 
@@ -53,7 +53,7 @@ def fix_library_header_locations(
         print("No headers to move!")
         return
 
-    out = run("git diff-index --cached HEAD --quiet", shell=True)
+    out = subprocess.run("git diff-index --cached HEAD --quiet", shell=True)
     if out.returncode:
         raise RuntimeError(
             "git index not clean! Please commit or discard any changes before continuing"
@@ -94,8 +94,10 @@ def apply_fixes(header_regex, source):
     return header_regex.sub(r"\1bout/\2\3", modified)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
+def add_parser(subcommand, default_args):
+    parser = subcommand.add_parser(
+        "header",
+        help="Fix deprecated header locations",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=textwrap.dedent(
             """\
@@ -119,8 +121,8 @@ if __name__ == "__main__":
 
             """
         ),
+        parents=[default_args],
     )
-    parser = default_args(parser, pos_files=False)
 
     parser.add_argument(
         "--include-path",
@@ -130,19 +132,17 @@ if __name__ == "__main__":
         type=Path,
     )
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--files", nargs="*", action="store", help="Input files")
-    group.add_argument(
+    header_group = parser.add_mutually_exclusive_group(required=True)
+    header_group.add_argument("--files", nargs="*", action="store", help="Input files")
+    header_group.add_argument(
         "--move-deprecated-headers",
         action="store_true",
         help="Move the deprecated headers",
     )
+    parser.set_defaults(func=run)
 
-    args = parser.parse_args()
 
-    if args.force and args.patch_only:
-        raise ValueError("Incompatible options: --force and --patch")
-
+def run(args):
     deprecated_headers = deprecated_header_list(args.include_path)
 
     if args.move_deprecated_headers:

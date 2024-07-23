@@ -50,6 +50,7 @@ docs = [
 
 [project.scripts]
 bout-squashoutput = "boutdata.scripts.bout_squashoutput:main"
+bout-upgrader = "boututils.upgrader:main"
 
 [tool.setuptools.dynamic]
 version = { attr = "setuptools_scm.get_version" }

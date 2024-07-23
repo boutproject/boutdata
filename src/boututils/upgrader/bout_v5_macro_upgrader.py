@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .common import default_args, apply_or_display_patch
+from .common import apply_or_display_patch
 
 import argparse
 import copy
@@ -320,8 +320,10 @@ def apply_fixes(replacements, source):
     return modified
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
+def add_parser(subcommand, default_args, files_args):
+    parser = subcommand.add_parser(
+        "macro",
+        help="Fix macro defines",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=textwrap.dedent(
             """\
@@ -342,14 +344,12 @@ if __name__ == "__main__":
             Please check the diff output carefully!
             """
         ),
+        parents=[default_args, files_args],
     )
-    parser = default_args(parser)
+    parser.set_defaults(func=run)
 
-    args = parser.parse_args()
 
-    if args.force and args.patch_only:
-        raise ValueError("Incompatible options: --force and --patch")
-
+def run(args):
     for filename in args.files:
         with open(filename, "r") as f:
             contents = f.read()
