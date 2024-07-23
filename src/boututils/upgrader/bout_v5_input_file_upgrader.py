@@ -8,7 +8,6 @@ import itertools
 import textwrap
 import warnings
 
-from boutdata.data import BoutOptionsFile, BoutOptions
 from ..boutwarnings import AlwaysWarning
 
 
@@ -20,10 +19,6 @@ def case_sensitive_init(self, name="root", parent=None):
     self.comments = dict()
     self.inline_comments = dict()
     self._comment_whitespace = dict()
-
-
-# Monky-patch BoutOptions to make sure it's case sensitive
-BoutOptions.__init__ = case_sensitive_init
 
 
 # This should be a list of dicts, each containing "old", "new" and optionally "new_values".
@@ -298,6 +293,9 @@ def add_parser(subcommand, default_args, files_args):
 
 
 def run(args):
+    from boutdata.data import BoutOptionsFile, BoutOptions
+    # Monkey-patch BoutOptions to make sure it's case sensitive
+    BoutOptions.__init__ = case_sensitive_init
 
     warnings.simplefilter("ignore", AlwaysWarning)
 
