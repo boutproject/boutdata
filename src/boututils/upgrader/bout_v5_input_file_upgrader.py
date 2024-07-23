@@ -294,6 +294,7 @@ def add_parser(subcommand, default_args, files_args):
 
 def run(args):
     from boutdata.data import BoutOptionsFile, BoutOptions
+
     # Monkey-patch BoutOptions to make sure it's case sensitive
     BoutOptions.__init__ = case_sensitive_init
 

@@ -179,8 +179,7 @@ MACRO_REPLACEMENTS = [
 
 
 def fix_include_version_header(old, headers, source):
-    """Make sure version.hxx header is included
-    """
+    """Make sure version.hxx header is included"""
 
     if not isinstance(headers, list):
         headers = [headers]
@@ -218,9 +217,7 @@ def fix_include_version_header(old, headers, source):
 
 
 def fix_ifdefs(old, source):
-    """Remove any code inside #ifdef/#ifndef blocks that would now not be compiled
-
-    """
+    """Remove any code inside #ifdef/#ifndef blocks that would now not be compiled"""
     source_lines = source.splitlines()
 
     # Something to keep track of nested sections
@@ -281,21 +278,18 @@ def fix_ifdefs(old, source):
 
 
 def fix_always_defined_macros(old, new, source):
-    """Fix '#ifdef's that should become plain '#if'
-    """
+    """Fix '#ifdef's that should become plain '#if'"""
     new_source = re.sub(r"#ifdef\s+{}\b".format(old), r"#if {}".format(new), source)
     return re.sub(r"#ifndef\s+{}\b".format(old), r"#if !{}".format(new), new_source)
 
 
 def fix_replacement(old, new, source):
-    """Straight replacements
-    """
+    """Straight replacements"""
     return re.sub(r'([^"_])\b{}\b([^"_])'.format(old), r"\1{}\2".format(new), source)
 
 
 def apply_fixes(replacements, source):
-    """Apply all fixes in this module
-    """
+    """Apply all fixes in this module"""
     modified = copy.deepcopy(source)
 
     for replacement in replacements:

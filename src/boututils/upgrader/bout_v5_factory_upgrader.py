@@ -173,9 +173,7 @@ def fix_deletions(variables, source):
 
 
 def fix_create_method(factory, source):
-    """Fix change of name of factory `create` method
-
-    """
+    """Fix change of name of factory `create` method"""
 
     if "old_create_method" not in factory:
         return source
