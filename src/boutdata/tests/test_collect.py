@@ -40,6 +40,7 @@ collect_kwargs_list_full = [
 squash_params_list = [
     (False, {}),
     (True, {}),
+    (True, {"parallel": 2}),
 ]
 
 
