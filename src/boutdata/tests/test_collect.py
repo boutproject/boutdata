@@ -24,8 +24,8 @@ from boututils.datafile import DataFile
 # Note - using tmp_path fixture requires pytest>=3.9.0
 
 collect_kwargs_list = [
-    {"xguards": True, "yguards": "include_upper"},
-    {"xguards": False, "yguards": False},
+    pytest.param({"xguards": True, "yguards": "include_upper"}, id="collect_guards"),
+    pytest.param({"xguards": False, "yguards": False}, id="collect_noguards"),
 ]
 
 collect_kwargs_list_full = [
@@ -39,9 +39,9 @@ collect_kwargs_list_full = [
 
 
 squash_params_list = [
-    (False, {}),
-    (True, {}),
-    (True, {"parallel": 2}),
+    pytest.param((False, {}), id="squash_off"),
+    pytest.param((True, {}), id="squash_serial"),
+    pytest.param((True, {"parallel": 2}), id="squash_parallel"),
 ]
 
 
