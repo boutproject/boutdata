@@ -156,6 +156,8 @@ def create_dump_file_set(
 
 @pytest.fixture(scope="module")
 def core_min(tmp_path_factory):
+    """Check output from a core-only case using the minimum number of processes"""
+
     tmp_path = tmp_path_factory.getbasetemp() / "core_min"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -180,6 +182,11 @@ def core_min(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def core_full(tmp_path_factory):
+    """
+    Check output from a core-only case using a large number of processes. 'Large'
+    means there is at least one process in each region with no edges touching
+    another region.
+    """
     tmp_path = tmp_path_factory.getbasetemp() / "core_full"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -211,6 +218,8 @@ def core_full(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def sol_min(tmp_path_factory):
+    """Check output from a SOL-only case using the minimum number of processes"""
+
     tmp_path = tmp_path_factory.getbasetemp() / "sol_min"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -232,6 +241,11 @@ def sol_min(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def sol_full(tmp_path_factory):
+    """
+    Check output from a SOL-only case using a large number of processes. 'Large'
+    means there is at least one process in each region with no edges touching
+    another region.
+    """
     tmp_path = tmp_path_factory.getbasetemp() / "sol_full"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -261,6 +275,8 @@ def sol_full(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def single_null_min(tmp_path_factory):
+    """Check output from a single-null case using the minimum number of processes"""
+
     tmp_path = tmp_path_factory.getbasetemp() / "single_null_min"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -287,6 +303,11 @@ def single_null_min(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def single_null_lower_boundary(tmp_path_factory):
+    """
+    Check output from a single-null case using the minimum number of processes. This
+    test puts the FieldPerp in the lower boundary.
+    """
+
     tmp_path = tmp_path_factory.getbasetemp() / "single_null_lower_boundary"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -312,6 +333,11 @@ def single_null_lower_boundary(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def single_null_upper_boundary(tmp_path_factory):
+    """
+    Check output from a single-null case using the minimum number of processes. This
+    test puts the FieldPerp in the upper boundary.
+    """
+
     tmp_path = tmp_path_factory.getbasetemp() / "single_null_upper_boundary"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -338,6 +364,12 @@ def single_null_upper_boundary(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def single_null_inconsistent(tmp_path_factory):
+    """
+    Check output from a single-null case using the minimum number of processes. This
+    test has FieldPerps created with inconsistent y-indices to check this produces
+    an error.
+    """
+
     tmp_path = tmp_path_factory.getbasetemp() / "single_null_inconsistent"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -364,6 +396,11 @@ def single_null_inconsistent(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def single_null_full(tmp_path_factory):
+    """
+    Check output from a single-null case using a large number of processes. 'Large'
+    means there is at least one process in each region with no edges touching
+    another region.
+    """
     tmp_path = tmp_path_factory.getbasetemp() / "single_null_full"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -414,6 +451,8 @@ def single_null_full(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def connected_double_null_min(tmp_path_factory):
+    """Check output from a connected double-null case using the minimum number of processes"""
+
     tmp_path = tmp_path_factory.getbasetemp() / "connected_double_null_min"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -446,6 +485,12 @@ def connected_double_null_min(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def connected_double_null_full(tmp_path_factory):
+    """
+    Check output from a connected double-null case using a large number of
+    processes. 'Large' means there is at least one process in each region with no
+    edges touching another region.
+    """
+
     tmp_path = tmp_path_factory.getbasetemp() / "connected_double_null_full"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -526,6 +571,8 @@ def connected_double_null_full(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def disconnected_double_null_min(tmp_path_factory):
+    """Check output from a disconnected double-null case using the minimum number of processes"""
+
     tmp_path = tmp_path_factory.getbasetemp() / "disconnected_double_null_min"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
@@ -556,85 +603,115 @@ def disconnected_double_null_min(tmp_path_factory):
     return tmp_path, expected, fieldperp_global_yind
 
 
+disconnected_double_null_params = [
+    # inner, lower divertor leg
+    (0, ["xinner", "ylower"], -1),
+    (1, ["ylower"], -1),
+    (2, ["xouter", "ylower"], -1),
+    (3, ["xinner"], -1),
+    (4, [], -1),
+    (5, ["xouter"], -1),
+    (6, ["xinner"], -1),
+    (7, [], -1),
+    (8, ["xouter"], -1),
+    # inner core
+    (9, ["xinner"], -1),
+    (10, [], -1),
+    (11, ["xouter"], -1),
+    (12, ["xinner"], 19),
+    (13, [], 19),
+    (14, ["xouter"], 19),
+    (15, ["xinner"], -1),
+    (16, [], -1),
+    (17, ["xouter"], -1),
+    # inner, upper divertor leg
+    (18, ["xinner"], -1),
+    (19, [], -1),
+    (20, ["xouter"], -1),
+    (21, ["xinner"], -1),
+    (22, [], -1),
+    (23, ["xouter"], -1),
+    (24, ["xinner", "yupper"], -1),
+    (25, ["yupper"], -1),
+    (26, ["xouter", "yupper"], -1),
+    # outer, upper divertor leg
+    (27, ["xinner", "ylower"], -1),
+    (28, ["ylower"], -1),
+    (29, ["xouter", "ylower"], -1),
+    (30, ["xinner"], -1),
+    (31, [], -1),
+    (32, ["xouter"], -1),
+    (33, ["xinner"], -1),
+    (34, [], -1),
+    (35, ["xouter"], -1),
+    # outer core
+    (36, ["xinner"], -1),
+    (37, [], -1),
+    (38, ["xouter"], -1),
+    (39, ["xinner"], -1),
+    (40, [], -1),
+    (41, ["xouter"], -1),
+    (42, ["xinner"], -1),
+    (43, [], -1),
+    (44, ["xouter"], -1),
+    # outer, lower divertor leg
+    (45, ["xinner"], -1),
+    (46, [], -1),
+    (47, ["xouter"], -1),
+    (48, ["xinner"], -1),
+    (49, [], -1),
+    (50, ["xouter"], -1),
+    (51, ["xinner", "yupper"], -1),
+    (52, ["yupper"], -1),
+    (53, ["xouter", "yupper"], -1),
+]
+
+
 @pytest.fixture(scope="module")
-def disconnected_double_null_full(tmp_path_factory, request=None):
-    mxg = request.param if request is not None else 2
+def disconnected_double_null_full(tmp_path_factory):
+    """Check output from a disconnected double-null case using a large number of
+    processes. 'Large' means there is at least one process in each region with
+    no edges touching another region.
+
+    """
 
     tmp_path = tmp_path_factory.getbasetemp() / "disconnected_double_null_full"
     tmp_path.mkdir(parents=True, exist_ok=True)
 
     fieldperp_global_yind = 19
 
-    dump_params = [
-        # inner, lower divertor leg
-        (0, ["xinner", "ylower"], -1),
-        (1, ["ylower"], -1),
-        (2, ["xouter", "ylower"], -1),
-        (3, ["xinner"], -1),
-        (4, [], -1),
-        (5, ["xouter"], -1),
-        (6, ["xinner"], -1),
-        (7, [], -1),
-        (8, ["xouter"], -1),
-        # inner core
-        (9, ["xinner"], -1),
-        (10, [], -1),
-        (11, ["xouter"], -1),
-        (12, ["xinner"], fieldperp_global_yind),
-        (13, [], fieldperp_global_yind),
-        (14, ["xouter"], fieldperp_global_yind),
-        (15, ["xinner"], -1),
-        (16, [], -1),
-        (17, ["xouter"], -1),
-        # inner, upper divertor leg
-        (18, ["xinner"], -1),
-        (19, [], -1),
-        (20, ["xouter"], -1),
-        (21, ["xinner"], -1),
-        (22, [], -1),
-        (23, ["xouter"], -1),
-        (24, ["xinner", "yupper"], -1),
-        (25, ["yupper"], -1),
-        (26, ["xouter", "yupper"], -1),
-        # outer, upper divertor leg
-        (27, ["xinner", "ylower"], -1),
-        (28, ["ylower"], -1),
-        (29, ["xouter", "ylower"], -1),
-        (30, ["xinner"], -1),
-        (31, [], -1),
-        (32, ["xouter"], -1),
-        (33, ["xinner"], -1),
-        (34, [], -1),
-        (35, ["xouter"], -1),
-        # outer core
-        (36, ["xinner"], -1),
-        (37, [], -1),
-        (38, ["xouter"], -1),
-        (39, ["xinner"], -1),
-        (40, [], -1),
-        (41, ["xouter"], -1),
-        (42, ["xinner"], -1),
-        (43, [], -1),
-        (44, ["xouter"], -1),
-        # outer, lower divertor leg
-        (45, ["xinner"], -1),
-        (46, [], -1),
-        (47, ["xouter"], -1),
-        (48, ["xinner"], -1),
-        (49, [], -1),
-        (50, ["xouter"], -1),
-        (51, ["xinner", "yupper"], -1),
-        (52, ["yupper"], -1),
-        (53, ["xouter", "yupper"], -1),
-    ]
     expected = create_dump_file_set(
-        make_grid_info(
-            mxg=mxg, myg=mxg, nxpe=3, nype=18, ixseps1=6, ixseps2=11, xpoints=2
-        ),
+        make_grid_info(nxpe=3, nype=18, ixseps1=6, ixseps2=11, xpoints=2),
         fieldperp_global_yind,
         tmp_path,
         np.random.default_rng(110),
-        dump_params,
+        disconnected_double_null_params,
+        fieldperp_yproc_ind=4,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def disconnected_double_null_full_no_guards(tmp_path_factory):
+    """Check output from a disconnected double-null case using a large number of
+    processes. 'Large' means there is at least one process in each region with
+    no edges touching another region. This case has no guard cells
+
+    """
+
+    tmp_path = (
+        tmp_path_factory.getbasetemp() / "disconnected_double_null_full_no_guards"
+    )
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 19
+
+    expected = create_dump_file_set(
+        make_grid_info(mxg=0, myg=0, nxpe=3, nype=18, ixseps1=6, ixseps2=11, xpoints=2),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(110),
+        disconnected_double_null_params,
         fieldperp_yproc_ind=4,
     )
     return tmp_path, expected, fieldperp_global_yind
@@ -690,21 +767,39 @@ def check_variable(
         assert actual.attributes["bout_type"] == "scalar"
 
 
+scenario_list = [
+    "core_min",
+    "core_full",
+    "sol_min",
+    "sol_full",
+    "single_null_min",
+    "single_null_lower_boundary",
+    "single_null_upper_boundary",
+    "single_null_full",
+    "connected_double_null_min",
+    "connected_double_null_full",
+    "disconnected_double_null_min",
+    "disconnected_double_null_full",
+    "disconnected_double_null_full_no_guards",
+]
+
+
 class TestCollect:
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_core_min_files(self, core_min, tmp_path, squash_params, collect_kwargs):
-        """
-        Check output from a core-only case using the minimum number of processes
-        """
+    @pytest.mark.parametrize("scenario", scenario_list)
+    def test_tokamak_scenario_collect(
+        self, tmp_path, scenario, collect_kwargs, squash_params, request
+    ):
+        """Test basic collect in different scenarios"""
         squash, squash_kwargs = squash_params
-        data_path, expected, fieldperp_global_yind = core_min
+        data_path, expected, fieldperp_global_yind = request.getfixturevalue(scenario)
         symlink_dump_files(data_path, tmp_path)
 
         check_collected_data(
             expected,
             fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=False,
+            doublenull="double_null" in scenario,
             path=tmp_path,
             squash=squash,
             collect_kwargs=collect_kwargs,
@@ -850,144 +945,6 @@ class TestCollect:
             )
 
     @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_core(self, core_full, tmp_path, squash_params, collect_kwargs):
-        """
-        Check output from a core-only case using a large number of processes. 'Large'
-        means there is at least one process in each region with no edges touching
-        another region.
-        """
-        data_path, expected, fieldperp_global_yind = core_full
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=False,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_sol_min_files(self, sol_min, tmp_path, squash_params, collect_kwargs):
-        """
-        Check output from a SOL-only case using the minimum number of processes
-        """
-        data_path, expected, fieldperp_global_yind = sol_min
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=False,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_sol(self, sol_full, tmp_path, squash_params, collect_kwargs):
-        """
-        Check output from a SOL-only case using a large number of processes. 'Large'
-        means there is at least one process in each region with no edges touching
-        another region.
-        """
-        data_path, expected, fieldperp_global_yind = sol_full
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=False,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_singlenull_min_files(
-        self, single_null_min, tmp_path, squash_params, collect_kwargs
-    ):
-        """
-        Check output from a single-null case using the minimum number of processes
-        """
-        data_path, expected, fieldperp_global_yind = single_null_min
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=False,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_singlenull_min_files_lower_boundary_fieldperp(
-        self, single_null_lower_boundary, tmp_path, squash_params, collect_kwargs
-    ):
-        """
-        Check output from a single-null case using the minimum number of processes. This
-        test puts the FieldPerp in the lower boundary.
-        """
-        data_path, expected, fieldperp_global_yind = single_null_lower_boundary
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=False,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_singlenull_min_files_upper_boundary_fieldperp(
-        self, single_null_upper_boundary, tmp_path, squash_params, collect_kwargs
-    ):
-        """
-        Check output from a single-null case using the minimum number of processes. This
-        test puts the FieldPerp in the upper boundary.
-        """
-        data_path, expected, fieldperp_global_yind = single_null_upper_boundary
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=False,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
     def test_singlenull_min_files_fieldperp_on_two_yproc_different_index(
         self, single_null_inconsistent, tmp_path, squash_params
     ):
@@ -1012,31 +969,6 @@ class TestCollect:
                 collect_kwargs=collect_kwargs,
                 squash_kwargs=squash_kwargs,
             )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_singlenull(
-        self, single_null_full, tmp_path, squash_params, collect_kwargs
-    ):
-        """
-        Check output from a single-null case using a large number of processes. 'Large'
-        means there is at least one process in each region with no edges touching
-        another region.
-        """
-        data_path, expected, fieldperp_global_yind = single_null_full
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=False,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
 
     @pytest.mark.parametrize(
         "squash_kwargs",
@@ -1317,108 +1249,9 @@ class TestCollect:
             squash_kwargs=squash_kwargs,
         )
 
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list_full)
-    def test_connected_doublenull_min_files(
-        self, connected_double_null_min, tmp_path, squash_params, collect_kwargs
-    ):
-        """
-        Check output from a connected double-null case using the minimum number of
-        processes
-        """
-        data_path, expected, fieldperp_global_yind = connected_double_null_min
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=True,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_connected_doublenull(
-        self, connected_double_null_full, tmp_path, squash_params, collect_kwargs
-    ):
-        """
-        Check output from a connected double-null case using a large number of
-        processes. 'Large' means there is at least one process in each region with no
-        edges touching another region.
-        """
-        data_path, expected, fieldperp_global_yind = connected_double_null_full
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=True,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_disconnected_doublenull_min_files(
-        self, disconnected_double_null_min, tmp_path, squash_params, collect_kwargs
-    ):
-        """
-        Check output from a disconnected double-null case using the minimum number of
-        processes
-        """
-        data_path, expected, fieldperp_global_yind = disconnected_double_null_min
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=True,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
-    @pytest.mark.parametrize("squash_params", squash_params_list)
-    @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    @pytest.mark.parametrize("disconnected_double_null_full", [0, 1, 2], indirect=True)
-    def test_disconnected_doublenull(
-        self, disconnected_double_null_full, tmp_path, squash_params, collect_kwargs
-    ):
-        """
-        Check output from a disconnected double-null case using a large number of
-        processes. 'Large' means there is at least one process in each region with no
-        edges touching another region.
-        """
-        data_path, expected, fieldperp_global_yind = disconnected_double_null_full
-        symlink_dump_files(data_path, tmp_path)
-
-        squash, squash_kwargs = squash_params
-        check_collected_data(
-            expected,
-            fieldperp_global_yind=fieldperp_global_yind,
-            doublenull=True,
-            path=tmp_path,
-            squash=squash,
-            collect_kwargs=collect_kwargs,
-            squash_kwargs=squash_kwargs,
-        )
-
     @pytest.mark.parametrize(
         "squash_kwargs",
         [
-            {},
             {"compress": True, "complevel": 1},
             {"compress": True, "complevel": 9},
         ],
