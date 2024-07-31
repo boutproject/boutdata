@@ -1,3 +1,4 @@
+import copy
 from glob import glob
 from pathlib import Path
 
@@ -45,7 +46,7 @@ squash_params_list = [
 
 
 def check_collected_data(
-    expected,
+    expected_in,
     *,
     fieldperp_global_yind,
     doublenull,
@@ -75,6 +76,8 @@ def check_collected_data(
     squash_kwargs : dict, optional
         Keyword arguments passed to `squashoutput()`.
     """
+    expected = copy.deepcopy(expected_in)
+
     # Apply effect of arguments to expected data
     if not collect_kwargs["xguards"]:
         remove_xboundaries(expected, expected["MXG"])
@@ -121,6 +124,518 @@ def check_collected_data(
             assert f.read_file_attribute(attrname) == attr
 
 
+def symlink_dump_files(src: Path, dst: Path):
+    """Symlink all dump files from ``src`` directory into ``dst``"""
+    for f in src.glob("*.nc"):
+        (dst / f.name).symlink_to(f)
+
+
+def create_dump_file_set(
+    grid_info, fieldperp_global_yind, tmp_path, rng, dump_params, fieldperp_yproc_ind=0
+):
+    """Create a set of dump files based on ``dump_params`` and return the concatenated data"""
+
+    dumps = []
+    for i, boundaries, fieldperp_yind in dump_params:
+        dumps.append(
+            create_dump_file(
+                tmpdir=tmp_path,
+                rng=rng,
+                grid_info=grid_info,
+                i=i,
+                boundaries=boundaries,
+                fieldperp_global_yind=fieldperp_yind,
+            )
+        )
+
+    expected = concatenate_data(
+        dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
+    )
+    return expected
+
+
+@pytest.fixture(scope="module")
+def core_min(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "core_min"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 3
+
+    # core
+    # core includes "ylower" and "yupper" even though there is no actual y-boundary
+    # because collect/squashoutput collect these points
+    dump_params = [
+        (0, ["xinner", "xouter", "ylower", "yupper"], fieldperp_global_yind),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(100),
+        dump_params,
+    )
+
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def core_full(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "core_full"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 3
+
+    # core
+    # core includes "ylower" and "yupper" even though there is no actual y-boundary
+    # because collect/squashoutput collect these points
+    dump_params = [
+        (0, ["xinner", "ylower"], fieldperp_global_yind),
+        (1, ["ylower"], fieldperp_global_yind),
+        (2, ["xouter", "ylower"], fieldperp_global_yind),
+        (3, ["xinner"], -1),
+        (4, [], -1),
+        (5, ["xouter"], -1),
+        (6, ["xinner", "yupper"], -1),
+        (7, ["yupper"], -1),
+        (8, ["xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nxpe=3, nype=3),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(101),
+        dump_params,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def sol_min(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "sol_min"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 3
+
+    # SOL
+    dump_params = [
+        (0, ["xinner", "xouter", "ylower", "yupper"], fieldperp_global_yind),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(ixseps1=0, ixseps2=0),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(102),
+        dump_params,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def sol_full(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "sol_full"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 3
+
+    # SOL
+    dump_params = [
+        (0, ["xinner", "ylower"], fieldperp_global_yind),
+        (1, ["ylower"], fieldperp_global_yind),
+        (2, ["xouter", "ylower"], fieldperp_global_yind),
+        (3, ["xinner"], -1),
+        (4, [], -1),
+        (5, ["xouter"], -1),
+        (6, ["xinner", "yupper"], -1),
+        (7, ["yupper"], -1),
+        (8, ["xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nxpe=3, nype=3, ixseps1=0, ixseps2=0),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(103),
+        dump_params,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def single_null_min(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "single_null_min"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 7
+
+    dump_params = [
+        # inner divertor leg
+        (0, ["xinner", "xouter", "ylower"], -1),
+        # core
+        (1, ["xinner", "xouter"], fieldperp_global_yind),
+        # outer divertor leg
+        (2, ["xinner", "xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nype=3, ixseps1=4, xpoints=1),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(104),
+        dump_params,
+        fieldperp_yproc_ind=1,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def single_null_lower_boundary(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "single_null_lower_boundary"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 1
+
+    dump_params = [
+        # inner divertor leg
+        (0, ["xinner", "xouter", "ylower"], fieldperp_global_yind),
+        # core
+        (1, ["xinner", "xouter"], -1),
+        # outer divertor leg
+        (2, ["xinner", "xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nype=3, ixseps1=4, xpoints=1),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(104),
+        dump_params,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def single_null_upper_boundary(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "single_null_upper_boundary"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 14
+
+    dump_params = [
+        # inner divertor leg
+        (0, ["xinner", "xouter", "ylower"], -1),
+        # core
+        (1, ["xinner", "xouter"], -1),
+        # outer divertor leg
+        (2, ["xinner", "xouter", "yupper"], fieldperp_global_yind),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nype=3, ixseps1=4, xpoints=1),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(104),
+        dump_params,
+        fieldperp_yproc_ind=2,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def single_null_inconsistent(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "single_null_inconsistent"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 7
+
+    dump_params = [
+        # inner divertor leg
+        (0, ["xinner", "xouter", "ylower"], 2),
+        # core
+        (1, ["xinner", "xouter"], 7),
+        # outer divertor leg
+        (2, ["xinner", "xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nype=3, ixseps1=4, xpoints=1),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(104),
+        dump_params,
+        fieldperp_yproc_ind=1,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def single_null_full(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "single_null_full"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 19
+
+    dump_params = [
+        # inner divertor leg
+        (0, ["xinner", "ylower"], -1),
+        (1, ["ylower"], -1),
+        (2, ["xouter", "ylower"], -1),
+        (3, ["xinner"], -1),
+        (4, [], -1),
+        (5, ["xouter"], -1),
+        (6, ["xinner"], -1),
+        (7, [], -1),
+        (8, ["xouter"], -1),
+        # core
+        (9, ["xinner"], -1),
+        (10, [], -1),
+        (11, ["xouter"], -1),
+        (12, ["xinner"], fieldperp_global_yind),
+        (13, [], fieldperp_global_yind),
+        (14, ["xouter"], fieldperp_global_yind),
+        (15, ["xinner"], -1),
+        (16, [], -1),
+        (17, ["xouter"], -1),
+        # outer divertor leg
+        (18, ["xinner"], -1),
+        (19, [], -1),
+        (20, ["xouter"], -1),
+        (21, ["xinner"], -1),
+        (22, [], -1),
+        (23, ["xouter"], -1),
+        (24, ["xinner", "yupper"], -1),
+        (25, ["yupper"], -1),
+        (26, ["xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nxpe=3, nype=9, ixseps1=7, xpoints=1),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(105),
+        dump_params,
+        fieldperp_yproc_ind=4,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def connected_double_null_min(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "connected_double_null_min"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 7
+
+    dump_params = [
+        # inner, lower divertor leg
+        (0, ["xinner", "xouter", "ylower"], -1),
+        # inner core
+        (1, ["xinner", "xouter"], fieldperp_global_yind),
+        # inner, upper divertor leg
+        (2, ["xinner", "xouter", "yupper"], -1),
+        # outer, upper divertor leg
+        (3, ["xinner", "xouter", "ylower"], -1),
+        # outer core
+        (4, ["xinner", "xouter"], -1),
+        # outer, lower divertor leg
+        (5, ["xinner", "xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nype=6, ixseps1=4, ixseps2=4, xpoints=2),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(107),
+        dump_params,
+        fieldperp_yproc_ind=1,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def connected_double_null_full(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "connected_double_null_full"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 19
+
+    dump_params = [
+        # inner, lower divertor leg
+        (0, ["xinner", "ylower"], -1),
+        (1, ["ylower"], -1),
+        (2, ["xouter", "ylower"], -1),
+        (3, ["xinner"], -1),
+        (4, [], -1),
+        (5, ["xouter"], -1),
+        (6, ["xinner"], -1),
+        (7, [], -1),
+        (8, ["xouter"], -1),
+        # inner core
+        (9, ["xinner"], -1),
+        (10, [], -1),
+        (11, ["xouter"], -1),
+        (12, ["xinner"], fieldperp_global_yind),
+        (13, [], fieldperp_global_yind),
+        (14, ["xouter"], fieldperp_global_yind),
+        (15, ["xinner"], -1),
+        (16, [], -1),
+        (17, ["xouter"], -1),
+        # inner, upper divertor leg
+        (18, ["xinner"], -1),
+        (19, [], -1),
+        (20, ["xouter"], -1),
+        (21, ["xinner"], -1),
+        (22, [], -1),
+        (23, ["xouter"], -1),
+        (24, ["xinner", "yupper"], -1),
+        (25, ["yupper"], -1),
+        (26, ["xouter", "yupper"], -1),
+        # outer, upper divertor leg
+        (27, ["xinner", "ylower"], -1),
+        (28, ["ylower"], -1),
+        (29, ["xouter", "ylower"], -1),
+        (30, ["xinner"], -1),
+        (31, [], -1),
+        (32, ["xouter"], -1),
+        (33, ["xinner"], -1),
+        (34, [], -1),
+        (35, ["xouter"], -1),
+        # outer core
+        (36, ["xinner"], -1),
+        (37, [], -1),
+        (38, ["xouter"], -1),
+        (39, ["xinner"], -1),
+        (40, [], -1),
+        (41, ["xouter"], -1),
+        (42, ["xinner"], -1),
+        (43, [], -1),
+        (44, ["xouter"], -1),
+        # outer, lower divertor leg
+        (45, ["xinner"], -1),
+        (46, [], -1),
+        (47, ["xouter"], -1),
+        (48, ["xinner"], -1),
+        (49, [], -1),
+        (50, ["xouter"], -1),
+        (51, ["xinner", "yupper"], -1),
+        (52, ["yupper"], -1),
+        (53, ["xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nxpe=3, nype=18, ixseps1=7, ixseps2=7, xpoints=2),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(108),
+        dump_params,
+        fieldperp_yproc_ind=4,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def disconnected_double_null_min(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "disconnected_double_null_min"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 7
+
+    dump_params = [
+        # inner, lower divertor leg
+        (0, ["xinner", "xouter", "ylower"], -1),
+        # inner core
+        (1, ["xinner", "xouter"], fieldperp_global_yind),
+        # inner, upper divertor leg
+        (2, ["xinner", "xouter", "yupper"], -1),
+        # outer, upper divertor leg
+        (3, ["xinner", "xouter", "ylower"], -1),
+        # outer core
+        (4, ["xinner", "xouter"], -1),
+        # outer, lower divertor leg
+        (5, ["xinner", "xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nype=6, ixseps1=3, ixseps2=5, xpoints=2),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(109),
+        dump_params,
+        fieldperp_yproc_ind=1,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
+@pytest.fixture(scope="module")
+def disconnected_double_null_full(tmp_path_factory):
+    tmp_path = tmp_path_factory.getbasetemp() / "disconnected_double_null_full"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    fieldperp_global_yind = 19
+
+    dump_params = [
+        # inner, lower divertor leg
+        (0, ["xinner", "ylower"], -1),
+        (1, ["ylower"], -1),
+        (2, ["xouter", "ylower"], -1),
+        (3, ["xinner"], -1),
+        (4, [], -1),
+        (5, ["xouter"], -1),
+        (6, ["xinner"], -1),
+        (7, [], -1),
+        (8, ["xouter"], -1),
+        # inner core
+        (9, ["xinner"], -1),
+        (10, [], -1),
+        (11, ["xouter"], -1),
+        (12, ["xinner"], fieldperp_global_yind),
+        (13, [], fieldperp_global_yind),
+        (14, ["xouter"], fieldperp_global_yind),
+        (15, ["xinner"], -1),
+        (16, [], -1),
+        (17, ["xouter"], -1),
+        # inner, upper divertor leg
+        (18, ["xinner"], -1),
+        (19, [], -1),
+        (20, ["xouter"], -1),
+        (21, ["xinner"], -1),
+        (22, [], -1),
+        (23, ["xouter"], -1),
+        (24, ["xinner", "yupper"], -1),
+        (25, ["yupper"], -1),
+        (26, ["xouter", "yupper"], -1),
+        # outer, upper divertor leg
+        (27, ["xinner", "ylower"], -1),
+        (28, ["ylower"], -1),
+        (29, ["xouter", "ylower"], -1),
+        (30, ["xinner"], -1),
+        (31, [], -1),
+        (32, ["xouter"], -1),
+        (33, ["xinner"], -1),
+        (34, [], -1),
+        (35, ["xouter"], -1),
+        # outer core
+        (36, ["xinner"], -1),
+        (37, [], -1),
+        (38, ["xouter"], -1),
+        (39, ["xinner"], -1),
+        (40, [], -1),
+        (41, ["xouter"], -1),
+        (42, ["xinner"], -1),
+        (43, [], -1),
+        (44, ["xouter"], -1),
+        # outer, lower divertor leg
+        (45, ["xinner"], -1),
+        (46, [], -1),
+        (47, ["xouter"], -1),
+        (48, ["xinner"], -1),
+        (49, [], -1),
+        (50, ["xouter"], -1),
+        (51, ["xinner", "yupper"], -1),
+        (52, ["yupper"], -1),
+        (53, ["xouter", "yupper"], -1),
+    ]
+    expected = create_dump_file_set(
+        make_grid_info(nxpe=3, nype=18, ixseps1=6, ixseps2=11, xpoints=2),
+        fieldperp_global_yind,
+        tmp_path,
+        np.random.default_rng(110),
+        dump_params,
+        fieldperp_yproc_ind=4,
+    )
+    return tmp_path, expected, fieldperp_global_yind
+
+
 def check_variable(
     varname, actual, expected_data, expected_attributes, fieldperp_global_yind
 ):
@@ -140,7 +655,7 @@ def check_variable(
     fieldperp_global_yind : int
         Global y-index where FieldPerps have been created
     """
-    npt.assert_array_equal(expected_data, actual)
+    npt.assert_array_equal(expected_data, actual, err_msg=varname)
     actual_keys = list(actual.attributes.keys())
     if expected_attributes is not None:
         for a in expected_attributes:
@@ -174,41 +689,13 @@ def check_variable(
 class TestCollect:
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_core_min_files(self, tmp_path, squash_params, collect_kwargs):
+    def test_core_min_files(self, core_min, tmp_path, squash_params, collect_kwargs):
         """
         Check output from a core-only case using the minimum number of processes
         """
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info()
-
-        fieldperp_global_yind = 3
-        fieldperp_yproc_ind = 0
-
-        rng = np.random.default_rng(100)
-
-        # core
-        # core includes "ylower" and "yupper" even though there is no actual y-boundary
-        # because collect/squashoutput collect these points
-        dump_params = [
-            (0, ["xinner", "xouter", "ylower", "yupper"], fieldperp_global_yind),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
+        data_path, expected, fieldperp_global_yind = core_min
+        symlink_dump_files(data_path, tmp_path)
 
         check_collected_data(
             expected,
@@ -234,39 +721,21 @@ class TestCollect:
             (7, None),
         ],
     )
-    def test_core_min_files_existing_squash_file_raises(self, tmp_path, time_split):
+    def test_core_min_files_existing_squash_file_raises(
+        self, core_min, tmp_path, time_split
+    ):
         """
         Check output from a core-only case using the minimum number of processes
         """
         time_split_size, time_split_first_label = time_split
+        data_path, _, _ = core_min
+        symlink_dump_files(data_path, tmp_path)
 
         squash_kwargs = {}
         if time_split_size is not None:
             squash_kwargs["time_split_size"] = time_split_size
         if time_split_first_label is not None:
             squash_kwargs["time_split_first_label"] = time_split_first_label
-
-        grid_info = make_grid_info()
-
-        fieldperp_global_yind = 3
-
-        rng = np.random.default_rng(100)
-
-        # core
-        # core includes "ylower" and "yupper" even though there is no actual y-boundary
-        # because collect/squashoutput collect these points
-        dump_params = [
-            (0, ["xinner", "xouter", "ylower", "yupper"], fieldperp_global_yind),
-        ]
-        for i, boundaries, fieldperp_yind in dump_params:
-            create_dump_file(
-                tmpdir=tmp_path,
-                rng=rng,
-                grid_info=grid_info,
-                i=i,
-                boundaries=boundaries,
-                fieldperp_global_yind=fieldperp_yind,
-            )
 
         if time_split_size is None:
             filenames = ["boutdata.nc"]
@@ -302,44 +771,17 @@ class TestCollect:
         ],
     )
     @pytest.mark.parametrize("parallel", [False, 2])
-    def test_core_min_files_time_split(self, tmp_path, time_split, parallel):
+    def test_core_min_files_time_split(self, core_min, tmp_path, time_split, parallel):
         """
         Check output from a core-only case using the minimum number of processes
         """
+        data_path, expected, fieldperp_global_yind = core_min
+        symlink_dump_files(data_path, tmp_path)
+
         collect_kwargs = {"xguards": True, "yguards": "include_upper"}
         squash_kwargs = {"time_split_size": time_split[0], "parallel": parallel}
         if time_split[1] is not None:
             squash_kwargs["time_split_first_label"] = time_split[1]
-
-        grid_info = make_grid_info()
-
-        fieldperp_global_yind = 3
-        fieldperp_yproc_ind = 0
-
-        rng = np.random.default_rng(100)
-
-        # core
-        # core includes "ylower" and "yupper" even though there is no actual y-boundary
-        # because collect/squashoutput collect these points
-        dump_params = [
-            (0, ["xinner", "xouter", "ylower", "yupper"], fieldperp_global_yind),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         # Copy of check_collected_data code, modified to test series of output
         # files created when setting time_split_size
@@ -386,34 +828,15 @@ class TestCollect:
                     fieldperp_global_yind,
                 )
 
-    def test_core_min_files_append_time_split_raises(self, tmp_path):
+    def test_core_min_files_append_time_split_raises(self, core_min, tmp_path):
         """
         Check output from a core-only case using the minimum number of processes
         """
+        data_path, expected, fieldperp_global_yind = core_min
+        symlink_dump_files(data_path, tmp_path)
+
         collect_kwargs = {"xguards": True, "yguards": "include_upper"}
         squash_kwargs = {"time_split_size": 2, "append": True}
-
-        grid_info = make_grid_info()
-
-        fieldperp_global_yind = 3
-
-        rng = np.random.default_rng(100)
-
-        # core
-        # core includes "ylower" and "yupper" even though there is no actual y-boundary
-        # because collect/squashoutput collect these points
-        dump_params = [
-            (0, ["xinner", "xouter", "ylower", "yupper"], fieldperp_global_yind),
-        ]
-        for i, boundaries, fieldperp_yind in dump_params:
-            create_dump_file(
-                tmpdir=tmp_path,
-                rng=rng,
-                grid_info=grid_info,
-                i=i,
-                boundaries=boundaries,
-                fieldperp_global_yind=fieldperp_yind,
-            )
 
         with pytest.raises(
             ValueError, match="'time_split_size' is not compatible with append=True"
@@ -424,51 +847,16 @@ class TestCollect:
 
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_core(self, tmp_path, squash_params, collect_kwargs):
+    def test_core(self, core_full, tmp_path, squash_params, collect_kwargs):
         """
         Check output from a core-only case using a large number of processes. 'Large'
         means there is at least one process in each region with no edges touching
         another region.
         """
+        data_path, expected, fieldperp_global_yind = core_full
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(nxpe=3, nype=3)
-
-        fieldperp_global_yind = 3
-        fieldperp_yproc_ind = 0
-
-        rng = np.random.default_rng(101)
-
-        # core
-        # core includes "ylower" and "yupper" even though there is no actual y-boundary
-        # because collect/squashoutput collect these points
-        dump_params = [
-            (0, ["xinner", "ylower"], fieldperp_global_yind),
-            (1, ["ylower"], fieldperp_global_yind),
-            (2, ["xouter", "ylower"], fieldperp_global_yind),
-            (3, ["xinner"], -1),
-            (4, [], -1),
-            (5, ["xouter"], -1),
-            (6, ["xinner", "yupper"], -1),
-            (7, ["yupper"], -1),
-            (8, ["xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -482,39 +870,14 @@ class TestCollect:
 
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_sol_min_files(self, tmp_path, squash_params, collect_kwargs):
+    def test_sol_min_files(self, sol_min, tmp_path, squash_params, collect_kwargs):
         """
         Check output from a SOL-only case using the minimum number of processes
         """
+        data_path, expected, fieldperp_global_yind = sol_min
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(ixseps1=0, ixseps2=0)
-
-        fieldperp_global_yind = 3
-        fieldperp_yproc_ind = 0
-
-        rng = np.random.default_rng(102)
-
-        # SOL
-        dump_params = [
-            (0, ["xinner", "xouter", "ylower", "yupper"], fieldperp_global_yind),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -528,49 +891,16 @@ class TestCollect:
 
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_sol(self, tmp_path, squash_params, collect_kwargs):
+    def test_sol(self, sol_full, tmp_path, squash_params, collect_kwargs):
         """
         Check output from a SOL-only case using a large number of processes. 'Large'
         means there is at least one process in each region with no edges touching
         another region.
         """
+        data_path, expected, fieldperp_global_yind = sol_full
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(nxpe=3, nype=3, ixseps1=0, ixseps2=0)
-
-        fieldperp_global_yind = 3
-        fieldperp_yproc_ind = 0
-
-        rng = np.random.default_rng(103)
-
-        # SOL
-        dump_params = [
-            (0, ["xinner", "ylower"], fieldperp_global_yind),
-            (1, ["ylower"], fieldperp_global_yind),
-            (2, ["xouter", "ylower"], fieldperp_global_yind),
-            (3, ["xinner"], -1),
-            (4, [], -1),
-            (5, ["xouter"], -1),
-            (6, ["xinner", "yupper"], -1),
-            (7, ["yupper"], -1),
-            (8, ["xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -584,43 +914,16 @@ class TestCollect:
 
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_singlenull_min_files(self, tmp_path, squash_params, collect_kwargs):
+    def test_singlenull_min_files(
+        self, single_null_min, tmp_path, squash_params, collect_kwargs
+    ):
         """
         Check output from a single-null case using the minimum number of processes
         """
+        data_path, expected, fieldperp_global_yind = single_null_min
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(nype=3, ixseps1=4, xpoints=1)
-
-        fieldperp_global_yind = 7
-        fieldperp_yproc_ind = 1
-
-        rng = np.random.default_rng(104)
-
-        dump_params = [
-            # inner divertor leg
-            (0, ["xinner", "xouter", "ylower"], -1),
-            # core
-            (1, ["xinner", "xouter"], fieldperp_global_yind),
-            # outer divertor leg
-            (2, ["xinner", "xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -635,45 +938,16 @@ class TestCollect:
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
     def test_singlenull_min_files_lower_boundary_fieldperp(
-        self, tmp_path, squash_params, collect_kwargs
+        self, single_null_lower_boundary, tmp_path, squash_params, collect_kwargs
     ):
         """
         Check output from a single-null case using the minimum number of processes. This
         test puts the FieldPerp in the lower boundary.
         """
+        data_path, expected, fieldperp_global_yind = single_null_lower_boundary
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(nype=3, ixseps1=4, xpoints=1)
-
-        fieldperp_global_yind = 1
-        fieldperp_yproc_ind = 0
-
-        rng = np.random.default_rng(104)
-
-        dump_params = [
-            # inner divertor leg
-            (0, ["xinner", "xouter", "ylower"], fieldperp_global_yind),
-            # core
-            (1, ["xinner", "xouter"], -1),
-            # outer divertor leg
-            (2, ["xinner", "xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -688,45 +962,16 @@ class TestCollect:
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
     def test_singlenull_min_files_upper_boundary_fieldperp(
-        self, tmp_path, squash_params, collect_kwargs
+        self, single_null_upper_boundary, tmp_path, squash_params, collect_kwargs
     ):
         """
         Check output from a single-null case using the minimum number of processes. This
         test puts the FieldPerp in the upper boundary.
         """
+        data_path, expected, fieldperp_global_yind = single_null_upper_boundary
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(nype=3, ixseps1=4, xpoints=1)
-
-        fieldperp_global_yind = 14
-        fieldperp_yproc_ind = 2
-
-        rng = np.random.default_rng(104)
-
-        dump_params = [
-            # inner divertor leg
-            (0, ["xinner", "xouter", "ylower"], -1),
-            # core
-            (1, ["xinner", "xouter"], -1),
-            # outer divertor leg
-            (2, ["xinner", "xouter", "yupper"], fieldperp_global_yind),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -740,48 +985,18 @@ class TestCollect:
 
     @pytest.mark.parametrize("squash_params", squash_params_list)
     def test_singlenull_min_files_fieldperp_on_two_yproc_different_index(
-        self, tmp_path, squash_params
+        self, single_null_inconsistent, tmp_path, squash_params
     ):
         """
         Check output from a single-null case using the minimum number of processes. This
         test has FieldPerps created with inconsistent y-indices to check this produces
         an error.
         """
+        data_path, expected, fieldperp_global_yind = single_null_inconsistent
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
         collect_kwargs = {"xguards": True, "yguards": "include_upper"}
-
-        grid_info = make_grid_info(nype=3, ixseps1=4, xpoints=1)
-
-        fieldperp_global_yind = 7
-        fieldperp_yproc_ind = 1
-
-        rng = np.random.default_rng(104)
-
-        dump_params = [
-            # inner divertor leg
-            (0, ["xinner", "xouter", "ylower"], 2),
-            # core
-            (1, ["xinner", "xouter"], 7),
-            # outer divertor leg
-            (2, ["xinner", "xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         with pytest.raises(ValueError, match="Found FieldPerp"):
             check_collected_data(
@@ -796,69 +1011,18 @@ class TestCollect:
 
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_singlenull(self, tmp_path, squash_params, collect_kwargs):
+    def test_singlenull(
+        self, single_null_full, tmp_path, squash_params, collect_kwargs
+    ):
         """
         Check output from a single-null case using a large number of processes. 'Large'
         means there is at least one process in each region with no edges touching
         another region.
         """
+        data_path, expected, fieldperp_global_yind = single_null_full
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(nxpe=3, nype=9, ixseps1=7, xpoints=1)
-
-        fieldperp_global_yind = 19
-        fieldperp_yproc_ind = 4
-
-        rng = np.random.default_rng(105)
-
-        dump_params = [
-            # inner divertor leg
-            (0, ["xinner", "ylower"], -1),
-            (1, ["ylower"], -1),
-            (2, ["xouter", "ylower"], -1),
-            (3, ["xinner"], -1),
-            (4, [], -1),
-            (5, ["xouter"], -1),
-            (6, ["xinner"], -1),
-            (7, [], -1),
-            (8, ["xouter"], -1),
-            # core
-            (9, ["xinner"], -1),
-            (10, [], -1),
-            (11, ["xouter"], -1),
-            (12, ["xinner"], fieldperp_global_yind),
-            (13, [], fieldperp_global_yind),
-            (14, ["xouter"], fieldperp_global_yind),
-            (15, ["xinner"], -1),
-            (16, [], -1),
-            (17, ["xouter"], -1),
-            # outer divertor leg
-            (18, ["xinner"], -1),
-            (19, [], -1),
-            (20, ["xouter"], -1),
-            (21, ["xinner"], -1),
-            (22, [], -1),
-            (23, ["xouter"], -1),
-            (24, ["xinner", "yupper"], -1),
-            (25, ["yupper"], -1),
-            (26, ["xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -872,75 +1036,18 @@ class TestCollect:
 
     @pytest.mark.parametrize(
         "squash_kwargs",
-        (
-            # {"parallel": False},
-            {"parallel": 1},
-            {"parallel": 2},
-            {"parallel": 8},
-            {"parallel": True},
-        ),
+        ({"parallel": 1}, {"parallel": 8}, {"parallel": True}),
     )
-    def test_singlenull_squashoutput_np(self, tmp_path, squash_kwargs):
+    def test_singlenull_squashoutput_np(
+        self, single_null_full, tmp_path, squash_kwargs
+    ):
         """
         Check output from a single-null case using a large number of processes. 'Large'
         means there is at least one process in each region with no edges touching
         another region.
         """
-        grid_info = make_grid_info(nxpe=3, nype=9, ixseps1=7, xpoints=1)
-
-        fieldperp_global_yind = 19
-        fieldperp_yproc_ind = 4
-
-        rng = np.random.default_rng(105)
-
-        dump_params = [
-            # inner divertor leg
-            (0, ["xinner", "ylower"], -1),
-            (1, ["ylower"], -1),
-            (2, ["xouter", "ylower"], -1),
-            (3, ["xinner"], -1),
-            (4, [], -1),
-            (5, ["xouter"], -1),
-            (6, ["xinner"], -1),
-            (7, [], -1),
-            (8, ["xouter"], -1),
-            # core
-            (9, ["xinner"], -1),
-            (10, [], -1),
-            (11, ["xouter"], -1),
-            (12, ["xinner"], fieldperp_global_yind),
-            (13, [], fieldperp_global_yind),
-            (14, ["xouter"], fieldperp_global_yind),
-            (15, ["xinner"], -1),
-            (16, [], -1),
-            (17, ["xouter"], -1),
-            # outer divertor leg
-            (18, ["xinner"], -1),
-            (19, [], -1),
-            (20, ["xouter"], -1),
-            (21, ["xinner"], -1),
-            (22, [], -1),
-            (23, ["xouter"], -1),
-            (24, ["xinner", "yupper"], -1),
-            (25, ["yupper"], -1),
-            (26, ["xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
+        data_path, expected, fieldperp_global_yind = single_null_full
+        symlink_dump_files(data_path, tmp_path)
 
         check_collected_data(
             expected,
@@ -1297,7 +1404,7 @@ class TestCollect:
         ],
     )
     def test_singlenull_tind_xind_yind_zind(
-        self, tmp_path, squash_params, tind, xind, yind, zind
+        self, single_null_full, tmp_path, squash_params, tind, xind, yind, zind
     ):
         """
         Check output from a single-null case using a large number of processes. 'Large'
@@ -1305,6 +1412,9 @@ class TestCollect:
         another region. This test checks the 'tind', 'xind', 'yind' and 'zind' arguments
         to `collect()` and `squashoutput()`.
         """
+        data_path, expected_original, fieldperp_global_yind = single_null_full
+        symlink_dump_files(data_path, tmp_path)
+
         tind, tslice = tind
         xind, xslice = xind
         yind, yslice = yind
@@ -1321,62 +1431,7 @@ class TestCollect:
             "zind": zind,
         }
 
-        grid_info = make_grid_info(nxpe=3, nype=9, ixseps1=7, xpoints=1)
-
-        fieldperp_global_yind = 19
-        fieldperp_yproc_ind = 4
-
-        rng = np.random.default_rng(106)
-
-        dump_params = [
-            # inner divertor leg
-            (0, ["xinner", "ylower"], -1),
-            (1, ["ylower"], -1),
-            (2, ["xouter", "ylower"], -1),
-            (3, ["xinner"], -1),
-            (4, [], -1),
-            (5, ["xouter"], -1),
-            (6, ["xinner"], -1),
-            (7, [], -1),
-            (8, ["xouter"], -1),
-            # core
-            (9, ["xinner"], -1),
-            (10, [], -1),
-            (11, ["xouter"], -1),
-            (12, ["xinner"], fieldperp_global_yind),
-            (13, [], fieldperp_global_yind),
-            (14, ["xouter"], fieldperp_global_yind),
-            (15, ["xinner"], -1),
-            (16, [], -1),
-            (17, ["xouter"], -1),
-            # outer divertor leg
-            (18, ["xinner"], -1),
-            (19, [], -1),
-            (20, ["xouter"], -1),
-            (21, ["xinner"], -1),
-            (22, [], -1),
-            (23, ["xouter"], -1),
-            (24, ["xinner", "yupper"], -1),
-            (25, ["yupper"], -1),
-            (26, ["xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
-
+        expected = copy.deepcopy(expected_original)
         # Can only apply here (before effect of 'xguards' and 'yguards' is applied in
         # check_collected_data) because we keep 'xguards=True' and
         # 'yguards="include_upper"' for this test, so neither has an effect.
@@ -1395,51 +1450,16 @@ class TestCollect:
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list_full)
     def test_connected_doublenull_min_files(
-        self, tmp_path, squash_params, collect_kwargs
+        self, connected_double_null_min, tmp_path, squash_params, collect_kwargs
     ):
         """
         Check output from a connected double-null case using the minimum number of
         processes
         """
+        data_path, expected, fieldperp_global_yind = connected_double_null_min
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(nype=6, ixseps1=4, ixseps2=4, xpoints=2)
-
-        fieldperp_global_yind = 7
-        fieldperp_yproc_ind = 1
-
-        rng = np.random.default_rng(107)
-
-        dump_params = [
-            # inner, lower divertor leg
-            (0, ["xinner", "xouter", "ylower"], -1),
-            # inner core
-            (1, ["xinner", "xouter"], fieldperp_global_yind),
-            # inner, upper divertor leg
-            (2, ["xinner", "xouter", "yupper"], -1),
-            # outer, upper divertor leg
-            (3, ["xinner", "xouter", "ylower"], -1),
-            # outer core
-            (4, ["xinner", "xouter"], -1),
-            # outer, lower divertor leg
-            (5, ["xinner", "xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -1453,99 +1473,18 @@ class TestCollect:
 
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
-    def test_connected_doublenull(self, tmp_path, squash_params, collect_kwargs):
+    def test_connected_doublenull(
+        self, connected_double_null_full, tmp_path, squash_params, collect_kwargs
+    ):
         """
         Check output from a connected double-null case using a large number of
         processes. 'Large' means there is at least one process in each region with no
         edges touching another region.
         """
+        data_path, expected, fieldperp_global_yind = connected_double_null_full
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(nxpe=3, nype=18, ixseps1=7, ixseps2=7, xpoints=2)
-
-        fieldperp_global_yind = 19
-        fieldperp_yproc_ind = 4
-
-        rng = np.random.default_rng(108)
-
-        dump_params = [
-            # inner, lower divertor leg
-            (0, ["xinner", "ylower"], -1),
-            (1, ["ylower"], -1),
-            (2, ["xouter", "ylower"], -1),
-            (3, ["xinner"], -1),
-            (4, [], -1),
-            (5, ["xouter"], -1),
-            (6, ["xinner"], -1),
-            (7, [], -1),
-            (8, ["xouter"], -1),
-            # inner core
-            (9, ["xinner"], -1),
-            (10, [], -1),
-            (11, ["xouter"], -1),
-            (12, ["xinner"], fieldperp_global_yind),
-            (13, [], fieldperp_global_yind),
-            (14, ["xouter"], fieldperp_global_yind),
-            (15, ["xinner"], -1),
-            (16, [], -1),
-            (17, ["xouter"], -1),
-            # inner, upper divertor leg
-            (18, ["xinner"], -1),
-            (19, [], -1),
-            (20, ["xouter"], -1),
-            (21, ["xinner"], -1),
-            (22, [], -1),
-            (23, ["xouter"], -1),
-            (24, ["xinner", "yupper"], -1),
-            (25, ["yupper"], -1),
-            (26, ["xouter", "yupper"], -1),
-            # outer, upper divertor leg
-            (27, ["xinner", "ylower"], -1),
-            (28, ["ylower"], -1),
-            (29, ["xouter", "ylower"], -1),
-            (30, ["xinner"], -1),
-            (31, [], -1),
-            (32, ["xouter"], -1),
-            (33, ["xinner"], -1),
-            (34, [], -1),
-            (35, ["xouter"], -1),
-            # outer core
-            (36, ["xinner"], -1),
-            (37, [], -1),
-            (38, ["xouter"], -1),
-            (39, ["xinner"], -1),
-            (40, [], -1),
-            (41, ["xouter"], -1),
-            (42, ["xinner"], -1),
-            (43, [], -1),
-            (44, ["xouter"], -1),
-            # outer, lower divertor leg
-            (45, ["xinner"], -1),
-            (46, [], -1),
-            (47, ["xouter"], -1),
-            (48, ["xinner"], -1),
-            (49, [], -1),
-            (50, ["xouter"], -1),
-            (51, ["xinner", "yupper"], -1),
-            (52, ["yupper"], -1),
-            (53, ["xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -1560,51 +1499,16 @@ class TestCollect:
     @pytest.mark.parametrize("squash_params", squash_params_list)
     @pytest.mark.parametrize("collect_kwargs", collect_kwargs_list)
     def test_disconnected_doublenull_min_files(
-        self, tmp_path, squash_params, collect_kwargs
+        self, disconnected_double_null_min, tmp_path, squash_params, collect_kwargs
     ):
         """
         Check output from a disconnected double-null case using the minimum number of
         processes
         """
+        data_path, expected, fieldperp_global_yind = disconnected_double_null_min
+        symlink_dump_files(data_path, tmp_path)
+
         squash, squash_kwargs = squash_params
-
-        grid_info = make_grid_info(nype=6, ixseps1=3, ixseps2=5, xpoints=2)
-
-        fieldperp_global_yind = 7
-        fieldperp_yproc_ind = 1
-
-        rng = np.random.default_rng(109)
-
-        dump_params = [
-            # inner, lower divertor leg
-            (0, ["xinner", "xouter", "ylower"], -1),
-            # inner core
-            (1, ["xinner", "xouter"], fieldperp_global_yind),
-            # inner, upper divertor leg
-            (2, ["xinner", "xouter", "yupper"], -1),
-            # outer, upper divertor leg
-            (3, ["xinner", "xouter", "ylower"], -1),
-            # outer core
-            (4, ["xinner", "xouter"], -1),
-            # outer, lower divertor leg
-            (5, ["xinner", "xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
 
         check_collected_data(
             expected,
@@ -1736,98 +1640,17 @@ class TestCollect:
             {"compress": True, "complevel": 9},
         ],
     )
-    def test_disconnected_doublenull_with_compression(self, tmp_path, squash_kwargs):
+    def test_disconnected_doublenull_with_compression(
+        self, disconnected_double_null_full, tmp_path, squash_kwargs
+    ):
         """
         Check output from a disconnected double-null case using a large number of
         processes. 'Large' means there is at least one process in each region with no
         edges touching another region. This test checks some compression options that
         can be used with `squashoutput()`, verifying that they do not modify data.
         """
-        grid_info = make_grid_info(nxpe=3, nype=18, ixseps1=6, ixseps2=11, xpoints=2)
-
-        fieldperp_global_yind = 19
-        fieldperp_yproc_ind = 4
-
-        rng = np.random.default_rng(111)
-
-        dump_params = [
-            # inner, lower divertor leg
-            (0, ["xinner", "ylower"], -1),
-            (1, ["ylower"], -1),
-            (2, ["xouter", "ylower"], -1),
-            (3, ["xinner"], -1),
-            (4, [], -1),
-            (5, ["xouter"], -1),
-            (6, ["xinner"], -1),
-            (7, [], -1),
-            (8, ["xouter"], -1),
-            # inner core
-            (9, ["xinner"], -1),
-            (10, [], -1),
-            (11, ["xouter"], -1),
-            (12, ["xinner"], fieldperp_global_yind),
-            (13, [], fieldperp_global_yind),
-            (14, ["xouter"], fieldperp_global_yind),
-            (15, ["xinner"], -1),
-            (16, [], -1),
-            (17, ["xouter"], -1),
-            # inner, upper divertor leg
-            (18, ["xinner"], -1),
-            (19, [], -1),
-            (20, ["xouter"], -1),
-            (21, ["xinner"], -1),
-            (22, [], -1),
-            (23, ["xouter"], -1),
-            (24, ["xinner", "yupper"], -1),
-            (25, ["yupper"], -1),
-            (26, ["xouter", "yupper"], -1),
-            # outer, upper divertor leg
-            (27, ["xinner", "ylower"], -1),
-            (28, ["ylower"], -1),
-            (29, ["xouter", "ylower"], -1),
-            (30, ["xinner"], -1),
-            (31, [], -1),
-            (32, ["xouter"], -1),
-            (33, ["xinner"], -1),
-            (34, [], -1),
-            (35, ["xouter"], -1),
-            # outer core
-            (36, ["xinner"], -1),
-            (37, [], -1),
-            (38, ["xouter"], -1),
-            (39, ["xinner"], -1),
-            (40, [], -1),
-            (41, ["xouter"], -1),
-            (42, ["xinner"], -1),
-            (43, [], -1),
-            (44, ["xouter"], -1),
-            # outer, lower divertor leg
-            (45, ["xinner"], -1),
-            (46, [], -1),
-            (47, ["xouter"], -1),
-            (48, ["xinner"], -1),
-            (49, [], -1),
-            (50, ["xouter"], -1),
-            (51, ["xinner", "yupper"], -1),
-            (52, ["yupper"], -1),
-            (53, ["xouter", "yupper"], -1),
-        ]
-        dumps = []
-        for i, boundaries, fieldperp_yind in dump_params:
-            dumps.append(
-                create_dump_file(
-                    tmpdir=tmp_path,
-                    rng=rng,
-                    grid_info=grid_info,
-                    i=i,
-                    boundaries=boundaries,
-                    fieldperp_global_yind=fieldperp_yind,
-                )
-            )
-
-        expected = concatenate_data(
-            dumps, nxpe=grid_info["NXPE"], fieldperp_yproc_ind=fieldperp_yproc_ind
-        )
+        data_path, expected, fieldperp_global_yind = disconnected_double_null_full
+        symlink_dump_files(data_path, tmp_path)
 
         collect_kwargs = {"xguards": True, "yguards": "include_upper"}
 
