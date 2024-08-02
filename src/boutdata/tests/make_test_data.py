@@ -3,13 +3,13 @@ from copy import copy
 import numpy as np
 from netCDF4 import Dataset
 
-field3d_t_list = ["field3d_t_1", "field3d_t_2"]
-field3d_list = ["field3d_1", "field3d_2"]
-field2d_t_list = ["field2d_t_1", "field2d_t_2"]
-field2d_list = ["field2d_1", "field2d_2"]
-fieldperp_t_list = ["fieldperp_t_1", "fieldperp_t_2"]
-fieldperp_list = ["fieldperp_1", "fieldperp_2"]
-scalar_t_list = ["t_array", "scalar_t_1", "scalar_t_2"]
+field3d_t_list = ["field3d_t_1"]
+field3d_list = ["field3d_1"]
+field2d_t_list = ["field2d_t_1"]
+field2d_list = ["field2d_1"]
+fieldperp_t_list = ["fieldperp_t_1"]
+fieldperp_list = ["fieldperp_1"]
+scalar_t_list = ["t_array", "scalar_t_1"]
 
 # Note "yindex_global" attribute not included here for FieldPerps, because it is handled
 # specially
@@ -19,17 +19,7 @@ expected_attributes = {
         "direction_y": "Standard",
         "direction_z": "Standard",
     },
-    "field3d_t_2": {
-        "cell_location": "CELL_CENTRE",
-        "direction_y": "Standard",
-        "direction_z": "Standard",
-    },
     "field3d_1": {
-        "cell_location": "CELL_CENTRE",
-        "direction_y": "Standard",
-        "direction_z": "Standard",
-    },
-    "field3d_2": {
         "cell_location": "CELL_CENTRE",
         "direction_y": "Standard",
         "direction_z": "Standard",
@@ -39,17 +29,7 @@ expected_attributes = {
         "direction_y": "Standard",
         "direction_z": "Average",
     },
-    "field2d_t_2": {
-        "cell_location": "CELL_CENTRE",
-        "direction_y": "Standard",
-        "direction_z": "Average",
-    },
     "field2d_1": {
-        "cell_location": "CELL_CENTRE",
-        "direction_y": "Standard",
-        "direction_z": "Average",
-    },
-    "field2d_2": {
         "cell_location": "CELL_CENTRE",
         "direction_y": "Standard",
         "direction_z": "Average",
@@ -59,17 +39,7 @@ expected_attributes = {
         "direction_y": "Standard",
         "direction_z": "Standard",
     },
-    "fieldperp_t_2": {
-        "cell_location": "CELL_CENTRE",
-        "direction_y": "Standard",
-        "direction_z": "Standard",
-    },
     "fieldperp_1": {
-        "cell_location": "CELL_CENTRE",
-        "direction_y": "Standard",
-        "direction_z": "Standard",
-    },
-    "fieldperp_2": {
         "cell_location": "CELL_CENTRE",
         "direction_y": "Standard",
         "direction_z": "Standard",
@@ -228,7 +198,6 @@ def create_dump_file(*, i, tmpdir, rng, grid_info, boundaries, fieldperp_global_
             result[name] = data[:, xslice, yslice, zslice]
 
         create3D_t("field3d_t_1")
-        create3D_t("field3d_t_2")
 
         def create3D(name):
             var = outputfile.createVariable(name, float, ("x", "y", "z"))
@@ -241,7 +210,6 @@ def create_dump_file(*, i, tmpdir, rng, grid_info, boundaries, fieldperp_global_
             result[name] = data[xslice, yslice, zslice]
 
         create3D("field3d_1")
-        create3D("field3d_2")
 
         # Field2D
         def create2D_t(name):
@@ -255,7 +223,6 @@ def create_dump_file(*, i, tmpdir, rng, grid_info, boundaries, fieldperp_global_
             result[name] = data[:, xslice, yslice]
 
         create2D_t("field2d_t_1")
-        create2D_t("field2d_t_2")
 
         def create2D(name):
             var = outputfile.createVariable(name, float, ("x", "y"))
@@ -268,7 +235,6 @@ def create_dump_file(*, i, tmpdir, rng, grid_info, boundaries, fieldperp_global_
             result[name] = data[xslice, yslice]
 
         create2D("field2d_1")
-        create2D("field2d_2")
 
         # FieldPerp
         def createPerp_t(name):
@@ -283,7 +249,6 @@ def create_dump_file(*, i, tmpdir, rng, grid_info, boundaries, fieldperp_global_
             result[name] = data[:, xslice, zslice]
 
         createPerp_t("fieldperp_t_1")
-        createPerp_t("fieldperp_t_2")
 
         def createPerp(name):
             var = outputfile.createVariable(name, float, ("x", "z"))
@@ -297,7 +262,6 @@ def create_dump_file(*, i, tmpdir, rng, grid_info, boundaries, fieldperp_global_
             result[name] = data[xslice, zslice]
 
         createPerp("fieldperp_1")
-        createPerp("fieldperp_2")
 
         # Time-dependent array
         def createScalar_t(name):
@@ -310,7 +274,6 @@ def create_dump_file(*, i, tmpdir, rng, grid_info, boundaries, fieldperp_global_
 
         createScalar_t("t_array")
         createScalar_t("scalar_t_1")
-        createScalar_t("scalar_t_2")
 
         # Scalar
         def createScalar(name, value):
@@ -388,7 +351,6 @@ def create_restart_file(*, i, tmpdir, rng, grid_info, fieldperp_global_yind):
             result[name] = data[xslice, yslice, zslice]
 
         create3D("field3d_1")
-        create3D("field3d_2")
 
         # Field2D
         def create2D(name):
@@ -402,7 +364,6 @@ def create_restart_file(*, i, tmpdir, rng, grid_info, fieldperp_global_yind):
             result[name] = data[xslice, yslice]
 
         create2D("field2d_1")
-        create2D("field2d_2")
 
         # FieldPerp
         def createPerp(name):
@@ -417,7 +378,6 @@ def create_restart_file(*, i, tmpdir, rng, grid_info, fieldperp_global_yind):
             result[name] = data[xslice, zslice]
 
         createPerp("fieldperp_1")
-        createPerp("fieldperp_2")
 
         # Scalar
         def createScalar(name, value):
@@ -466,7 +426,7 @@ def concatenate_data(data_list, *, nxpe, fieldperp_yproc_ind, has_t_dim=True):
         raise ValueError("nxpe={} does not divide len(data_list)={}".format(nxpe, npes))
 
     if has_t_dim:
-        for var in ("field3d_t_1", "field3d_t_2", "field2d_t_1", "field2d_t_2"):
+        for var in ("field3d_t_1", "field2d_t_1"):
             # Join in x-direction
             parts = [
                 np.concatenate(
@@ -477,7 +437,7 @@ def concatenate_data(data_list, *, nxpe, fieldperp_yproc_ind, has_t_dim=True):
             # Join in y-direction
             result[var] = np.concatenate(parts, axis=2)
 
-    for var in ("field3d_1", "field3d_2", "field2d_1", "field2d_2"):
+    for var in ("field3d_1", "field2d_1"):
         # Join in x-direction
         parts = [
             np.concatenate(
@@ -489,7 +449,7 @@ def concatenate_data(data_list, *, nxpe, fieldperp_yproc_ind, has_t_dim=True):
         result[var] = np.concatenate(parts, axis=1)
 
     if has_t_dim:
-        for var in ("fieldperp_t_1", "fieldperp_t_2"):
+        for var in ("fieldperp_t_1",):
             # Join in x-direction
             result[var] = np.concatenate(
                 [
@@ -501,7 +461,7 @@ def concatenate_data(data_list, *, nxpe, fieldperp_yproc_ind, has_t_dim=True):
                 axis=1,
             )
 
-    for var in ("fieldperp_1", "fieldperp_2"):
+    for var in ("fieldperp_1",):
         # Join in x-direction
         result[var] = np.concatenate(
             [
