@@ -5,9 +5,10 @@ The official document describing g-eqdsk files:
 https://fusion.gat.com/conferences/snowmass/working/mfe/physics/p3/equilibria/g_eqdsk_s.pdf
 """
 
+import warnings
+
 import freeqdsk
 import numpy
-import warnings
 
 from .bunch import Bunch
 
