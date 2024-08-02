@@ -7,6 +7,7 @@ https://fusion.gat.com/conferences/snowmass/working/mfe/physics/p3/equilibria/g_
 
 import freeqdsk
 import numpy
+import warnings
 
 from .bunch import Bunch
 
@@ -16,6 +17,11 @@ class Geqdsk:
         """
         Constructor
         """
+        warnings.warn(
+            "`boututils.geqdsk.Geqdsk` is deprecated, use `freeqdsk.geqdsk.read` directly",
+            DeprecationWarning,
+        )
+
         self.data = {}
 
         self.openFile(filename)
@@ -128,6 +134,10 @@ class Geqdsk:
 
 
 def read_geqdsk(filename: str):
+    warnings.warn(
+        "`boututils.geqdks.read_geqdsk` is deprecated, use `freeqdsk.geqdsk.read` directly",
+        DeprecationWarning,
+    )
 
     data = Geqdsk(filename)
 
