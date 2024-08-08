@@ -7,6 +7,7 @@ Supported libraries:
 
 - ``h5py`` (for HDF5 files)
 - ``netCDF4`` (preferred NetCDF library)
+- ``adios2`` (for ADIOS2 BP files)
 
 NOTE
 ----
@@ -47,7 +48,15 @@ except ImportError:
     has_h5py = False
 
 
-class DataFile:
+try:
+    import adios2
+
+    has_adios2 = True
+except ImportError:
+    has_adios2 = False
+
+
+class DataFile(object):
     """File I/O class
 
     A wrapper around various NetCDF libraries and h5py, used by BOUT++
@@ -97,6 +106,10 @@ class DataFile:
                 self.impl = DataFile_HDF5(
                     filename=filename, write=write, create=create, format=format
                 )
+            elif filename.split(".")[-1] in ("bp", "bp5"):
+                self.impl = DataFile_ADIOS2(
+                    filename=filename, write=write, create=create, format=format
+                )
             else:
                 self.impl = DataFile_netCDF(
                     filename=filename,
@@ -107,6 +120,10 @@ class DataFile:
                 )
         elif format == "HDF5":
             self.impl = DataFile_HDF5(
+                filename=filename, write=write, create=create, format=format
+            )
+        elif format.lower().startswith() == "adios":
+            self.impl = DataFile_ADIOS2(
                 filename=filename, write=write, create=create, format=format
             )
         else:
@@ -991,6 +1008,279 @@ class DataFile_HDF5(DataFile):
                 raise ValueError(
                     f"Error: bout_type not found in attributes of {varname}"
                 )
+
+            # Save the attributes for this variable to the cache
+            self._attributes_cache[varname] = attributes
+
+            return attributes
+
+
+class DataFile_ADIOS2(DataFile):
+    handle = None
+
+    def open(self, filename, write=False, create=False, format=None):
+        if (not write) and (not create):
+            self.handle = adios2.FileReader(filename)
+        else:
+            message = "DataFile: Writing to ADIOS2 not supported"
+            raise ImportError(message)
+#        elif create:
+#            self.handle = adios2.Stream(filename,"w")
+#        else:
+#            self.handle = adios2.Stream(filename, "a")
+        # Record if writing
+        self.writeable = write or create
+
+    def close(self):
+        if self.handle is not None:
+            self.handle.close()
+        self.handle = None
+
+    def __init__(self, filename=None, write=False, create=False, format=None):
+        if not has_adios2:
+            message = "DataFile: No supported ADIOS2 python-modules available"
+            raise ImportError(message)
+        if filename is not None:
+            self.open(filename, write=write, create=create, format=format)
+        self._attributes_cache = {}
+
+    def __del__(self):
+        self.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
+    def read(self, name, ranges=None, asBoutArray=True):
+        if self.handle is None:
+            return None
+
+        var = self.handle.inquire_variable(name)
+        n = name
+        if var is None:
+            # Not found. Try to find using case-insensitive search
+            nlow = name.lower()
+            for n in self.handle.available_variables():
+                if n.lower() == nlow:
+                    print(f"WARNING: Reading '{n}' instead of '{name}'")
+                    var = self.handle.inquire_variable(n)
+            if var is None:
+                return None
+
+        attributes = self.attributes(n) if asBoutArray else {}
+
+        time_dependent = var.steps() > 1
+        if time_dependent:
+            tdim = 1
+        else:
+            tdim = 0
+
+        ndims = len(var.shape()) + tdim
+
+        # print(f"\n    Read {name} shape = {var.shape()} ndims = {ndims} tdim = {tdim} Ranges = {ranges}\n")
+
+        if ndims == 0:  # single value, no time
+            data = self.handle.read(var)
+            if asBoutArray:
+                data = BoutArray(data, attributes=attributes)
+            return data
+        else:
+            if ranges:
+                # adios python does not support slicing,
+                # need to transform slices to start/count arrays
+                if len(ranges) == 2 * ndims:
+                    start = ranges[::2]
+                    count = ranges[1::2] - start + 1
+                elif len(ranges) != ndims:
+                    raise ValueError(
+                        "Incorrect number of elements in ranges argument "
+                        f"(got {ranges}, expected {ndims} or {2 * ndims})"
+                    )
+                else:
+                    count = [int(r.stop - r.start) for r in ranges]
+                    start = [int(r.start) for r in ranges]
+                    steps = [int(r.step) for r in ranges]
+                    if any(s != 1 for s in steps):
+                        raise ValueError(
+                            "ADIOS2 does not support 'step != 1' in ranges argument "
+                            f"(got {ranges} when reading variable {name})"
+                        )
+
+                if time_dependent:
+                    var.set_step_selection([start[0], count[0]])
+                    var.set_selection([start[1:], count[1:]])
+                else:
+                    var.set_selection([start, count])
+
+                data = self.handle.read(var)
+                if time_dependent:
+                    data = data.reshape(count)
+                # print(f"Read data of size {data.shape}")
+                if asBoutArray:
+                    data = BoutArray(data, attributes=attributes)
+                return data
+            else:
+                # boutdata assumes reading all steps when no ranges are given
+                var.set_step_selection([0, var.steps()])
+                data = self.handle.read(var)
+                if asBoutArray:
+                    data = BoutArray(data, attributes=attributes)
+                return data
+
+    def __getitem__(self, name):
+        var = self.read(name)
+        if var is None:
+            raise KeyError(f"No variable found: {name}")
+        return var
+
+    def __setitem__(self, key, value):
+        self.write(key, value)
+
+    def list(self):
+        if self.handle is None:
+            return []
+        vars = self.handle.available_variables()
+        names = vars.keys()
+        return names
+
+    def keys(self):
+        return self.list()
+
+    def dimensions(self, varname):
+        bout_type = self.bout_type(varname)
+        dims = BoutArray.dims_from_type(bout_type)
+        if dims is None:
+            raise ValueError(
+                "Variable bout_type not recognized (got {})".format(bout_type)
+            )
+        return dims
+
+    def _bout_type_from_array(self, data):
+        """Get the bout_type from the array 'data'
+
+        If 'data' is a BoutArray, it knows its bout_type, otherwise we
+        have to guess.
+
+        Parameters
+        ----------
+        data : :py:obj:`~boututils.boutarray.BoutArray` or ndarray
+            An array with between 0 and 4 dimensions
+
+        Returns
+        -------
+        str
+            Either the actual bout_type or our best guess
+
+        See Also
+        --------
+        - `DataFile.bout_type`
+
+        TODO
+        ----
+        - Make standalone function
+
+        """
+        try:
+            # If data is a BoutArray, it should have a type attribute that we can use
+            return data.attributes["bout_type"]
+        except AttributeError:
+            # Otherwise data is a numpy.ndarray and we have to guess the bout_type
+            pass
+
+        try:
+            ndim = len(data.shape)
+        except AttributeError:
+            ndim = 0
+        if ndim == 4:
+            return "Field3D_t"
+        elif ndim == 3:
+            # not ideal, 3d field might be time-evolving 2d field,
+            # 'Field2D_t', but can't think of a good way to distinguish
+            alwayswarn(
+                "Warning: assuming bout_type of 3d array is Field3D. If it "
+                "should be a time-evolving Field2D, this may cause errors in "
+                "dimension sizes."
+            )
+            return "Field3D"
+        elif ndim == 2:
+            return "Field2D"
+        elif ndim == 1:
+            return "scalar_t"
+        elif ndim == 0:
+            return "scalar"
+        else:
+            raise ValueError(f"Unrecognized variable bout_type, ndims={ndim}")
+
+    def ndims(self, varname):
+        if self.handle is None:
+            return None
+
+        var = self.handle.inquire_variable(varname)
+        if var is None:
+            raise ValueError("Variable not found")
+
+        return len(var.shape)
+
+    def sync(self):
+        return None
+
+    def size(self, varname):
+        if self.handle is None:
+            return None
+        var = self.handle.inquire_variable(varname)
+        if var is None:
+            return None
+        return var.shape()
+
+    def _bout_type_from_dimensions(self, dims, steps):
+        t = ()
+        if steps > 1:
+            t = t + ('t',)
+        for d in dims:
+            t = t + (d,)
+        bt = BoutArray.type_from_dims(t)
+        return bt
+
+    def write(self, name, data, info=False):
+        raise Exception("ADIOS2 File not writeable.")
+
+    def read_file_attribute(self, name):
+        attr = self.handle.inquire_attribute(name)
+        if attr is None:
+            raise AttributeError(f"DataFile (ADIOS2) has no file attribute {name}")
+        return self.handle.read_attribute(name)
+
+    def write_file_attribute(self, name, value):
+        return None
+        # self.handle.attrs[name] = value
+
+    def list_file_attributes(self):
+        attrs = self.handle.available_attributes()
+        return attrs.keys()
+
+    def attributes(self, varname):
+        # adios has attribute names and values in memory after open
+        # so we don't really need caching here but want to avoid
+        # creating the dictionary every time
+        try:
+            return self._attributes_cache[varname]
+        except KeyError:
+            # Need to add attributes for this variable to the cache
+            attributes = {}
+            varattrs = self.handle.available_attributes(varname)
+            for attrname in varattrs:
+                attribute = self.handle.read_attribute(attrname, varname)
+                if type(attribute) in [bytes, np.bytes_]:
+                    attribute = str(attribute, encoding="utf-8")
+                attributes[attrname] = attribute
+
+            if "bout_type" not in attributes:
+                if "__xarray_dimensions__" in attributes:
+                    var = self.handle.inquire_variable(varname)
+                    attributes["bout_type"] = self._bout_type_from_dimensions(
+                        attributes["__xarray_dimensions__"], var.steps())
 
             # Save the attributes for this variable to the cache
             self._attributes_cache[varname] = attributes
