@@ -20,7 +20,7 @@ header_warning = f"""\
 
 def header_needs_moving(header: Path) -> bool:
     """Check if `header` has not yet been moved"""
-    with open(header, "r") as f:
+    with open(header) as f:
         return header_shim_sentinel not in f.read()
 
 
@@ -149,7 +149,7 @@ def run(args):
     header_regex = make_header_regex(deprecated_headers)
 
     for filename in args.files:
-        with open(filename, "r") as f:
+        with open(filename) as f:
             contents = f.read()
         original = copy.deepcopy(contents)
 

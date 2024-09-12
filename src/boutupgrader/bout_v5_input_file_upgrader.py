@@ -299,7 +299,7 @@ def run(args):
     warnings.simplefilter("ignore", AlwaysWarning)
 
     for filename in args.files:
-        with open(filename, "r") as f:
+        with open(filename) as f:
             original_source = f.read()
 
         try:

@@ -192,7 +192,7 @@ def run(args):
         )
 
     for filename in args.files:
-        with open(filename, "r") as f:
+        with open(filename) as f:
             contents = f.read()
         original = copy.deepcopy(contents)
 
