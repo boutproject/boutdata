@@ -1,4 +1,5 @@
 import argparse
+from importlib.metadata import PackageNotFoundError, version
 
 from .bout_v5_factory_upgrader import add_parser as add_factory_parser
 from .bout_v5_format_upgrader import add_parser as add_format_parser
@@ -7,6 +8,18 @@ from .bout_v5_input_file_upgrader import add_parser as add_input_parser
 from .bout_v5_macro_upgrader import add_parser as add_macro_parser
 from .bout_v5_physics_model_upgrader import add_parser as add_model_parser
 from .bout_v5_xzinterpolation_upgrader import add_parser as add_xzinterp_parser
+
+try:
+    # This gives the version if the boututils package was installed
+    __version__ = version("boutdata")
+except PackageNotFoundError:
+    # This branch handles the case when boututils is used from the git repo
+    try:
+        from setuptools_scm import get_version
+
+        __version__ = get_version(root="..", relative_to=__file__)
+    except (ModuleNotFoundError, LookupError):
+        __version__ = "dev"
 
 
 def main():
@@ -29,6 +42,9 @@ def main():
 
     parser = argparse.ArgumentParser(
         description="Upgrade BOUT++ source and input files to newer versions"
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     subcommand = parser.add_subparsers(title="subcommands", required=True)
     v5_subcommand = subcommand.add_parser(
