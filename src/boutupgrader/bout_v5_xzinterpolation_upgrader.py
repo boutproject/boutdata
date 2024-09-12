@@ -46,15 +46,13 @@ def fix_header_includes(old_header, new_header, source):
 
     """
     return re.sub(
-        r"""
+        rf"""
         (\s*\#\s*include\s*)     # Preprocessor include
         (<|")
-        ({header})              # Header name
+        ({old_header})              # Header name
         (>|")
-        """.format(
-            header=old_header
-        ),
-        r"\1\2{header}\4".format(header=new_header),
+        """,
+        rf"\1\2{new_header}\4",
         source,
         flags=re.VERBOSE,
     )
@@ -63,12 +61,10 @@ def fix_header_includes(old_header, new_header, source):
 def fix_interpolations(old_interpolation, new_interpolation, source):
 
     return re.sub(
-        r"""
-        \b{}\b
-        """.format(
-            old_interpolation
-        ),
-        r"{}".format(new_interpolation),
+        rf"""
+        \b{old_interpolation}\b
+        """,
+        rf"{new_interpolation}",
         source,
         flags=re.VERBOSE,
     )
@@ -117,12 +113,10 @@ def clang_fix_interpolation(old_interpolation, new_interpolation, node, source):
 def fix_factories(old_factory, new_factory, source):
 
     return re.sub(
-        r"""
-        \b{}\b
-        """.format(
-            old_factory
-        ),
-        r"{}".format(new_factory),
+        rf"""
+        \b{old_factory}\b
+        """,
+        new_factory,
         source,
         flags=re.VERBOSE,
     )

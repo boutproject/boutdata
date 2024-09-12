@@ -22,8 +22,8 @@ format_replacements = {
 def fix_format_replacement(format_replacement, source):
     """Replace printf format with fmt format"""
     return re.sub(
-        r"%([0-9]*\.?[0-9]*){}".format(format_replacement[0]),
-        r"{{:\1{}}}".format(format_replacement[1]),
+        rf"%([0-9]*\.?[0-9]*){format_replacement[0]}",
+        rf"{{:\1{format_replacement[1]}}}",
         source,
     )
 
@@ -33,10 +33,10 @@ def fix_trivial_format(source):
 
     def trivial_replace(match):
         if match.group(2):
-            return "{}{}{}".format(match.group(1), match.group(2), match.group(4))
+            return f"{match.group(1)}{match.group(2)}{match.group(4)}"
         if match.group(3):
-            return "{}{}{}".format(match.group(1), match.group(3), match.group(4))
-        raise ValueError("Found an unexpected match: {}".format(match))
+            return f"{match.group(1)}{match.group(3)}{match.group(4)}"
+        raise ValueError(f"Found an unexpected match: {match}")
 
     return re.sub(
         r"""

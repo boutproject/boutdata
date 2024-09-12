@@ -208,7 +208,7 @@ def fix_bout_constrain(source, error_on_warning):
         bad_line = source[: match.end()].count("\n")
         line_range = range(max(0, bad_line - 1), min(len(source_lines), bad_line + 2))
         lines_context.append(
-            "\n  ".join(["{}:{}".format(i, source_lines[i]) for i in line_range])
+            "\n  ".join([f"{i}:{source_lines[i]}" for i in line_range])
         )
 
     message = textwrap.dedent(

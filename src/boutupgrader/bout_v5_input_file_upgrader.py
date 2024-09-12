@@ -223,14 +223,14 @@ def possibly_apply_patch(patch, options_file, quiet=False, force=False):
     """
     if not quiet:
         print("\n******************************************")
-        print("Changes to {}\n".format(options_file.filename))
+        print(f"Changes to {options_file.filename}\n")
         print(patch)
         print("\n******************************************")
 
     if force:
         make_change = True
     else:
-        make_change = yes_or_no("Make changes to {}?".format(options_file.filename))
+        make_change = yes_or_no(f"Make changes to {options_file.filename}?")
     if make_change:
         options_file.write(overwrite=True)
     return make_change

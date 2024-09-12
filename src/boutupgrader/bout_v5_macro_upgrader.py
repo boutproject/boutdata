@@ -185,13 +185,13 @@ def fix_include_version_header(old, headers, source):
     # If header is already included, we can skip this fix
     for header in headers:
         if (
-            re.search(r'^#\s*include.*(<|"){}(>|")'.format(header), source, flags=re.M)
+            re.search(rf'^#\s*include.*(<|"){header}(>|")', source, flags=re.M)
             is not None
         ):
             return source
 
     # If the old macro isn't in the file, we can skip this fix
-    if re.search(r"\b{}\b".format(old), source) is None:
+    if re.search(rf"\b{old}\b", source) is None:
         return source
 
     # Now we want to find a suitable place to stick the new include
@@ -209,7 +209,7 @@ def fix_include_version_header(old, headers, source):
     else:
         # No suitable includes, so just stick at the top of the file
         last_include = 0
-    source_lines.insert(last_include, '#include "{}"'.format(headers[0]))
+    source_lines.insert(last_include, f'#include "{headers[0]}"')
 
     return "\n".join(source_lines)
 
@@ -277,13 +277,13 @@ def fix_ifdefs(old, source):
 
 def fix_always_defined_macros(old, new, source):
     """Fix '#ifdef's that should become plain '#if'"""
-    new_source = re.sub(r"#ifdef\s+{}\b".format(old), r"#if {}".format(new), source)
-    return re.sub(r"#ifndef\s+{}\b".format(old), r"#if !{}".format(new), new_source)
+    new_source = re.sub(rf"#ifdef\s+{old}\b", rf"#if {new}", source)
+    return re.sub(rf"#ifndef\s+{old}\b", rf"#if !{new}", new_source)
 
 
 def fix_replacement(old, new, source):
     """Straight replacements"""
-    return re.sub(r'([^"_])\b{}\b([^"_])'.format(old), r"\1{}\2".format(new), source)
+    return re.sub(rf'([^"_])\b{old}\b([^"_])', rf"\1{new}\2", source)
 
 
 def apply_fixes(replacements, source):
@@ -293,8 +293,7 @@ def apply_fixes(replacements, source):
     for replacement in replacements:
         if replacement["new"] is None:
             print(
-                "'%s' has been removed, please delete from your code"
-                % replacement["old"]
+                f"{replacement['old']} has been removed, please delete from your code"
             )
             continue
 

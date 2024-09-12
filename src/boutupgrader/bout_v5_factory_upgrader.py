@@ -161,7 +161,7 @@ def fix_deletions(variables, source):
 
     for variable in variables:
         source = re.sub(
-            r"(.*;?)\s*(delete\s*{variable})\s*;".format(variable=variable),
+            rf"(.*;?)\s*(delete\s*{variable})\s*;",
             r"\1",
             source,
         )
