@@ -8,7 +8,7 @@ import itertools
 import textwrap
 import warnings
 
-from ..boutwarnings import AlwaysWarning
+from boututils.boutwarnings import AlwaysWarning
 
 
 def case_sensitive_init(self, name="root", parent=None):
