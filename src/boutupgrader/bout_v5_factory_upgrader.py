@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from .common import apply_or_display_patch
 
 import copy

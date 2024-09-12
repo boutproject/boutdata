@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from .common import create_patch, yes_or_no
 
 import argparse
