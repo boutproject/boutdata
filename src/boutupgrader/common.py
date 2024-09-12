@@ -1,36 +1,4 @@
-import argparse
 import difflib
-
-
-def default_args(
-    parser: argparse.ArgumentParser, pos_files: bool = True
-) -> argparse.ArgumentParser:
-    """Add some default arguments to the parser
-
-    Parameters
-    ----------
-    parser :
-    pos_files :
-        If ``True``, add positional argument for input files
-
-    """
-
-    if pos_files:
-        parser.add_argument("files", action="store", nargs="+", help="Input files")
-
-    parser.add_argument(
-        "--quiet", "-q", action="store_true", help="Don't print patches"
-    )
-
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--force", "-f", action="store_true", help="Make changes without asking"
-    )
-    group.add_argument(
-        "--patch-only", "-p", action="store_true", help="Print the patches and exit"
-    )
-
-    return parser
 
 
 def yes_or_no(question: str) -> bool:
