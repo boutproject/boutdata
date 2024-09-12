@@ -31,14 +31,17 @@ def main():
         description="Upgrade BOUT++ source and input files to newer versions"
     )
     subcommand = parser.add_subparsers(title="subcommands", required=True)
+    v5_subcommand = subcommand.add_parser(
+        "v5", help="BOUT++ v5 upgrades"
+    ).add_subparsers(title="v5 subcommands", required=True)
 
-    add_factory_parser(subcommand, common_args, files_args)
-    add_format_parser(subcommand, common_args, files_args)
-    add_header_parser(subcommand, common_args)
-    add_input_parser(subcommand, common_args, files_args)
-    add_macro_parser(subcommand, common_args, files_args)
-    add_model_parser(subcommand, common_args, files_args)
-    add_xzinterp_parser(subcommand, common_args, files_args)
+    add_factory_parser(v5_subcommand, common_args, files_args)
+    add_format_parser(v5_subcommand, common_args, files_args)
+    add_header_parser(v5_subcommand, common_args)
+    add_input_parser(v5_subcommand, common_args, files_args)
+    add_macro_parser(v5_subcommand, common_args, files_args)
+    add_model_parser(v5_subcommand, common_args, files_args)
+    add_xzinterp_parser(v5_subcommand, common_args, files_args)
 
     args = parser.parse_args()
     args.func(args)
