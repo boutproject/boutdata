@@ -1,6 +1,7 @@
 import argparse
 from importlib.metadata import PackageNotFoundError, version
 
+from .bout_3to4 import add_parser as add_3to4_parser
 from .bout_v5_factory_upgrader import add_parser as add_factory_parser
 from .bout_v5_format_upgrader import add_parser as add_format_parser
 from .bout_v5_header_upgrader import add_parser as add_header_parser
@@ -8,7 +9,6 @@ from .bout_v5_input_file_upgrader import add_parser as add_input_parser
 from .bout_v5_macro_upgrader import add_parser as add_macro_parser
 from .bout_v5_physics_model_upgrader import add_parser as add_model_parser
 from .bout_v5_xzinterpolation_upgrader import add_parser as add_xzinterp_parser
-from .bout_3to4 import add_parser as add_3to4_parser
 
 try:
     # This gives the version if the boututils package was installed
