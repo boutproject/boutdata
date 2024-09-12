@@ -1,13 +1,12 @@
 """ Generic routines, useful for all data """
 
 __all__ = []
-__name__ = "boututils"
 
 from importlib.metadata import PackageNotFoundError, version
 
 try:
     # This gives the version if the boututils package was installed
-    __version__ = version(__name__)
+    __version__ = version("boutdata")
 except PackageNotFoundError:
     # This branch handles the case when boututils is used from the git repo
     try:
