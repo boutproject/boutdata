@@ -142,8 +142,7 @@ def throw_warnings(line_text, filename, line_num):
             sys.stderr.write(" "*len(name_num) + "\033[91m!!!WARNING: {}\033[0m\n\n".format(warn[1]))
 
 
-if __name__ == '__main__':
-
+def add_parser(subcommand, default_args, files_args):
     epilog = """
     Currently bout_3to4 can detect the following transformations are needed:
         - Triple square brackets instead of round brackets for subscripts
@@ -155,16 +154,17 @@ if __name__ == '__main__':
     to the correct scopes
     """
 
-    parser = argparse.ArgumentParser(description="A little helper for upgrading from BOUT++ version 3 to version 4",
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     epilog=epilog)
-    parser.add_argument("-r", "--replace", action="store_true",
-                        help="Actually make the fix")
-    parser.add_argument("files", nargs='+',
-                        help="Files to process")
+    parser = subcommand.add_parser(
+        "3to4",
+        help="A little helper for upgrading from BOUT++ version 3 to version 4",
+        description="A little helper for upgrading from BOUT++ version 3 to version 4",
+        parents=[default_args, files_args],
+        epilog=epilog
+    )
+    parser.set_defaults(func=run)
 
-    args = parser.parse_args()
 
+def run(args):
     # Loops over all lines across all files
     for line in fileinput.input(files=args.files, inplace=args.replace):
         filename = fileinput.filename()

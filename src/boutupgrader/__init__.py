@@ -8,6 +8,7 @@ from .bout_v5_input_file_upgrader import add_parser as add_input_parser
 from .bout_v5_macro_upgrader import add_parser as add_macro_parser
 from .bout_v5_physics_model_upgrader import add_parser as add_model_parser
 from .bout_v5_xzinterpolation_upgrader import add_parser as add_xzinterp_parser
+from .bout_3to4 import add_parser as add_3to4_parser
 
 try:
     # This gives the version if the boututils package was installed
@@ -47,6 +48,12 @@ def main():
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
     subcommand = parser.add_subparsers(title="subcommands", required=True)
+
+    v4_subcommand = subcommand.add_parser(
+        "v4", help="BOUT++ v4 upgrades"
+    ).add_subparsers(title="v4 subcommands", required=True)
+    add_3to4_parser(v4_subcommand, common_args, files_args)
+
     v5_subcommand = subcommand.add_parser(
         "v5", help="BOUT++ v5 upgrades"
     ).add_subparsers(title="v5 subcommands", required=True)
