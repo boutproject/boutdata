@@ -1,13 +1,12 @@
-from .common import apply_or_display_patch
-
 import argparse
 import copy
 import re
+import subprocess
 import textwrap
 from pathlib import Path
 from typing import List
-import subprocess
 
+from .common import apply_or_display_patch
 
 header_shim_sentinel = "// BOUT++ header shim"
 

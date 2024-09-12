@@ -1,5 +1,3 @@
-from .common import apply_or_display_patch
-
 import argparse
 import copy
 import pathlib
@@ -7,6 +5,7 @@ import re
 import textwrap
 import warnings
 
+from .common import apply_or_display_patch
 
 PHYSICS_MODEL_INCLUDE = '#include "bout/physicsmodel.hxx"'
 

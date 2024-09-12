@@ -1,7 +1,7 @@
-from .common import apply_or_display_patch
-
 import copy
 import re
+
+from .common import apply_or_display_patch
 
 try:
     import clang.cindex

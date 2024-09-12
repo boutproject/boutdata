@@ -1,9 +1,9 @@
-from .common import apply_or_display_patch
-
 import argparse
 import copy
 import re
 import textwrap
+
+from .common import apply_or_display_patch
 
 # List of macros, their replacements and what header to find them
 # in. Each element should be a dict with "old", "new" and "headers"

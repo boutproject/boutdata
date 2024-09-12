@@ -1,8 +1,7 @@
-from .common import apply_or_display_patch
-
 import copy
 import re
 
+from .common import apply_or_display_patch
 
 # Dictionary of factory methods that may need updating
 factories = {

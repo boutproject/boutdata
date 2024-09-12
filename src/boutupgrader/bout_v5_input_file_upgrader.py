@@ -1,5 +1,3 @@
-from .common import create_patch, yes_or_no
-
 import argparse
 import copy
 import itertools
@@ -7,6 +5,8 @@ import textwrap
 import warnings
 
 from boututils.boutwarnings import AlwaysWarning
+
+from .common import create_patch, yes_or_no
 
 
 def case_sensitive_init(self, name="root", parent=None):
@@ -291,7 +291,7 @@ def add_parser(subcommand, default_args, files_args):
 
 
 def run(args):
-    from boutdata.data import BoutOptionsFile, BoutOptions
+    from boutdata.data import BoutOptions, BoutOptionsFile
 
     # Monkey-patch BoutOptions to make sure it's case sensitive
     BoutOptions.__init__ = case_sensitive_init
