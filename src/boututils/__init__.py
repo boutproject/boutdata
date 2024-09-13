@@ -1,4 +1,4 @@
-""" Generic routines, useful for all data """
+"""Generic routines, useful for all data"""
 
 __all__ = []
 

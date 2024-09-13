@@ -1,6 +1,4 @@
-"""Ask a yes/no question and return the answer.
-
-"""
+"""Ask a yes/no question and return the answer."""
 
 import sys
 

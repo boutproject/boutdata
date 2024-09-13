@@ -1,6 +1,4 @@
-"""Parse BOUT.inp settings file
-
-"""
+"""Parse BOUT.inp settings file"""
 
 
 def get(filename, name, section=None):
