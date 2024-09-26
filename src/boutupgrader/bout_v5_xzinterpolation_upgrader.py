@@ -59,7 +59,6 @@ def fix_header_includes(old_header, new_header, source):
 
 
 def fix_interpolations(old_interpolation, new_interpolation, source):
-
     return re.sub(
         rf"""
         \b{old_interpolation}\b
@@ -111,7 +110,6 @@ def clang_fix_interpolation(old_interpolation, new_interpolation, node, source):
 
 
 def fix_factories(old_factory, new_factory, source):
-
     return re.sub(
         rf"""
         \b{old_factory}\b
@@ -151,7 +149,6 @@ def apply_fixes(headers, interpolations, factories, source):
 
 
 def clang_apply_fixes(headers, interpolations, factories, filename, source):
-
     # translation unit
     tu = clang_parse(filename, source)
 

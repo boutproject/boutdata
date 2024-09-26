@@ -185,7 +185,7 @@ def fix_include_version_header(old, headers, source):
     # If header is already included, we can skip this fix
     for header in headers:
         if (
-            re.search(rf'^#\s*include.*(<|"){header}(>|")', source, flags=re.M)
+            re.search(rf'^#\s*include.*(<|"){header}(>|")', source, flags=re.MULTILINE)
             is not None
         ):
             return source

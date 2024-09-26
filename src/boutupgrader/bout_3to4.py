@@ -83,19 +83,16 @@ def fix_nonmembers(line_text, filename, line_num, replace=False):
     old_line_text = line_text
 
     for old, (new, num_args) in nonmembers.items():
-        pattern = re.compile("(\w*)\.{}\(".format(old))
+        pattern = re.compile(rf"(\w*)\.{old}\(")
         matches = re.findall(pattern, line_text)
         for match in matches:
-            replacement = "{func}({object}".format(func=new, object=match)
+            replacement = f"{new}({match}"
             if num_args > 1:
                 replacement += ", "
             line_text = re.sub(pattern, replacement, line_text)
             if not replace:
-                name_num = "{name}:{num}:".format(name=filename, num=line_num)
-                print(
-                    "{name_num}{line}".format(name_num=name_num, line=old_line_text),
-                    end="",
-                )
+                name_num = f"{filename}:{line_num}:"
+                print(f"{name_num}{old_line_text}", end="")
                 print(" " * len(name_num) + line_text)
     if replace:
         return line_text
@@ -119,10 +116,8 @@ def fix_subscripts(line_text, filename, line_num, replace=False):
             replacement = r"(\1, \2)"
         line_text = re.sub(pattern, replacement, line_text)
         if not replace:
-            name_num = "{name}:{num}:".format(name=filename, num=line_num)
-            print(
-                "{name_num}{line}".format(name_num=name_num, line=old_line_text), end=""
-            )
+            name_num = f"{filename}:{line_num}:"
+            print(f"{name_num}{old_line_text}", end="")
             print(" " * len(name_num) + line_text)
     if replace:
         return line_text
@@ -134,16 +129,14 @@ def fix_coordinates(line_text, filename, line_num, replace=False):
     old_line_text = line_text
 
     for var in coordinates:
-        pattern = re.compile("mesh->{}".format(var))
+        pattern = re.compile(f"mesh->{var}")
         matches = re.findall(pattern, line_text)
         for match in matches:
-            line_text = re.sub(
-                pattern, "mesh->coordinates()->{}".format(var), line_text
-            )
+            line_text = re.sub(pattern, f"mesh->coordinates()->{var}", line_text)
             if not replace:
-                name_num = "{name}:{num}:".format(name=filename, num=line_num)
+                name_num = f"{filename}:{line_num}:"
                 print(
-                    "{name_num}{line}".format(name_num=name_num, line=old_line_text),
+                    f"{name_num}{old_line_text}",
                     end="",
                 )
                 print(" " * len(name_num) + line_text)
@@ -162,9 +155,9 @@ def fix_local_mesh_size(line_text, filename, line_num, replace=False):
         for match in matches:
             line_text = re.sub(pattern, lm[1], line_text)
             if not replace:
-                name_num = "{name}:{num}:".format(name=filename, num=line_num)
+                name_num = f"{filename}:{line_num}:"
                 print(
-                    "{name_num}{line}".format(name_num=name_num, line=old_line_text),
+                    f"{name_num}{old_line_text}",
                     end="",
                 )
                 print(" " * len(name_num) + line_text)
@@ -179,16 +172,13 @@ def throw_warnings(line_text, filename, line_num):
         pattern = re.compile(warn[0])
         matches = re.findall(pattern, line_text)
         for match in matches:
-            name_num = "{name}:{num}:".format(name=filename, num=line_num)
+            name_num = f"{filename}:{line_num}:"
             # stdout is redirected to the file if --replace is given,
             # therefore use stderr
-            sys.stderr.write(
-                "{name_num}{line}".format(name_num=name_num, line=line_text)
-            )
+            sys.stderr.write(f"{name_num}{line_text}")
             # Coloring with \033[91m, end coloring with \033[0m\n
             sys.stderr.write(
-                " " * len(name_num)
-                + "\033[91m!!!WARNING: {}\033[0m\n\n".format(warn[1])
+                " " * len(name_num) + f"\033[91m!!!WARNING: {warn[1]}\033[0m\n\n"
             )
 
 
