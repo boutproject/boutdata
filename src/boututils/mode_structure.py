@@ -4,8 +4,8 @@ import numpy as numpy
 from past.utils import old_div
 from pylab import clf, draw, gca, plot, savefig, show, title, xlabel, xlim, ylim
 
-from boututils.fft_integrate import fft_integrate
 from boutupgrader.common import yes_or_no as query_yes_no
+from boututils.fft_integrate import fft_integrate
 
 # ; Calculates mode structure from BOUT++ output
 # ; for comparison to ELITE
