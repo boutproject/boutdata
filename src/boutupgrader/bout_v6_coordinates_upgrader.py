@@ -154,7 +154,7 @@ def assignment_regex_pairs(var):
             replacement_for_division_assignment,
         ),
         # Replace `c->var` with `c->var()` etc, but not if is assignment
-        (rf"({arrow_or_dot})({var})(?!\(){not_followed_by_equals}", rf"\1\2()"),
+        (rf"({arrow_or_dot})({var})(?!\(){not_followed_by_equals}", r"\1\2()"),
     ]
 
 
