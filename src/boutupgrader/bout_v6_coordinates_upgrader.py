@@ -12,9 +12,9 @@ def add_parser(subcommand, default_args, files_args):
 
     help_text = textwrap.dedent(
         """\
-            Upgrade files to use the refactored Coordinates class. 
-            
-            For example, changes coords->dx to coord->dx()
+            Upgrade files to use the refactored Coordinates class.
+
+            For example, changes coords->dx to coords->dx()
             """
     )
     parser = subcommand.add_parser(
