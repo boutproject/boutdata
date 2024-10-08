@@ -1,6 +1,4 @@
-"""Average over a surface
-
-"""
+"""Average over a surface"""
 
 import numpy as np
 import scipy

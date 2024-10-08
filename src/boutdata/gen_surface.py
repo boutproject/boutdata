@@ -1,6 +1,4 @@
-"""Flux surface generator for tokamak grid files
-
-"""
+"""Flux surface generator for tokamak grid files"""
 
 from __future__ import print_function
 

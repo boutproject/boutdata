@@ -953,8 +953,9 @@ def _check_fieldperp_attributes(
         # and check they are unique
         if yindex_global is not None and yindex_global != temp_yindex:
             raise ValueError(
-                "Found FieldPerp {} at different global y-indices, {} "
-                "and {}".format(varname, temp_yindex, yindex_global)
+                "Found FieldPerp {} at different global y-indices, {} " "and {}".format(
+                    varname, temp_yindex, yindex_global
+                )
             )
         yindex_global = temp_yindex
         if fieldperp_yproc is not None and fieldperp_yproc != pe_yind:
