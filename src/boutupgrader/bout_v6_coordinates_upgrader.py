@@ -35,6 +35,7 @@ def run(args):
         except Exception as e:
             error_message = textwrap.indent(f"{e}", " ")
             print(f"Error reading {filename}:\n\n{error_message}")
+            continue
 
         original = copy.deepcopy(contents)
         modified_contents = modify(contents)
