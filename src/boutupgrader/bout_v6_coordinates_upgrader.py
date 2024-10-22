@@ -30,8 +30,7 @@ def add_parser(subcommand, default_args, files_args):
 def run(args):
     for filename in args.files:
         try:
-            with pathlib.Path(filename).open() as f:
-                contents = f.read()
+            contents = pathlib.Path(filename).read_text()
         except Exception as e:
             error_message = textwrap.indent(f"{e}", " ")
             print(f"Error reading {filename}:\n\n{error_message}")
