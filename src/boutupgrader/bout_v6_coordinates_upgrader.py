@@ -7,7 +7,6 @@ import textwrap
 
 from .common import apply_or_display_patch
 
-
 # find lines like: c->g_11 = x; and c.g_11 = x;
 SETTING_METRIC_COMPONENT_REGEX = re.compile(
     r"(\b.+\-\>|\.)"  # arrow or dot (-> or .)
