@@ -8,6 +8,16 @@ import textwrap
 from .common import apply_or_display_patch
 
 
+# find lines like: c->g_11 = x; and c.g_11 = x;
+SETTING_METRIC_COMPONENT_REGEX = re.compile(
+    r"(\b.+\-\>|\.)(g_?)(\d\d)\s?\=\s?(.+)(?=;)"
+)
+
+GETTING_METRIC_COMPONENT_REGEX = re.compile(r"(\b\w+->|\.)(g_?\d\d)")
+
+GEOMETRY_METHOD_CALL_REGEX = re.compile(r"geometry\(\)")
+
+
 def add_parser(subcommand, default_args, files_args):
 
     help_text = textwrap.dedent(
@@ -70,17 +80,13 @@ def use_metric_accessors(original_string):
 
     lines = original_string.splitlines()
 
-    # find lines like: c->g_11 = x; and c.g_11 = x;
-    pattern_setting_metric_component = re.compile(
-        r"(\b.+\-\>|\.)(g_?)(\d\d)\s?\=\s?(.+)(?=;)"
-    )
-    line_matches = pattern_setting_metric_component.findall(original_string)
+    line_matches = SETTING_METRIC_COMPONENT_REGEX.findall(original_string)
 
     if len(line_matches) == 0:
         return lines
 
     metric_components = {match[1] + match[2]: match[3] for match in line_matches}
-    lines_to_remove = indices_of_matching_lines(pattern_setting_metric_component, lines)
+    lines_to_remove = indices_of_matching_lines(SETTING_METRIC_COMPONENT_REGEX, lines)
     lines_removed_count = 0
     for line_index in lines_to_remove:
         del lines[line_index - lines_removed_count]
@@ -90,10 +96,7 @@ def use_metric_accessors(original_string):
     }
     newline_inserted = False
     for key, value in metric_components_with_value.items().__reversed__():
-        # Replace `c->g11` with `g11`, etc
-        pattern = re.compile(r"(\b\w+->|\.)(g_?\d\d)")
-        replacement = r"\2"
-        new_value = pattern.sub(replacement, value)
+        new_value = GETTING_METRIC_COMPONENT_REGEX.sub(r"\2", value)
         if not key.startswith("g_") and not newline_inserted:
             lines.insert(lines_to_remove[0], "")
             newline_inserted = True
@@ -116,8 +119,7 @@ def use_metric_accessors(original_string):
 
 def remove_geometry_calls(lines):
     # Remove lines calling geometry()
-    geometry_method_call_pattern = re.compile(r"geometry\(\)")
-    lines_to_remove = indices_of_matching_lines(geometry_method_call_pattern, lines)
+    lines_to_remove = indices_of_matching_lines(GEOMETRY_METHOD_CALL_REGEX, lines)
     for line_index in lines_to_remove:
         # If both the lines above and below are blank then remove one of them
         if lines[line_index - 1].strip() == "" and lines[line_index + 1].strip() == "":
