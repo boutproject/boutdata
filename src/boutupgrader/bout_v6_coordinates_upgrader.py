@@ -20,7 +20,7 @@ SETTING_METRIC_COMPONENT_REGEX = re.compile(
 # c->g11, etc
 GETTING_METRIC_COMPONENT_REGEX = re.compile(
     r"(\b\w+->|\.)"  # e.g. coord. or coord->
-    r"(g_?\d\d)"  # g12 or g_12, etc
+    r"(?P<component>g_?\d\d)"  # g12 or g_12, etc
 )
 
 # find the string `geometry()`
@@ -106,7 +106,7 @@ def use_metric_accessors(original_string):
     newline_inserted = False
     for key, value in metric_components_with_value.items().__reversed__():
         # Replace `c->g11` with `g11`, etc
-        new_value = GETTING_METRIC_COMPONENT_REGEX.sub(r"\2", value)
+        new_value = GETTING_METRIC_COMPONENT_REGEX.sub(r"\g<component>", value)
         if not key.startswith("g_") and not newline_inserted:
             lines.insert(lines_to_remove[0], "")
             newline_inserted = True
