@@ -61,7 +61,7 @@ def modify(original_string):
 
 
 def indices_of_matching_lines(pattern, lines):
-    search_result_for_all_lines = [re.search(pattern, line) for line in lines]
+    search_result_for_all_lines = [pattern.search(line) for line in lines]
     matches = [x for x in search_result_for_all_lines if x is not None]
     return [lines.index(match.string) for match in matches]
 
@@ -71,8 +71,10 @@ def use_metric_accessors(original_string):
     lines = original_string.splitlines()
 
     # find lines like: c->g_11 = x; and c.g_11 = x;
-    pattern_setting_metric_component = r"(\b.+\-\>|\.)(g_?)(\d\d)\s?\=\s?(.+)(?=;)"
-    line_matches = re.findall(pattern_setting_metric_component, original_string)
+    pattern_setting_metric_component = re.compile(
+        r"(\b.+\-\>|\.)(g_?)(\d\d)\s?\=\s?(.+)(?=;)"
+    )
+    line_matches = pattern_setting_metric_component.findall(original_string)
 
     if len(line_matches) == 0:
         return lines
@@ -89,7 +91,9 @@ def use_metric_accessors(original_string):
     newline_inserted = False
     for key, value in metric_components_with_value.items().__reversed__():
         # Replace `c->g11` with `g11`, etc
-        new_value = re.sub(r"(\b\w+->|\.)(g_?\d\d)", r"\2", value)
+        pattern = re.compile(r"(\b\w+->|\.)(g_?\d\d)")
+        replacement = r"\2"
+        new_value = pattern.sub(replacement, value)
         if not key.startswith("g_") and not newline_inserted:
             lines.insert(lines_to_remove[0], "")
             newline_inserted = True
@@ -112,7 +116,7 @@ def use_metric_accessors(original_string):
 
 def remove_geometry_calls(lines):
     # Remove lines calling geometry()
-    geometry_method_call_pattern = r"geometry\(\)"
+    geometry_method_call_pattern = re.compile(r"geometry\(\)")
     lines_to_remove = indices_of_matching_lines(geometry_method_call_pattern, lines)
     for line_index in lines_to_remove:
         # If both the lines above and below are blank then remove one of them
@@ -199,9 +203,10 @@ def replace_one_line_cases(modified):
     patterns_with_replacements.append(mesh_get_pattern_and_replacement())
 
     for pattern, replacement in patterns_with_replacements:
+        compiled_pattern = re.compile(pattern)
         MAX_OCCURRENCES = 12
         count = 0
-        while re.search(pattern, modified) and count < MAX_OCCURRENCES:
+        while compiled_pattern.search(modified) and count < MAX_OCCURRENCES:
             count += 1
-            modified = re.sub(pattern, replacement, modified)
+            modified = compiled_pattern.sub(replacement, modified)
     return modified
