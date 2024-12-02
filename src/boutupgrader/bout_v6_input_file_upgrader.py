@@ -1,4 +1,4 @@
-from .bout_v5_input_file_upgrader import run_general, add_parser_general
+from .bout_v5_input_file_upgrader import add_parser_general, run_general
 
 # This should be a list of dicts, each containing "old", "new" and optionally "new_values".
 # The values of "old"/"new" keys should be the old/new names of input file values or
