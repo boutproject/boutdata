@@ -236,7 +236,7 @@ def possibly_apply_patch(patch, options_file, quiet=False, force=False):
     return make_change
 
 
-def add_parser(subcommand, default_args, files_args):
+def add_parser_general(subcommand, default_args, files_args, run):
     parser = subcommand.add_parser(
         "input",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -290,7 +290,7 @@ def add_parser(subcommand, default_args, files_args):
     parser.set_defaults(func=run)
 
 
-def run(args):
+def run_general(REPLACEMENTS, DELETED, args):
     from boutdata.data import BoutOptions, BoutOptionsFile
 
     # Monkey-patch BoutOptions to make sure it's case sensitive
@@ -340,3 +340,11 @@ def run(args):
             continue
 
         possibly_apply_patch(patch, modified, args.quiet, args.force)
+
+
+def run(args):
+    return run_general(REPLACEMENTS, DELETED, args)
+
+
+def add_parser(subcommand, default_args, files_args):
+    return add_parser_general(subcommand, default_args, files_args, run)

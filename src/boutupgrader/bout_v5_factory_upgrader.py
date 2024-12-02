@@ -59,9 +59,7 @@ def find_factory_calls(factory, source):
         \s*=\s*
         {factory_name}::
         .*{create_method}.*
-        """.format(
-            **factory
-        ),
+        """.format(**factory),
         source,
         re.VERBOSE,
     )
@@ -72,9 +70,7 @@ def find_type_pointers(factory, source):
         r"""
         \b{type_name}\s*\*\s*   # Type name and pointer
         ([\w_]+)\s*;            # Variable name
-        """.format(
-            **factory
-        ),
+        """.format(**factory),
         source,
         re.VERBOSE,
     )
@@ -104,9 +100,7 @@ def fix_declarations(factory, variables, source):
             (.*?)(class\s*)?         # optional "class" keyword
             \b({type_name})\s*\*\s*  # Type-pointer
             ({variable_name})\s*;    # Variable
-            """.format(
-                type_name=factory["type_name"], variable_name=variable
-            ),
+            """.format(type_name=factory["type_name"], variable_name=variable),
             r"\1std::unique_ptr<\3> \4{nullptr};",
             source,
             flags=re.VERBOSE,
@@ -120,9 +114,7 @@ def fix_declarations(factory, variables, source):
             ({variable_name})\s*   # Variable
             =\s*                   # Assignment from factory
             ({factory_name}::.*{create_method}.*);
-            """.format(
-                variable_name=variable, **factory
-            ),
+            """.format(variable_name=variable, **factory),
             r"\1auto \4 = \5;",
             source,
             flags=re.VERBOSE,
@@ -136,9 +128,7 @@ def fix_declarations(factory, variables, source):
             ({variable_name})\s*   # Variable
             =\s*                   # Assignment
             (0|nullptr|NULL);
-            """.format(
-                variable_name=variable, **factory
-            ),
+            """.format(variable_name=variable, **factory),
             r"\1std::unique_ptr<\2> \3{nullptr};",
             source,
             flags=re.VERBOSE,
