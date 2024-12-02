@@ -359,7 +359,7 @@ class BoutOptions(object):
 
             # Renaming a child key just within the same parent section, we can preserve
             # the order
-            if new_parent is old_parent:
+            if new_parent is old_parent and ":" not in new_name:
                 new_parent._keys = rename_key(new_parent._keys, new_child, old_child)
                 new_parent.comments = rename_key(
                     new_parent.comments, new_child, old_child
