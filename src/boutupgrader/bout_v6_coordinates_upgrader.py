@@ -27,7 +27,6 @@ GEOMETRY_METHOD_CALL_REGEX = re.compile(r"geometry\(\)")
 
 
 def add_parser(subcommand, default_args, files_args):
-
     help_text = textwrap.dedent(
         """\
             Upgrade files to use the refactored Coordinates class.
@@ -85,7 +84,6 @@ def indices_of_matching_lines(pattern, lines):
 
 
 def use_metric_accessors(original_string):
-
     lines = original_string.splitlines()
 
     line_matches = SETTING_METRIC_COMPONENT_REGEX.findall(original_string)
@@ -138,7 +136,6 @@ def remove_geometry_calls(lines):
 
 
 def assignment_regex_pairs(var):
-
     arrow_or_dot = r"\b.+\-\>|\."
     not_followed_by_equals = r"(?!\s?=)"
     equals_something = r"\=\s?(.+)(?=;)"
@@ -174,7 +171,6 @@ def assignment_regex_pairs(var):
 
 
 def mesh_get_pattern_and_replacement():
-
     # Convert `mesh->get(coord->dx(), "dx")` to `coord->setDx(mesh->get("dx"));`, etc
 
     def replacement_for_assignment_with_mesh_get(match):
@@ -196,7 +192,6 @@ def mesh_get_pattern_and_replacement():
 
 # Deal with the basic find-and-replace cases that do not involve multiple lines
 def replace_one_line_cases(modified):
-
     metric_component = r"g_?\d\d"
     mesh_spacing = r"d[xyz]"
 
