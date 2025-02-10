@@ -10,6 +10,7 @@ from .bout_v5_macro_upgrader import add_parser as add_macro_parser
 from .bout_v5_physics_model_upgrader import add_parser as add_model_parser
 from .bout_v5_xzinterpolation_upgrader import add_parser as add_xzinterp_parser
 from .bout_v6_coordinates_upgrader import add_parser as add_v6_coordinates_parser
+from .bout_v6_input_file_upgrader import add_parser as add_v6_input_parser
 
 try:
     # This gives the version if the boututils package was installed
@@ -71,6 +72,7 @@ def main():
     add_model_parser(v5_subcommand, common_args, files_args)
     add_xzinterp_parser(v5_subcommand, common_args, files_args)
     add_v6_coordinates_parser(v6_subcommand, common_args, files_args)
+    add_v6_input_parser(v6_subcommand, common_args, files_args)
 
     args = parser.parse_args()
     args.func(args)
