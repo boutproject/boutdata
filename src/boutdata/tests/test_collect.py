@@ -931,7 +931,7 @@ class TestCollect:
         """
         Check output from a core-only case using the minimum number of processes
         """
-        data_path, expected, fieldperp_global_yind = core_min
+        data_path, _expected, _fieldperp_global_yind = core_min
         symlink_dump_files(data_path, tmp_path)
 
         collect_kwargs = {"xguards": True, "yguards": "include_upper"}

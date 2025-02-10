@@ -12,26 +12,23 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.x
-    - name: Install black
+    - name: Install ruff
       run: |
         python -m pip install --upgrade pip
-        pip install black isort
+        pip install ruff
     - name: Version
       run: |
         python --version
-        black --version
-        isort --version
-    - name: Run isort
-      run: |
-        isort src
-    - name: Run black
-      run: |
-        black src
+        ruff --version
+    - name: Run ruff, sort imports
+      run: ruff check --select I . --fix
+    - name: Run ruff format
+      run: ruff format .
     - uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: "[skip ci] Apply black/isort changes"
+        commit_message: "Apply ruff changes"

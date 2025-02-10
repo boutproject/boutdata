@@ -1,6 +1,4 @@
-"""Wrapper for ndarray with extra attributes for BOUT++ fields.
-
-"""
+"""Wrapper for ndarray with extra attributes for BOUT++ fields."""
 
 import numpy
 

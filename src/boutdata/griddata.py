@@ -1,6 +1,4 @@
-"""Routines for manipulating grid files
-
-"""
+"""Routines for manipulating grid files"""
 
 import matplotlib.pyplot as plt
 import numpy as np

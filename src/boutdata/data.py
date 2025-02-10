@@ -25,9 +25,23 @@ from numpy import arcsinh as asinh  # noqa: F401
 from numpy import arctan as atan  # noqa: F401
 from numpy import arctan2 as atan2  # noqa: F401
 from numpy import arctanh as atanh  # noqa: F401
-from numpy import ceil, cos, cosh, exp, floor, log, log10, pi  # noqa: F401
+from numpy import (  # noqa: F401  # noqa: F401
+    ceil,
+    cos,
+    cosh,
+    exp,
+    floor,
+    log,
+    log10,
+    pi,
+    round,
+    sin,
+    sinh,
+    sqrt,
+    tan,
+    tanh,
+)
 from numpy import power as pow  # noqa: F401
-from numpy import round, sin, sinh, sqrt, tan, tanh  # noqa: F401
 
 from boutdata.collect import (
     _check_fieldperp_attributes,
@@ -345,7 +359,7 @@ class BoutOptions(object):
 
             # Renaming a child key just within the same parent section, we can preserve
             # the order
-            if new_parent is old_parent:
+            if new_parent is old_parent and ":" not in new_name:
                 new_parent._keys = rename_key(new_parent._keys, new_child, old_child)
                 new_parent.comments = rename_key(
                     new_parent.comments, new_child, old_child

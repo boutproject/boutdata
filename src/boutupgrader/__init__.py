@@ -9,6 +9,8 @@ from .bout_v5_input_file_upgrader import add_parser as add_input_parser
 from .bout_v5_macro_upgrader import add_parser as add_macro_parser
 from .bout_v5_physics_model_upgrader import add_parser as add_model_parser
 from .bout_v5_xzinterpolation_upgrader import add_parser as add_xzinterp_parser
+from .bout_v6_coordinates_upgrader import add_parser as add_v6_coordinates_parser
+from .bout_v6_input_file_upgrader import add_parser as add_v6_input_parser
 
 try:
     # This gives the version if the boututils package was installed
@@ -52,12 +54,16 @@ def main():
     v4_subcommand = subcommand.add_parser(
         "v4", help="BOUT++ v4 upgrades"
     ).add_subparsers(title="v4 subcommands", required=True)
-    add_3to4_parser(v4_subcommand, common_args, files_args)
 
     v5_subcommand = subcommand.add_parser(
         "v5", help="BOUT++ v5 upgrades"
     ).add_subparsers(title="v5 subcommands", required=True)
 
+    v6_subcommand = subcommand.add_parser(
+        "v6", help="BOUT++ v6 upgrades"
+    ).add_subparsers(title="v6 subcommands", required=True)
+
+    add_3to4_parser(v4_subcommand, common_args, files_args)
     add_factory_parser(v5_subcommand, common_args, files_args)
     add_format_parser(v5_subcommand, common_args, files_args)
     add_header_parser(v5_subcommand, common_args)
@@ -65,6 +71,8 @@ def main():
     add_macro_parser(v5_subcommand, common_args, files_args)
     add_model_parser(v5_subcommand, common_args, files_args)
     add_xzinterp_parser(v5_subcommand, common_args, files_args)
+    add_v6_coordinates_parser(v6_subcommand, common_args, files_args)
+    add_v6_input_parser(v6_subcommand, common_args, files_args)
 
     args = parser.parse_args()
     args.func(args)

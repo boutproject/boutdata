@@ -1,6 +1,4 @@
-"""Functions for checking the error scaling of MMS or MES results
-
-"""
+"""Functions for checking the error scaling of MMS or MES results"""
 
 from numpy import array, isclose, log, polyfit
 

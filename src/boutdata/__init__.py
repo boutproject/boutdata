@@ -1,4 +1,4 @@
-""" Routines for exchanging data to/from BOUT++ """
+"""Routines for exchanging data to/from BOUT++"""
 
 from boutdata.collect import attributes, collect
 from boututils.boutarray import BoutArray
@@ -15,8 +15,6 @@ from boututils.run_wrapper import (
 __all__ = [
     "attributes",
     "collect",
-    "gen_surface",
-    "pol_slice",
     "BoutArray",
     "alwayswarn",
     "launch",
