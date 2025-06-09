@@ -281,7 +281,7 @@ class DataFile(object):
         """
         return self.attributes(varname)["bout_type"]
 
-    def write(self, name, data, info=False):
+    def write(self, name, data, info=False, *, dims=None):
         """Write a variable to file
 
         If the variable is not a :py:obj:`~boututils.boutarray.BoutArray` with
@@ -297,13 +297,15 @@ class DataFile(object):
         info : bool, optional
             If True, print information about what is being written to
             file
+        dims : tuple(str) or None, optional
+            If passed, specifies the dimensions to be used to write the variable.
 
         Returns
         -------
         None
 
         """
-        return self.impl.write(name, data, info)
+        return self.impl.write(name, data, info, dims=dims)
 
     def read_file_attribute(self, name):
         return self.impl.read_file_attribute(name)
@@ -525,11 +527,17 @@ class DataFile_netCDF(DataFile):
 
         return BoutArray.dims_from_type(bout_type)
 
-    def write(self, name, data, info=False):
+    def write(self, name, data, info=False, *, dims=None):
         if not self.writeable:
             raise Exception("File not writeable. Open with write=True keyword")
 
         s = np.shape(data)
+
+        if dims is not None and len(dims) != data.ndim:
+            raise ValueError(
+                f"When dims is passed, it must have an entry for each dimension of "
+                f"`data`, but dims={dims} and data.ndim={data.ndim}."
+            )
 
         # Get the variable type
         t = type(data).__name__
@@ -568,7 +576,10 @@ class DataFile_netCDF(DataFile):
             # Not found, so add.
 
             # Get dimensions
-            defdims = self._bout_dimensions_from_var(data)
+            if dims is None:
+                defdims = self._bout_dimensions_from_var(data)
+            else:
+                defdims = dims
 
             def find_dim(dim):
                 # Find a dimension with given name and size
@@ -626,10 +637,10 @@ class DataFile_netCDF(DataFile):
             # List of (size, 'name') tuples
             dlist = list(zip(s, defdims))
             # Get new list of variables, and turn into a tuple
-            dims = tuple(map(find_dim, dlist))
+            dims_tuple = tuple(map(find_dim, dlist))
 
             # Create the variable
-            var = self.handle.createVariable(name, t, dims, **self._kwargs)
+            var = self.handle.createVariable(name, t, dims_tuple, **self._kwargs)
 
             if var is None:
                 raise Exception("Couldn't create variable")
@@ -899,7 +910,7 @@ class DataFile_HDF5(DataFile):
             return None
         return var.shape
 
-    def write(self, name, data, info=False):
+    def write(self, name, data, info=False, *, dims=None):
         if not self.writeable:
             raise Exception("File not writeable. Open with write=True keyword")
 
