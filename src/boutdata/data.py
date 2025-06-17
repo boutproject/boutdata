@@ -1057,6 +1057,12 @@ class BoutOutputs(object):
         self._file0 = None
         # normalize prefix by removing trailing '.' if present
         self._prefix = prefix.removesuffix(".")
+        self._caching = caching
+        self._info = info
+        self._xguards = xguards
+        self._yguards = yguards
+        self._kwargs = kwargs
+        self._parallel = parallel
         if suffix is None:
             temp_file_list = glob.glob(os.path.join(self._path, self._prefix + "*"))
             latest_file = max(temp_file_list, key=os.path.getctime)
@@ -1064,12 +1070,6 @@ class BoutOutputs(object):
         else:
             # normalize suffix by removing leading '.' if present
             self._suffix = suffix.removeprefix(".")
-        self._caching = caching
-        self._info = info
-        self._xguards = xguards
-        self._yguards = yguards
-        self._kwargs = kwargs
-        self._parallel = parallel
         if self._parallel is False:
             self._DataFileCaching = DataFileCaching
         else:
