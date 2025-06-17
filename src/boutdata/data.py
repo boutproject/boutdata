@@ -1242,9 +1242,10 @@ class BoutOutputs(object):
             proc_list = tuple(p for p in range(filenum, filenum + files_per_proc[i]))
             filenum = filenum + files_per_proc[i]
             worker = Process(
-                target=self._worker_function,
+                target=self._clean_for_mp()._worker_function,
                 args=(child_connection, proc_list, self._shared_buffer_raw),
             )
+
             worker.start()
             self._workers.append((worker, parent_connection))
 
@@ -1627,6 +1628,14 @@ class BoutOutputs(object):
         return BoutArray(
             self._shared_buffer[global_slices].copy(), attributes=var_attributes
         )
+
+    def _clean_for_mp(self):
+        new = object.__new__(BoutOutputs)
+        new.__dict__ = self.__dict__.copy()
+        new._file0 = None
+        new._root_file = None
+        new._workers = None
+        return new
 
     def _worker_function(self, connection, proc_list, shared_buffer_raw):
         data_files = [DataFile(self._file_list[i]) for i in proc_list]
