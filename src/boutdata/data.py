@@ -164,7 +164,7 @@ class BoutOptions:
             return self._sections[key]
 
         if key not in self._keys:
-            raise KeyError("Key '%s' not in section '%s'" % (key, self.path()))
+            raise KeyError(f"Key '{key}' not in section '{self.path()}'")
         return self._keys[key]
 
     def __setitem__(self, key, value):
@@ -672,7 +672,7 @@ class BoutOptionsFile(BoutOptions):
                 if startpos != -1:
                     # A section heading
                     if endpos == -1:
-                        raise SyntaxError("Missing ']' on line %d" % (linenr,))
+                        raise SyntaxError(f"Missing ']' on line {linenr}")
                     line = line[(startpos + 1) : endpos].strip()
 
                     parent_section = self
@@ -1209,8 +1209,7 @@ class BoutOutputs:
             self._parallel = determineNumberOfCPUs()
         if not isinstance(self._parallel, int) or self._parallel <= 0:
             raise ValueError(
-                "Passed or found inconsistent value %i for number of processes",
-                self._parallel,
+                f"Passed or found inconsistent value {self._parallel} for number of processes"
             )
 
         if self._parallel > self.grid_info["npes"]:

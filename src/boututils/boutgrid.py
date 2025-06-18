@@ -75,7 +75,7 @@ def create_grid(grid, data, period=1):
     ny = grid["ny"]  # [0]
     nz = s[2]
 
-    print("data: %d,%d,%d   grid: %d,%d\n" % (s[0], s[1], s[2], nx, ny))
+    print(f"data: {s[0]},{s[1]},{s[2]}   grid: {nx},{ny}\n")
 
     dims = (nx, nz, ny)
     sgrid = tvtk.StructuredGrid(dimensions=dims)

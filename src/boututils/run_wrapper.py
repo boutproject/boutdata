@@ -266,8 +266,7 @@ def shell_safe(command, *args, **kwargs):
     s, out = shell(command, *args, **kwargs)
     if s:
         raise RuntimeError(
-            "Run failed with %d.\nCommand was:\n%s\n\n"
-            "Output was\n\n%s" % (s, command, out)
+            f"Run failed with {s}.\nCommand was:\n{command}\n\nOutput was\n\n{out}"
         )
     return s, out
 

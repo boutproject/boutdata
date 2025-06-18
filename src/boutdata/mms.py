@@ -353,11 +353,11 @@ class SimpleTokamak:
 
         # Approximate poloidal field for radial width calculation
         Bp0 = Bt * self.r / (q(0.5) * R)
-        print("Bp0 = %e" % Bp0)
+        print(f"Bp0 = {Bp0}")
 
         # dx = Bp * R * dr  -- width of the box in psi space
         self.psiwidth = Bp0 * R * dr
-        print("psi width = %e" % self.psiwidth)
+        print(f"psi width = {self.psiwidth}")
 
         # Integrated shear
         self.sinty = diff(self.zShift, x) / self.psiwidth

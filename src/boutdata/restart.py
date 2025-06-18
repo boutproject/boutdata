@@ -407,7 +407,7 @@ def addnoise(path=".", var=None, scale=1e-5):
     file_list = glob.glob(os.path.join(path, "BOUT.restart.*"))
     nfiles = len(file_list)
 
-    print("Number of restart files: %d" % (nfiles,))
+    print(f"Number of restart files: {nfiles}")
 
     for file in file_list:
         print(file)
@@ -448,7 +448,7 @@ def scalevar(var, factor, path="."):
     file_list = glob.glob(os.path.join(path, "BOUT.restart.*"))
     nfiles = len(file_list)
 
-    print("Number of restart files: %d" % (nfiles,))
+    print(f"Number of restart files: {nfiles}")
     for file in file_list:
         print(file)
         with DataFile(file, write=True) as d:
@@ -881,7 +881,7 @@ def resizeY(newy, path="data", output=".", informat="nc", outformat=None, myg=2)
         infname = path / f"BOUT.restart.{i}.{informat}"
         outfname = output / f"BOUT.restart.{i}.{outformat}"
 
-        print("Processing %s -> %s" % (infname, outfname))
+        print(f"Processing {infname} -> {outfname}")
 
         infile = DataFile(infname)
         outfile = DataFile(outfname, create=True)
@@ -988,7 +988,7 @@ def addvar(var, value, path="."):
     file_list = glob.glob(os.path.join(path, "BOUT.restart.*"))
     nfiles = len(file_list)
 
-    print("Number of restart files: %d" % (nfiles,))
+    print(f"Number of restart files: {nfiles}")
     # Loop through all the restart files
     for filename in file_list:
         print(filename)

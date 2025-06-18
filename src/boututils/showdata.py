@@ -766,9 +766,9 @@ def showdata(
                 ax[j].set_title(titles[j])
 
         if t_array is not None:
-            title.set_text("t = %1.2e" % t_array[index])
+            title.set_text(f"t = {t_array[index]:1.2e}")
         else:
-            title.set_text("t = %i" % index)
+            title.set_text(f"t = {index}")
         return plots
 
     def init():

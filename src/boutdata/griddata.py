@@ -181,7 +181,7 @@ def slice(infile, outfile, region=None, xind=None, yind=None):
         if not yind:
             yind = [0, ny]
 
-    print("Indices: [%d:%d, %d:%d]" % (xind[0], xind[1], yind[0], yind[1]))
+    print(f"Indices: [{xind[0]}:{xind[1]}, {yind[0]}:{yind[1]}]")
     # List of variables requiring special handling
     special = [
         "nx",
@@ -253,7 +253,7 @@ def rotate(gridfile, yshift, output=None):
     if output is None:
         output = gridfile + "_rot"
 
-    print("Rotating grid file '%s' -> '%s'" % (gridfile, output))
+    print(f"Rotating grid file '{gridfile}' -> '{output}'")
 
     # Open input grid file
     with DataFile(gridfile) as d:
@@ -265,7 +265,7 @@ def rotate(gridfile, yshift, output=None):
                 ndims = d.ndims(varname)
 
                 if ndims == 2:
-                    print("Shifting '%s' (x,y)" % (varname,))
+                    print(f"Shifting '{varname}' (x,y)")
                     # 2D, assume X-Y
 
                     var = d[varname]  # Read
@@ -284,7 +284,7 @@ def rotate(gridfile, yshift, output=None):
                     # out[varname] = newvar # Write
                     out.write(varname, newvar)
                 elif ndims == 3:
-                    print("Shifting '%s' (x,y,z)" % (varname,))
+                    print(f"Shifting '{varname}' (x,y,z)")
                     # 3D, assume X-Y-Z
 
                     var = d[varname]  # Read
@@ -302,7 +302,7 @@ def rotate(gridfile, yshift, output=None):
                     out.write(varname, newvar)
                 else:
                     # Just copy
-                    print("Copying '%s' (%d dimensions)" % (varname, ndims))
+                    print(f"Copying '{varname}' ({ndims} dimensions)")
                     out.write(varname, d[varname])
 
 
@@ -398,8 +398,7 @@ def gridcontourf(
 
     if (data2d.shape[0] != nx) or (data2d.shape[1] != ny):
         raise ValueError(
-            "data2d has wrong size: (%d,%d), expected (%d,%d)"
-            % (data2d.shape[0], data2d.shape[1], nx, ny)
+            f"data2d has wrong size: {data2d.shape}, expected ({nx},{ny})"
         )
 
     if hasattr(j11, "__len__"):
@@ -778,7 +777,7 @@ def bout2sonnet(grdname, outf):
 
     element = 1  # Element number
 
-    outf.write("BOUT++: " + grdname + "\n\n")
+    outf.write(f"BOUT++: {grdname}\n\n")
 
     outf.write("=====================================\n")
 
@@ -813,20 +812,17 @@ def bout2sonnet(grdname, outf):
 
             # Element number
             outf.write(
-                "     ELEMENT   %d = ( %d, %d): (%e, %e) (%e, %e)\n"
-                % (element, j - 1, i - 2, ll[0], ll[1], ul[0], ul[1])
+                f"     ELEMENT   {element} = ({j - 1}, {i - 2}): {ll} {ul}\n"
             )
 
             # Ratio Bt / Bp at cell centre. Note j-1 because
             # Bpxy and Btxy have not had extra points added
             outf.write(
-                "     FIELD RATIO  = %e  (%e, %e)\n"
-                % (Bpxy[i, j - 1] / Btxy[i, j - 1], R[i, j], Z[i, j])
+                f"     FIELD RATIO  = {Bpxy[i, j - 1] / Btxy[i, j - 1]} ({R[i, j]}, {Z[i, j]})\n"
             )
 
             outf.write(
-                "                         (%e, %e) (%e, %e)\n"
-                % (lr[0], lr[1], ur[0], ur[1])
+                f"                         {lr} {ur}\n"
             )
 
             if (i == nx - 3) and (j == ny + 1):
