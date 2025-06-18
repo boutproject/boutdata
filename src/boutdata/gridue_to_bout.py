@@ -203,7 +203,6 @@ def calcGridAngle(g: dict):
     Bzxy = g["bz"][:, :, 0].T
     Bpxy = g["bpol"][:, :, 0].T
 
-    psi = g["psi"]
     rm = g["rm"]
     zm = g["zm"]
 
@@ -422,6 +421,9 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
         "bxcvx": bxcvx,
         "bxcvy": bxcvy,
         "bxcvz": bxcvz,
+        # Coordinates
+        "Rxy": Rxy,
+        "Zxy": Zxy,
     }
 
 
