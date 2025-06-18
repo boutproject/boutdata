@@ -8,11 +8,15 @@
 #  Copyright 2019 J.T. Omotani
 #
 
-import numpy as np
+import argparse
+import uuid
+
 import matplotlib
 import matplotlib.pyplot as plt
-
+import numpy as np
 from scipy import linalg
+
+from boututils.datafile import DataFile
 
 
 def _importBody(gridue_settings, f):
@@ -91,7 +95,7 @@ def _importDN(values, f):
         values = [int(x) for x in next(f).split()]
         if len(values) != len(row):
             raise ValueError(
-                "Expected row with {} integers, found {}".format(len(row), len(values))
+                f"Expected row with {len(row)} integers, found {len(values)}"
             )
         gridue_settings.update(zip(row, values))
 
@@ -145,7 +149,7 @@ def plot(GridueParams: dict, edgecolor="black", ax: object = None, show=True):
     z = GridueParams["zm"]
     Nx = len(r)
     Ny = len(r[0])
-    patches = []
+
     plt.figure(figsize=(6, 10))
     if ax is None:
         ax = plt.gca()
@@ -169,7 +173,7 @@ def plot(GridueParams: dict, edgecolor="black", ax: object = None, show=True):
     return ax
 
 
-def calcHy(g: dict, dy: float):
+def calcHy(g: dict, dy: float, nx: int, ny: int):
     """
     Calculate poloidal arc length metric from gridue dictionary
     """
@@ -260,6 +264,10 @@ def calcRZderivs(R, Z, var):
     return dR, dZ  # dvar/dR, dvar/dZ at cell center
 
 
+def _print_stats(name: str, var) -> None:
+    print(f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}")
+
+
 def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
     """
     Calculate metric tensor given BOUT++ cell centers
@@ -283,15 +291,11 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
             (cosBeta, "cos(beta)"),
             (tanBeta, "tan(beta)"),
         ]:
-            print(
-                "{} min {}, mean {}, max {}".format(
-                    name, np.amin(var), np.mean(var), np.amax(var)
-                )
-            )
+            _print_stats(name, var)
 
     dphidy = hy * Btxy / (Bpxy * Rxy)
 
-    I = np.zeros(Rxy.shape)
+    I = np.zeros(Rxy.shape)  # noqa: F841,E741
 
     g11 = (Rxy * Bpxy) ** 2
     g22 = 1.0 / (hy * cosBeta) ** 2
@@ -336,11 +340,7 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
             (J - Jcheck, "J - Jcheck"),
             (rel_error, "(J - Jcheck)/J"),
         ]:
-            print(
-                "{} min {}, mean {}, max {}".format(
-                    name, np.amin(var), np.mean(var), np.amax(var)
-                )
-            )
+            _print_stats(name, var)
 
     if np.max(np.abs(rel_error)) > 1e-6:
         if ignore_checks:
@@ -393,11 +393,7 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
             (bxcvy, "bxcvy"),
             (bxcvz, "bxcvz"),
         ]:
-            print(
-                "{} min {}, mean {}, max {}".format(
-                    name, np.amin(var), np.mean(var), np.amax(var)
-                )
-            )
+            _print_stats(name, var)
 
     return {
         "dphidy": dphidy,
@@ -488,8 +484,6 @@ def calcRZCurvature(g: dict):
 
 
 def main():
-    import argparse
-
     parser = argparse.ArgumentParser(
         description="""Converts UEDGE grid files (gridue) into BOUT++ grids.
 Note that in most cases these grids are non-orthogonal."""
@@ -500,7 +494,7 @@ Note that in most cases these grids are non-orthogonal."""
     parser.add_argument("-v", "--verbose", action="store_true", default=False)
     parser.add_argument("-i", "--ignore-checks", action="store_true", default=False)
     try:
-        import argcomplete
+        import argcomplete  # noqa: PLC0415,I001
 
         argcomplete.autocomplete(parser)
     except ImportError:
@@ -569,7 +563,7 @@ def convert(gridue_file: str, plotting: bool, verbose: bool, ignore_checks: bool
 
     # Calculate hy, the arc length along the flux surface passing through
     # the center of each cell.
-    hy = calcHy(g, dy)
+    hy = calcHy(g, dy, nx, ny)
 
     # Calculate angle between x and y coordinates. sinBeta = 0, cosBeta = 1 for an orthogonal mesh
     sinBeta, cosBeta = calcGridAngle(g)
@@ -610,21 +604,19 @@ def convert(gridue_file: str, plotting: bool, verbose: bool, ignore_checks: bool
     if g["ix_cut2"] != g["ix_cut3"]:
         # Double null -> Remove upper Y guard cells
         ny_inner = g["ix_inner"]
-        for name in grd:
-            var = grd[name]
+        for name, var in grd.items():
             nx, ny = var.shape
             newvar = np.zeros((nx, ny - 2))
             newvar[:, :ny_inner] = var[:, :ny_inner]
             newvar[:, ny_inner:] = var[:, (ny_inner + 2) :]
             grd[name] = newvar
-        g["ix_cut2"] = g["ix_cut2"] - 1
-        g["ix_cut3"] = g["ix_cut3"] - 3
-        g["ix_cut4"] = g["ix_cut4"] - 2
+        g["ix_cut2"] -= 1
+        g["ix_cut3"] -= 3
+        g["ix_cut4"] -= 2
 
     # Extrapolate X (radial) boundary cells
     # Removing one cell, adding two on each X boundary
-    for name in grd:
-        var = grd[name]
+    for name, var in grd.items():
         nx, ny = var.shape
         newvar = np.zeros((nx + 2, ny))
         newvar[2:-2, :] = var[1:-1, :]
@@ -733,13 +725,7 @@ def convert(gridue_file: str, plotting: bool, verbose: bool, ignore_checks: bool
     )
 
     if verbose:
-        print(
-            "Safety factor: min {}, mean {}, max {}".format(
-                np.amin(ShiftAngle[:ixseps1]) / (2 * np.pi),
-                np.mean(ShiftAngle[:ixseps1]) / (2 * np.pi),
-                np.amax(ShiftAngle[:ixseps1]) / (2 * np.pi),
-            )
-        )
+        _print_stats("Safety factor", ShiftAngle[:ixseps1] / (2 * np.pi))
 
     if plotting:
         plt.plot(Rxy, Zxy, "x")
@@ -779,18 +765,16 @@ def convert(gridue_file: str, plotting: bool, verbose: bool, ignore_checks: bool
     return grd
 
 
-def write_file(grid: dict, output_filename: str, gridue_file: str):
-    from boututils.datafile import DataFile
+def write_file(grid: dict, output_filename: str, gridue_file: str) -> None:
+    """Write converted BOUT++ grid to file."""
 
     with DataFile(output_filename, create=True, format="NETCDF4") as f:
         # Save unique ID for grid file
-        import uuid
-
         f.write_file_attribute("grid_id", str(uuid.uuid1()))
         f.write_file_attribute("gridue", str(gridue_file))
 
-        for name in grid:
-            f.write(name, grid[name])
+        for name, value in grid.items():
+            f.write(name, value)
 
 
 if __name__ == "__main__":
