@@ -32,7 +32,7 @@ def _importBody(gridue_settings, f):
         if line == "\n":
             try:
                 Key = next(k)
-            except:
+            except StopIteration:
                 continue
         else:
             Str[Key].append(line)
@@ -53,7 +53,7 @@ def _importBody(gridue_settings, f):
 
                     try:
                         vv = next(_l)
-                    except:
+                    except StopIteration:
                         continue
                     gridue_settings[k] = data_
     return gridue_settings
