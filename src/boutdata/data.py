@@ -18,7 +18,7 @@ import numpy
 # These are imported to be used by 'eval' in
 # BoutOptions.evaluate_scalar() and BoutOptionsFile.evaluate().
 # Change the names to match those used by C++/BOUT++
-from numpy import abs as abs  # noqa: F401
+from numpy import abs as abs
 from numpy import arccos as acos  # noqa: F401
 from numpy import arccosh as acosh  # noqa: F401
 from numpy import arcsin as asin  # noqa: F401

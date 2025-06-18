@@ -10,7 +10,6 @@ based on enthought's example by Gael Varoquaux <gael.varoquaux@normalesup.org>
 https://docs.enthought.com/mayavi/mayavi/auto/example_magnetic_field.html#example-magnetic-field
 """
 
-import sys
 
 import numpy as np
 from mayavi import mlab

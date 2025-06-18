@@ -1247,7 +1247,7 @@ def change_grid(
                 ix * mxsub : (ix + 1) * mxsub + 2 * mxg,
                 iy * mysub : (iy + 1) * mysub,
             ]
-            return sliced.reshape(sliced.shape + (1,))  # make 3D
+            return sliced.reshape((*sliced.shape, 1))  # make 3D
 
         outpath = output / f"BOUT.restart.{i}.nc"
         with DataFile(outpath, create=True) as f:
