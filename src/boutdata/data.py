@@ -433,10 +433,8 @@ class BoutOptions:
 
     def __iter__(self):
         """Iterates over all keys. First values, then sections"""
-        for k in self._keys:
-            yield k
-        for s in self._sections:
-            yield s
+        yield from self._keys
+        yield from self._sections
 
     def as_tree(self, indent=""):
         """Return a string formatted as a pretty version of the options tree"""
@@ -1718,8 +1716,7 @@ class BoutOutputs:
         through all variables for _caching_collect
 
         """
-        for k in self.varNames:
-            yield k
+        yield from self.varNames
 
     def __str__(self, indent=""):
         """Print a pretty version of the tree"""

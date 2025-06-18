@@ -13,21 +13,11 @@ https://docs.enthought.com/mayavi/mayavi/auto/example_magnetic_field.html#exampl
 import sys
 
 import numpy as np
+from mayavi import mlab
 from past.utils import old_div
-
-from boutdata.collect import collect
-
-if sys.version_info[0] >= 3:
-    message = (
-        "View3D uses the VTK library through mayavi, which"
-        + " is currently only available in python 2"
-    )
-    raise ImportError(message)
-else:
-    from mayavi import mlab
-
 from scipy import interpolate
 
+from boutdata.collect import collect
 from boututils.View2D import View2D
 
 from .boutgrid import create_grid

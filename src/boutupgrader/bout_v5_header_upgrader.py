@@ -4,7 +4,6 @@ import re
 import subprocess
 import textwrap
 from pathlib import Path
-from typing import List
 
 from .common import apply_or_display_patch
 
@@ -78,7 +77,7 @@ def fix_library_header_locations(
     )
 
 
-def make_header_regex(deprecated_headers: List[str]) -> re.Pattern:
+def make_header_regex(deprecated_headers: list[str]) -> re.Pattern:
     """Create a regular expression to match deprecated header locations"""
     deprecated_header_joined = "|".join(header.name for header in deprecated_headers)
     return re.compile(rf'(#include\s+<|")(?:\.\./)?({deprecated_header_joined})(>|")')
