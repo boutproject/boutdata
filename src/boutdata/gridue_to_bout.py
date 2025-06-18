@@ -45,7 +45,6 @@ def _importBody(gridue_settings, f):
         for n in range(5):
             for j in range(ny):
                 for i in range(nx):
-
                     data_[i][j][n] = float(vv)
 
                     try:
@@ -79,7 +78,6 @@ def _importSN(values, f):
 
 
 def _importDN(values, f):
-
     gridue_settings = dict(zip(["nxm", "nym"], values))
 
     header_rows = [
@@ -489,8 +487,7 @@ def calcRZCurvature(g: dict):
     return curl_bOverB_Rhat.T, curl_bOverB_Zhat.T, curl_bOverB_zetahat.T
 
 
-if __name__ == "__main__":
-
+def main():
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -510,12 +507,15 @@ Note that in most cases these grids are non-orthogonal."""
         pass
 
     args = parser.parse_args()
-    gridue_file = args.gridue_file
-    output_filename = args.output
-    plotting = args.plot
-    verbose = args.verbose
-    ignore_checks = args.ignore_checks
+    grid = convert(args.gridue_file, args.plot, args.verbose, args.ignore_checks)
 
+    if args.verbose:
+        print(f"Saving to {args.output}")
+
+    write_file(grid, args.output, args.gridue_file)
+
+
+def convert(gridue_file: str, plotting: bool, verbose: bool, ignore_checks: bool):
     g = importGridue(gridue_file)
 
     if plotting:
@@ -721,10 +721,15 @@ Note that in most cases these grids are non-orthogonal."""
         )
 
     ShiftAngle = np.zeros(nx)
-    ShiftAngle[:ixseps1] = np.sum(
-        dphidy[:ixseps1, (jyseps1_1 + 1) : (jyseps2_1 + 1)] * dy, axis=1  # Inner core
-    ) + np.sum(
-        dphidy[:ixseps1, (jyseps1_2 + 1) : (jyseps2_2 + 1)] * dy, axis=1  # Outer core
+    ShiftAngle[:ixseps1] = (
+        np.sum(
+            dphidy[:ixseps1, (jyseps1_1 + 1) : (jyseps2_1 + 1)] * dy,
+            axis=1,  # Inner core
+        )
+        + np.sum(
+            dphidy[:ixseps1, (jyseps1_2 + 1) : (jyseps2_2 + 1)] * dy,
+            axis=1,  # Outer core
+        )
     )
 
     if verbose:
@@ -755,10 +760,27 @@ Note that in most cases these grids are non-orthogonal."""
         plt.legend()
         plt.show()
 
-    from boututils.datafile import DataFile
+    grd.update(
+        {
+            "nx": nx,
+            "ny": ny,
+            "ixseps1": ixseps1,
+            "ixseps2": ixseps2,
+            "jyseps1_1": jyseps1_1,
+            "jyseps2_1": jyseps2_1,
+            "ny_inner": ny_inner,
+            "jyseps1_2": jyseps1_2,
+            "jyseps2_2": jyseps2_2,
+            "zShift": zShift,
+            "ShiftAngle": ShiftAngle,
+        }
+    )
 
-    if verbose:
-        print("Saving to " + output_filename)
+    return grd
+
+
+def write_file(grid: dict, output_filename: str, gridue_file: str):
+    from boututils.datafile import DataFile
 
     with DataFile(output_filename, create=True, format="NETCDF4") as f:
         # Save unique ID for grid file
@@ -767,19 +789,9 @@ Note that in most cases these grids are non-orthogonal."""
         f.write_file_attribute("grid_id", str(uuid.uuid1()))
         f.write_file_attribute("gridue", str(gridue_file))
 
-        f.write("nx", nx)
-        f.write("ny", ny)
-        f.write("ixseps1", ixseps1)
-        f.write("ixseps2", ixseps2)
-        f.write("jyseps1_1", jyseps1_1)
-        f.write("jyseps2_1", jyseps2_1)
-        f.write("ny_inner", ny_inner)
-        f.write("jyseps1_2", jyseps1_2)
-        f.write("jyseps2_2", jyseps2_2)
+        for name in grid:
+            f.write(name, grid[name])
 
-        # 2D fields
-        for name in grd:
-            f.write(name, grd[name])
 
-        f.write("zShift", zShift)
-        f.write("ShiftAngle", ShiftAngle)
+if __name__ == "__main__":
+    main()
