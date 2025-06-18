@@ -397,9 +397,7 @@ def gridcontourf(
     ny = grid["ny"]
 
     if (data2d.shape[0] != nx) or (data2d.shape[1] != ny):
-        raise ValueError(
-            f"data2d has wrong size: {data2d.shape}, expected ({nx},{ny})"
-        )
+        raise ValueError(f"data2d has wrong size: {data2d.shape}, expected ({nx},{ny})")
 
     if hasattr(j11, "__len__"):
         # Arrays rather than scalars
@@ -811,9 +809,7 @@ def bout2sonnet(grdname, outf):
             )
 
             # Element number
-            outf.write(
-                f"     ELEMENT   {element} = ({j - 1}, {i - 2}): {ll} {ul}\n"
-            )
+            outf.write(f"     ELEMENT   {element} = ({j - 1}, {i - 2}): {ll} {ul}\n")
 
             # Ratio Bt / Bp at cell centre. Note j-1 because
             # Bpxy and Btxy have not had extra points added
@@ -821,9 +817,7 @@ def bout2sonnet(grdname, outf):
                 f"     FIELD RATIO  = {Bpxy[i, j - 1] / Btxy[i, j - 1]} ({R[i, j]}, {Z[i, j]})\n"
             )
 
-            outf.write(
-                f"                         {lr} {ur}\n"
-            )
+            outf.write(f"                         {lr} {ur}\n")
 
             if (i == nx - 3) and (j == ny + 1):
                 # Last element
