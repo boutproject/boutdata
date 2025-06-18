@@ -53,6 +53,7 @@ lint = [
 [project.scripts]
 bout-squashoutput = "boutdata.scripts.bout_squashoutput:main"
 bout-upgrader = "boutupgrader:main"
+gridue-to-bout = "boutdata.gridue_to_bout:main"
 
 [tool.setuptools.dynamic]
 version = { attr = "setuptools_scm.get_version" }
