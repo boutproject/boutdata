@@ -1628,6 +1628,13 @@ class BoutOutputs(object):
             self._shared_buffer[global_slices].copy(), attributes=var_attributes
         )
 
+    def __getstate__(self):
+        new = self.__dict__.copy()
+        new.pop('_file0')
+        new.pop('_root_file')
+        new.pop('_workers')
+        return new
+
     def _worker_function(self, connection, proc_list, shared_buffer_raw):
         data_files = [DataFile(self._file_list[i]) for i in proc_list]
         dim_sizes = tuple(self.grid_info["sizes"][d] for d in ("t", "x", "y", "z"))
