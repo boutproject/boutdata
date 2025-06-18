@@ -23,6 +23,8 @@ TODO
 
 """
 
+import pathlib
+
 import numpy as np
 
 from boututils.boutarray import BoutArray
@@ -90,7 +92,8 @@ class DataFile:
         - NETCDF4 and NETCDF4_CLASSIC use HDF5 as the disk format
         """
         if filename is not None:
-            if filename.split(".")[-1] in ("hdf5", "hdf", "h5"):
+            filename = pathlib.Path(filename)
+            if filename.suffix in ("hdf5", "hdf", "h5"):
                 self.impl = DataFile_HDF5(
                     filename=filename, write=write, create=create, format=format
                 )
