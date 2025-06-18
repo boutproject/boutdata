@@ -178,7 +178,7 @@ def showdata(
     # Sort out titles
     if len(titles) == 0:
         for i in range(0, Nvar):
-            titles.append("Var" + str(i + 1))
+            titles.append(f"Var {i + 1}")
     elif len(titles) != Nvar:
         raise ValueError(
             "The length of the titles input list must match the length of the vars "

@@ -11,6 +11,7 @@ TODO
 import glob
 import multiprocessing
 import os
+import pathlib
 
 import numpy as np
 from natsort import natsorted
@@ -59,11 +60,9 @@ def resize3DField(var, data, coordsAndSizesTuple, method, mute):
     ) = coordsAndSizesTuple
 
     if not (mute):
+        nx, ny, nz = data.shape
         print(
-            "    Resizing "
-            + var
-            + " from (nx,ny,nz) = ({},{},{})".format(*data.shape)
-            + f" to ({newNx},{newNy},{newNz})"
+            f"    Resizing {var} from (nx,ny,nz) = ({nx},{ny},{nz}) to ({newNx},{newNy},{newNz})"
         )
 
     # Make the regular grid function (see examples in
@@ -157,7 +156,7 @@ def resize(
         print("ERROR: Can't overwrite restart files when expanding")
         return False
 
-    file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
+    file_list = glob.glob(os.path.join(path, f"BOUT.restart.*.{informat}"))
     file_list.sort()
     nfiles = len(file_list)
 
@@ -166,7 +165,7 @@ def resize(
         return False
 
     if not (mute):
-        print("Number of files found: " + str(nfiles))
+        print(f"Number of files found: {nfiles}")
 
     for f in file_list:
         new_f = os.path.join(output, f.split("/")[-1])
@@ -319,14 +318,14 @@ def resizeZ(newNz, path="data", output="./", informat="nc", outformat=None):
     if path == output:
         raise ValueError("Can't overwrite restart files when expanding")
 
-    file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
+    file_list = glob.glob(os.path.join(path, f"BOUT.restart.*.{informat}"))
     file_list.sort()
     nfiles = len(file_list)
 
     if nfiles == 0:
         raise ValueError("No data found")
 
-    print("Number of files found: " + str(nfiles))
+    print(f"Number of files found: {nfiles}")
 
     for f in file_list:
         new_f = os.path.join(output, f.split("/")[-1])
@@ -482,17 +481,20 @@ def create(
     if outformat is None:
         outformat = informat
 
-    file_list = glob.glob(os.path.join(path, "BOUT.dmp.*." + informat))
+    path = pathlib.Path(path)
+    output = pathlib.Path(output)
+
+    file_list = glob.glob(path / f"BOUT.dmp.*.{informat}")
     nfiles = len(file_list)
 
-    print(("Number of data files: ", nfiles))
+    print(f"Number of data files: {nfiles}")
 
     for i in range(nfiles):
         # Open each data file
-        infname = os.path.join(path, "BOUT.dmp." + str(i) + "." + informat)
-        outfname = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
+        infname = path / f"BOUT.dmp.{i}.{informat}"
+        outfname = output / f"BOUT.restart.{i}.{outformat}"
 
-        print((infname, " -> ", outfname))
+        print(f"{infname} -> {outfname}")
 
         infile = DataFile(infname)
         outfile = DataFile(outfname, create=True)
@@ -643,7 +645,7 @@ def redistribute(
 
     if nfiles != old_processor_layout.npes:
         print("WARNING: Number of restart files inconsistent with NPES")
-        print("Setting nfiles = " + str(old_processor_layout.npes))
+        print(f"Setting nfiles = {old_processor_layout.npes}")
         nfiles = old_processor_layout.npes
 
     if nfiles == 0:
@@ -684,9 +686,11 @@ def redistribute(
         jyseps1_2 = f["jyseps1_2"]
         is_doublenull = jyseps2_1 == jyseps1_2
 
+    output = pathlib.Path(output)
+
     outfile_list = []
     for i in range(npes):
-        outpath = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
+        outpath = os.path.join(output, f"BOUT.restart.{i}.{outformat}")
         outfile_list.append(DataFile(outpath, write=True, create=True))
 
     DataFileCache = create_cache(path, "BOUT.restart")
@@ -869,10 +873,13 @@ def resizeY(newy, path="data", output=".", informat="nc", outformat=None, myg=2)
         print("ERROR: No restart files found")
         return False
 
+    path = pathlib.Path(path)
+    output = pathlib.Path(output)
+
     for i in range(nfiles):
         # Open each data file
-        infname = os.path.join(path, "BOUT.restart." + str(i) + "." + informat)
-        outfname = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
+        infname = path / f"BOUT.restart.{i}.{informat}"
+        outfname = output / f"BOUT.restart.{i}.{outformat}"
 
         print("Processing %s -> %s" % (infname, outfname))
 
@@ -1228,6 +1235,8 @@ def change_grid(
     copy_data["nx"] = to_nx
     copy_data["ny"] = to_ny
 
+    output = pathlib.Path(output)
+
     for i in range(npes):
         ix = i % nxpe
         iy = i // nxpe
@@ -1240,9 +1249,9 @@ def change_grid(
             ]
             return sliced.reshape(sliced.shape + (1,))  # make 3D
 
-        outpath = os.path.join(output, "BOUT.restart." + str(i) + ".nc")
+        outpath = output / f"BOUT.restart.{i}.nc"
         with DataFile(outpath, create=True) as f:
-            print("Creating " + outpath)
+            print(f"Creating {outpath}")
 
             f.write("PE_XIND", ix)
             f.write("PE_YIND", iy)
@@ -1296,14 +1305,16 @@ def shift_v3_to_v4(
     if path == output:
         raise ValueError("Can't overwrite restart file")
 
-    file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
+    path = pathlib.Path(path)
+
+    file_list = glob.glob(path / f"BOUT.restart.*.{informat}")
     file_list = natsorted(file_list)
     nfiles = len(file_list)
 
     if nfiles == 0:
         raise ValueError("No data found")
 
-    print("Number of files found: " + str(nfiles))
+    print(f"Number of files found: {nfiles}")
 
     # Read processor layout
     with DataFile(file_list[0]) as f:

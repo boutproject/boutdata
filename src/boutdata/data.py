@@ -8,6 +8,7 @@ import copy
 import glob
 import io
 import os
+import pathlib
 import re
 from collections import OrderedDict, UserDict
 from multiprocessing import Pipe, Process, RawArray
@@ -442,10 +443,11 @@ class BoutOptions:
         text = self._name + "\n"
 
         for k in self._keys:
-            text += indent + " |- " + k + " = " + str(self._keys[k]) + "\n"
+            text += f"{indent} |- {k} = {self._keys[k]}\n"
 
         for s in self._sections:
-            text += indent + " |- " + self._sections[s].as_tree(indent + " |  ")
+            sub_indent = f"{indent} |  "
+            text += f"{indent} |- {self._sections[s].as_tree(sub_indent)}"
         return text
 
     def __str__(self, basename=None, opts=None, f=None):
@@ -1123,9 +1125,10 @@ class BoutOutputs:
             # do like this to catch, e.g. either 'BOUT.dmp.nc' or 'BOUT.dmp.0.nc'
             self._file_list = [latest_file]
         else:
+            path = pathlib.Path(path)
             # Re-create self._file_list so that it is sorted
             self._file_list = [
-                os.path.join(path, self._prefix + "." + str(i) + "." + self._suffix)
+                path / f"{self._prefix}.{i}.{self._suffix}"
                 for i in range(self.grid_info["npes"])
             ]
 

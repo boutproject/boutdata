@@ -823,9 +823,7 @@ class DataFile_HDF5(DataFile):
         bout_type = self.bout_type(varname)
         dims = BoutArray.dims_from_type(bout_type)
         if dims is None:
-            raise ValueError(
-                f"Variable bout_type not recognized (got {bout_type})"
-            )
+            raise ValueError(f"Variable bout_type not recognized (got {bout_type})")
         return dims
 
     def _bout_type_from_array(self, data):

@@ -31,9 +31,7 @@ def pol_slice(var3d, gridfile, n=1, zangle=0.0, nyInterp=None):
 
     s = np.shape(var3d)
     if len(s) != 3:
-        raise ValueError(
-            f"pol_slice expects a 3D variable (got {len(s)} dimensions)"
-        )
+        raise ValueError(f"pol_slice expects a 3D variable (got {len(s)} dimensions)")
 
     nx, ny, nz = s
 

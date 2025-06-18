@@ -1,5 +1,6 @@
 import glob
 import os
+import pathlib
 import sys
 
 import numpy as np
@@ -36,9 +37,7 @@ def findVar(varname, varlist):
         print(f"Variable '{varname}' not found. Using '{v[0]}' instead")
         return v[0]
     elif len(v) > 1:
-        print(
-            f"Variable '{varname}' not found, and is ambiguous. Could be one of: {v}"
-        )
+        print(f"Variable '{varname}' not found, and is ambiguous. Could be one of: {v}")
         raise ValueError(f"Variable '{varname}' not found")
 
     # None found. Check if it's an abbreviation
@@ -47,9 +46,7 @@ def findVar(varname, varlist):
         print(f"Variable '{varname}' not found. Using '{v[0]}' instead")
         return v[0]
     elif len(v) > 1:
-        print(
-            f"Variable '{varname}' not found, and is ambiguous. Could be one of: {v}"
-        )
+        print(f"Variable '{varname}' not found, and is ambiguous. Could be one of: {v}")
     raise ValueError("Variable '" + varname + "' not found")
 
 
@@ -1201,11 +1198,10 @@ def findFiles(path, prefix):
     elif file_list_parallel:
         return file_list_parallel, True, suffix_parallel
     elif file_list:
+        path = pathlib.Path(path)
         # make sure files are in the right order
         nfiles = len(file_list)
-        file_list = [
-            os.path.join(path, prefix + "." + str(i) + suffix) for i in range(nfiles)
-        ]
+        file_list = [path / f"{prefix}.{i}{suffix}" for i in range(nfiles)]
         return file_list, False, suffix
     else:
         raise OSError(f"ERROR: No data files found in path {path}")
