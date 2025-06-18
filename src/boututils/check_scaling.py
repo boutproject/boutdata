@@ -24,8 +24,8 @@ def get_order(grid_spacing, errors):
     """
     if len(errors) != len(grid_spacing):
         raise ValueError(
-            "errors (len: {}) and grid_spacing (len: {}) "
-            "should be the same length".format(len(errors), len(grid_spacing))
+            f"errors (len: {len(errors)}) and grid_spacing (len: {len(grid_spacing)}) "
+            "should be the same length"
         )
 
     full_range = polyfit(log(grid_spacing), log(errors), 1)
@@ -79,18 +79,16 @@ def error_rate_table(errors, grid_sizes, label):
     """
     if len(errors) != len(grid_sizes):
         raise ValueError(
-            "errors (len: {}) and grid_sizes (len: {}) "
-            "should be the same length".format(len(errors), len(grid_sizes))
+            f"errors (len: {len(errors)}) and grid_sizes (len: {len(grid_sizes)}) "
+            "should be the same length"
         )
 
     dx = 1.0 / array(grid_sizes)
-    message = "{}:\nGrid points | Error    | Rate\n".format(label)
+    message = f"{label}:\nGrid points | Error    | Rate\n"
     for i, grid_size in enumerate(grid_sizes):
-        message += "{:<11} | {:f} | ".format(grid_size, errors[i])
+        message += f"{grid_size:<11} | {errors[i]:f} | "
         if i > 0:
-            message += "{:f} \n".format(
-                log(errors[i] / errors[i - 1]) / log(dx[i] / dx[i - 1])
-            )
+            message += f"{log(errors[i] / errors[i - 1]) / log(dx[i] / dx[i - 1]):f} \n"
         else:
             message += "--\n"
     return message

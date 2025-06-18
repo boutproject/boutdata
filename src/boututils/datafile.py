@@ -45,7 +45,7 @@ except ImportError:
     has_h5py = False
 
 
-class DataFile(object):
+class DataFile:
     """File I/O class
 
     A wrapper around various NetCDF libraries and h5py, used by BOUT++
@@ -824,7 +824,7 @@ class DataFile_HDF5(DataFile):
         dims = BoutArray.dims_from_type(bout_type)
         if dims is None:
             raise ValueError(
-                "Variable bout_type not recognized (got {})".format(bout_type)
+                f"Variable bout_type not recognized (got {bout_type})"
             )
         return dims
 

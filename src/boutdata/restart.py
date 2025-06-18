@@ -63,7 +63,7 @@ def resize3DField(var, data, coordsAndSizesTuple, method, mute):
             "    Resizing "
             + var
             + " from (nx,ny,nz) = ({},{},{})".format(*data.shape)
-            + " to ({},{},{})".format(newNx, newNy, newNz)
+            + f" to ({newNx},{newNy},{newNz})"
         )
 
     # Make the regular grid function (see examples in
@@ -162,7 +162,7 @@ def resize(
     nfiles = len(file_list)
 
     if nfiles == 0:
-        print("ERROR: No data found in {}".format(path))
+        print(f"ERROR: No data found in {path}")
         return False
 
     if not (mute):
@@ -171,7 +171,7 @@ def resize(
     for f in file_list:
         new_f = os.path.join(output, f.split("/")[-1])
         if not (mute):
-            print("Changing {} => {}".format(f, new_f))
+            print(f"Changing {f} => {new_f}")
 
         # Open the restart file in read mode and create the new file
         with DataFile(f) as old, DataFile(new_f, write=True, create=True) as new:
@@ -330,7 +330,7 @@ def resizeZ(newNz, path="data", output="./", informat="nc", outformat=None):
 
     for f in file_list:
         new_f = os.path.join(output, f.split("/")[-1])
-        print("Changing {} => {}".format(f, new_f))
+        print(f"Changing {f} => {new_f}")
 
         # Open the restart file in read mode and create the new file
         with DataFile(f) as old, DataFile(new_f, write=True, create=True) as new:
@@ -1190,12 +1190,7 @@ def change_grid(
 
             to_data[t_xf : (t_xl + 1), t_yf : (t_yl + 1)] = interpolator((xinds, yinds))
         print(
-            "\tData ranges: {}:{} -> {}:{}".format(
-                np.amin(from_data),
-                np.amax(from_data),
-                np.amin(to_data),
-                np.amax(to_data),
-            )
+            f"\tData ranges: {np.amin(from_data)}:{np.amax(from_data)} -> {np.amin(to_data)}:{np.amax(to_data)}"
         )
         if show:
             import matplotlib.pyplot as plt
@@ -1220,10 +1215,10 @@ def change_grid(
 
     if (to_nx - 2 * mxg) % nxpe != 0:
         # Can't split grid in this way
-        raise ValueError("nxpe={} not compatible with nx = {}".format(nxpe, to_nx))
+        raise ValueError(f"nxpe={nxpe} not compatible with nx = {to_nx}")
     if to_ny % nype != 0:
         # Can't split grid in this way
-        raise ValueError("nype={} not compatible with ny = {}".format(nype, to_ny))
+        raise ValueError(f"nype={nype} not compatible with ny = {to_ny}")
 
     mxsub = (to_nx - 2 * mxg) // nxpe
     mysub = to_ny // nype
@@ -1318,10 +1313,10 @@ def shift_v3_to_v4(
         raise ValueError("Number of restart files doesn't match NPES")
 
     for n in range(nfiles):
-        basename = "BOUT.restart.{}.{}".format(n, informat)
+        basename = f"BOUT.restart.{n}.{informat}"
         f = os.path.join(path, basename)
         new_f = os.path.join(output, basename)
-        print("Changing {} => {}".format(f, new_f))
+        print(f"Changing {f} => {new_f}")
 
         pe_xind = n % NXPE
         pe_yind = n // NXPE

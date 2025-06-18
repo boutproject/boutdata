@@ -19,7 +19,7 @@ z = symbols("z")
 t = symbols("t")
 
 
-class Metric(object):
+class Metric:
     def __init__(self):
         # Create an identity metric
         self.x = symbols("x'")
@@ -284,7 +284,7 @@ def exprMag(expr):
 ##################################
 
 
-class SimpleTokamak(object):
+class SimpleTokamak:
     """
     Simple tokamak
 
@@ -486,7 +486,7 @@ class SimpleTokamak(object):
 # Shaped tokamak
 
 
-class ShapedTokamak(object):
+class ShapedTokamak:
     def __init__(
         self,
         Rmaj=6.0,

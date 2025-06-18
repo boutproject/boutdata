@@ -423,7 +423,7 @@ def concatenate_data(data_list, *, nxpe, fieldperp_yproc_ind, has_t_dim=True):
     npes = len(data_list)
     nype = npes // nxpe
     if npes % nxpe != 0:
-        raise ValueError("nxpe={} does not divide len(data_list)={}".format(nxpe, npes))
+        raise ValueError(f"nxpe={nxpe} does not divide len(data_list)={npes}")
 
     if has_t_dim:
         for var in ("field3d_t_1", "field2d_t_1"):
