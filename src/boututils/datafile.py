@@ -93,7 +93,7 @@ class DataFile:
         """
         if filename is not None:
             filename = pathlib.Path(filename)
-            if filename.suffix in ("hdf5", "hdf", "h5"):
+            if filename.suffix in (".hdf5", ".hdf", ".h5"):
                 self.impl = DataFile_HDF5(
                     filename=filename, write=write, create=create, format=format
                 )
