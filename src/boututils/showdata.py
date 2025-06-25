@@ -178,7 +178,7 @@ def showdata(
     # Sort out titles
     if len(titles) == 0:
         for i in range(0, Nvar):
-            titles.append(("Var" + str(i + 1)))
+            titles.append(f"Var {i + 1}")
     elif len(titles) != Nvar:
         raise ValueError(
             "The length of the titles input list must match the length of the vars "
@@ -339,7 +339,7 @@ def showdata(
         dims.append([])
         Ndims.append([])
         for j in range(0, Nlines[i]):
-            dims[i].append(array((vars[i][j].shape)))
+            dims[i].append(array(vars[i][j].shape))
             Ndims[i].append(dims[i][j].shape[0])
             # Perform check to make sure that data is either 2D or 3D
             if Ndims[i][j] < 2:
@@ -766,9 +766,9 @@ def showdata(
                 ax[j].set_title(titles[j])
 
         if t_array is not None:
-            title.set_text("t = %1.2e" % t_array[index])
+            title.set_text(f"t = {t_array[index]:1.2e}")
         else:
-            title.set_text("t = %i" % index)
+            title.set_text(f"t = {index}")
         return plots
 
     def init():

@@ -74,9 +74,9 @@ extend-select = [
   # "PT",          # flake8-pytest-style
   # "PTH",         # flake8-use-pathlib
   # "RET",         # flake8-return
-  # "RUF",         # Ruff-specific
+  "RUF",         # Ruff-specific
   # "SIM",         # flake8-simplify
-  # "UP",          # pyupgrade
+  "UP",          # pyupgrade
   # "YTT",         # flake8-2020
   # "EXE",         # flake8-executable
   # "NPY",         # NumPy specific rules

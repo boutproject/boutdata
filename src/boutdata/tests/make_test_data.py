@@ -167,13 +167,13 @@ def create_dump_file(*, i, tmpdir, rng, grid_info, boundaries, fieldperp_global_
 
     for b in boundaries:
         if b not in ("xinner", "xouter", "yupper", "ylower"):
-            raise ValueError("Unexpected boundary input " + str(b))
+            raise ValueError(f"Unexpected boundary input {b}")
     xinner = "xinner" in boundaries
     xouter = "xouter" in boundaries
     ylower = "ylower" in boundaries
     yupper = "yupper" in boundaries
 
-    with Dataset(tmpdir.joinpath("BOUT.dmp." + str(i) + ".nc"), "w") as outputfile:
+    with Dataset(tmpdir.joinpath(f"BOUT.dmp.{i}.nc"), "w") as outputfile:
         outputfile.createDimension("t", None)
         outputfile.createDimension("x", localnx)
         outputfile.createDimension("y", localny)
@@ -327,7 +327,7 @@ def create_restart_file(*, i, tmpdir, rng, grid_info, fieldperp_global_yind):
     localny = grid_info["MYSUB"] + 2 * myg
     localnz = grid_info["MZSUB"] + 2 * mzg
 
-    with Dataset(tmpdir.joinpath("BOUT.restart." + str(i) + ".nc"), "w") as outputfile:
+    with Dataset(tmpdir.joinpath(f"BOUT.restart.{i}.nc"), "w") as outputfile:
         outputfile.createDimension("x", localnx)
         outputfile.createDimension("y", localny)
         outputfile.createDimension("z", localnz)
@@ -423,7 +423,7 @@ def concatenate_data(data_list, *, nxpe, fieldperp_yproc_ind, has_t_dim=True):
     npes = len(data_list)
     nype = npes // nxpe
     if npes % nxpe != 0:
-        raise ValueError("nxpe={} does not divide len(data_list)={}".format(nxpe, npes))
+        raise ValueError(f"nxpe={nxpe} does not divide len(data_list)={npes}")
 
     if has_t_dim:
         for var in ("field3d_t_1", "field2d_t_1"):

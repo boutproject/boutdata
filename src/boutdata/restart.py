@@ -11,6 +11,7 @@ TODO
 import glob
 import multiprocessing
 import os
+import pathlib
 
 import numpy as np
 from natsort import natsorted
@@ -59,11 +60,9 @@ def resize3DField(var, data, coordsAndSizesTuple, method, mute):
     ) = coordsAndSizesTuple
 
     if not (mute):
+        nx, ny, nz = data.shape
         print(
-            "    Resizing "
-            + var
-            + " from (nx,ny,nz) = ({},{},{})".format(*data.shape)
-            + " to ({},{},{})".format(newNx, newNy, newNz)
+            f"    Resizing {var} from (nx,ny,nz) = ({nx},{ny},{nz}) to ({newNx},{newNy},{newNz})"
         )
 
     # Make the regular grid function (see examples in
@@ -157,21 +156,21 @@ def resize(
         print("ERROR: Can't overwrite restart files when expanding")
         return False
 
-    file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
+    file_list = glob.glob(os.path.join(path, f"BOUT.restart.*.{informat}"))
     file_list.sort()
     nfiles = len(file_list)
 
     if nfiles == 0:
-        print("ERROR: No data found in {}".format(path))
+        print(f"ERROR: No data found in {path}")
         return False
 
     if not (mute):
-        print("Number of files found: " + str(nfiles))
+        print(f"Number of files found: {nfiles}")
 
     for f in file_list:
         new_f = os.path.join(output, f.split("/")[-1])
         if not (mute):
-            print("Changing {} => {}".format(f, new_f))
+            print(f"Changing {f} => {new_f}")
 
         # Open the restart file in read mode and create the new file
         with DataFile(f) as old, DataFile(new_f, write=True, create=True) as new:
@@ -319,18 +318,18 @@ def resizeZ(newNz, path="data", output="./", informat="nc", outformat=None):
     if path == output:
         raise ValueError("Can't overwrite restart files when expanding")
 
-    file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
+    file_list = glob.glob(os.path.join(path, f"BOUT.restart.*.{informat}"))
     file_list.sort()
     nfiles = len(file_list)
 
     if nfiles == 0:
         raise ValueError("No data found")
 
-    print("Number of files found: " + str(nfiles))
+    print(f"Number of files found: {nfiles}")
 
     for f in file_list:
         new_f = os.path.join(output, f.split("/")[-1])
-        print("Changing {} => {}".format(f, new_f))
+        print(f"Changing {f} => {new_f}")
 
         # Open the restart file in read mode and create the new file
         with DataFile(f) as old, DataFile(new_f, write=True, create=True) as new:
@@ -408,7 +407,7 @@ def addnoise(path=".", var=None, scale=1e-5):
     file_list = glob.glob(os.path.join(path, "BOUT.restart.*"))
     nfiles = len(file_list)
 
-    print("Number of restart files: %d" % (nfiles,))
+    print(f"Number of restart files: {nfiles}")
 
     for file in file_list:
         print(file)
@@ -449,7 +448,7 @@ def scalevar(var, factor, path="."):
     file_list = glob.glob(os.path.join(path, "BOUT.restart.*"))
     nfiles = len(file_list)
 
-    print("Number of restart files: %d" % (nfiles,))
+    print(f"Number of restart files: {nfiles}")
     for file in file_list:
         print(file)
         with DataFile(file, write=True) as d:
@@ -482,17 +481,20 @@ def create(
     if outformat is None:
         outformat = informat
 
-    file_list = glob.glob(os.path.join(path, "BOUT.dmp.*." + informat))
+    path = pathlib.Path(path)
+    output = pathlib.Path(output)
+
+    file_list = glob.glob(path / f"BOUT.dmp.*.{informat}")
     nfiles = len(file_list)
 
-    print(("Number of data files: ", nfiles))
+    print(f"Number of data files: {nfiles}")
 
     for i in range(nfiles):
         # Open each data file
-        infname = os.path.join(path, "BOUT.dmp." + str(i) + "." + informat)
-        outfname = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
+        infname = path / f"BOUT.dmp.{i}.{informat}"
+        outfname = output / f"BOUT.restart.{i}.{outformat}"
 
-        print((infname, " -> ", outfname))
+        print(f"{infname} -> {outfname}")
 
         infile = DataFile(infname)
         outfile = DataFile(outfname, create=True)
@@ -643,7 +645,7 @@ def redistribute(
 
     if nfiles != old_processor_layout.npes:
         print("WARNING: Number of restart files inconsistent with NPES")
-        print("Setting nfiles = " + str(old_processor_layout.npes))
+        print(f"Setting nfiles = {old_processor_layout.npes}")
         nfiles = old_processor_layout.npes
 
     if nfiles == 0:
@@ -684,9 +686,11 @@ def redistribute(
         jyseps1_2 = f["jyseps1_2"]
         is_doublenull = jyseps2_1 == jyseps1_2
 
+    output = pathlib.Path(output)
+
     outfile_list = []
     for i in range(npes):
-        outpath = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
+        outpath = os.path.join(output, f"BOUT.restart.{i}.{outformat}")
         outfile_list.append(DataFile(outpath, write=True, create=True))
 
     DataFileCache = create_cache(path, "BOUT.restart")
@@ -869,12 +873,15 @@ def resizeY(newy, path="data", output=".", informat="nc", outformat=None, myg=2)
         print("ERROR: No restart files found")
         return False
 
+    path = pathlib.Path(path)
+    output = pathlib.Path(output)
+
     for i in range(nfiles):
         # Open each data file
-        infname = os.path.join(path, "BOUT.restart." + str(i) + "." + informat)
-        outfname = os.path.join(output, "BOUT.restart." + str(i) + "." + outformat)
+        infname = path / f"BOUT.restart.{i}.{informat}"
+        outfname = output / f"BOUT.restart.{i}.{outformat}"
 
-        print("Processing %s -> %s" % (infname, outfname))
+        print(f"Processing {infname} -> {outfname}")
 
         infile = DataFile(infname)
         outfile = DataFile(outfname, create=True)
@@ -981,7 +988,7 @@ def addvar(var, value, path="."):
     file_list = glob.glob(os.path.join(path, "BOUT.restart.*"))
     nfiles = len(file_list)
 
-    print("Number of restart files: %d" % (nfiles,))
+    print(f"Number of restart files: {nfiles}")
     # Loop through all the restart files
     for filename in file_list:
         print(filename)
@@ -1190,12 +1197,7 @@ def change_grid(
 
             to_data[t_xf : (t_xl + 1), t_yf : (t_yl + 1)] = interpolator((xinds, yinds))
         print(
-            "\tData ranges: {}:{} -> {}:{}".format(
-                np.amin(from_data),
-                np.amax(from_data),
-                np.amin(to_data),
-                np.amax(to_data),
-            )
+            f"\tData ranges: {np.amin(from_data)}:{np.amax(from_data)} -> {np.amin(to_data)}:{np.amax(to_data)}"
         )
         if show:
             import matplotlib.pyplot as plt
@@ -1220,10 +1222,10 @@ def change_grid(
 
     if (to_nx - 2 * mxg) % nxpe != 0:
         # Can't split grid in this way
-        raise ValueError("nxpe={} not compatible with nx = {}".format(nxpe, to_nx))
+        raise ValueError(f"nxpe={nxpe} not compatible with nx = {to_nx}")
     if to_ny % nype != 0:
         # Can't split grid in this way
-        raise ValueError("nype={} not compatible with ny = {}".format(nype, to_ny))
+        raise ValueError(f"nype={nype} not compatible with ny = {to_ny}")
 
     mxsub = (to_nx - 2 * mxg) // nxpe
     mysub = to_ny // nype
@@ -1232,6 +1234,8 @@ def change_grid(
     copy_data["MYSUB"] = mysub
     copy_data["nx"] = to_nx
     copy_data["ny"] = to_ny
+
+    output = pathlib.Path(output)
 
     for i in range(npes):
         ix = i % nxpe
@@ -1243,11 +1247,11 @@ def change_grid(
                 ix * mxsub : (ix + 1) * mxsub + 2 * mxg,
                 iy * mysub : (iy + 1) * mysub,
             ]
-            return sliced.reshape(sliced.shape + (1,))  # make 3D
+            return sliced.reshape((*sliced.shape, 1))  # make 3D
 
-        outpath = os.path.join(output, "BOUT.restart." + str(i) + ".nc")
+        outpath = output / f"BOUT.restart.{i}.nc"
         with DataFile(outpath, create=True) as f:
-            print("Creating " + outpath)
+            print(f"Creating {outpath}")
 
             f.write("PE_XIND", ix)
             f.write("PE_YIND", iy)
@@ -1301,14 +1305,16 @@ def shift_v3_to_v4(
     if path == output:
         raise ValueError("Can't overwrite restart file")
 
-    file_list = glob.glob(os.path.join(path, "BOUT.restart.*." + informat))
+    path = pathlib.Path(path)
+
+    file_list = glob.glob(path / f"BOUT.restart.*.{informat}")
     file_list = natsorted(file_list)
     nfiles = len(file_list)
 
     if nfiles == 0:
         raise ValueError("No data found")
 
-    print("Number of files found: " + str(nfiles))
+    print(f"Number of files found: {nfiles}")
 
     # Read processor layout
     with DataFile(file_list[0]) as f:
@@ -1318,10 +1324,10 @@ def shift_v3_to_v4(
         raise ValueError("Number of restart files doesn't match NPES")
 
     for n in range(nfiles):
-        basename = "BOUT.restart.{}.{}".format(n, informat)
+        basename = f"BOUT.restart.{n}.{informat}"
         f = os.path.join(path, basename)
         new_f = os.path.join(output, basename)
-        print("Changing {} => {}".format(f, new_f))
+        print(f"Changing {f} => {new_f}")
 
         pe_xind = n % NXPE
         pe_yind = n // NXPE

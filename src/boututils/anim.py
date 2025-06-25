@@ -59,7 +59,7 @@ def anim(s, d, *args, **kwargs):
         title = "t=" + np.string0(i)
         mlab.title(title, height=1.1, size=0.26)
         if save:
-            mlab.savefig("Movie/anim%d.png" % i)
+            mlab.savefig(f"Movie/anim{i}.png")
         yield
 
 

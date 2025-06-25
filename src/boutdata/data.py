@@ -8,6 +8,7 @@ import copy
 import glob
 import io
 import os
+import pathlib
 import re
 from collections import OrderedDict, UserDict
 from multiprocessing import Pipe, Process, RawArray
@@ -17,7 +18,7 @@ import numpy
 # These are imported to be used by 'eval' in
 # BoutOptions.evaluate_scalar() and BoutOptionsFile.evaluate().
 # Change the names to match those used by C++/BOUT++
-from numpy import abs as abs  # noqa: F401
+from numpy import abs as abs
 from numpy import arccos as acos  # noqa: F401
 from numpy import arccosh as acosh  # noqa: F401
 from numpy import arcsin as asin  # noqa: F401
@@ -80,7 +81,7 @@ class CaseInsensitiveDict(UserDict):
         return repr({key: value for key, value in self.data.values()})
 
 
-class BoutOptions(object):
+class BoutOptions:
     """This class represents a tree structure. Each node (BoutOptions
     object) can have several sub-nodes (sections), and several
     key-value pairs.
@@ -163,7 +164,7 @@ class BoutOptions(object):
             return self._sections[key]
 
         if key not in self._keys:
-            raise KeyError("Key '%s' not in section '%s'" % (key, self.path()))
+            raise KeyError(f"Key '{key}' not in section '{self.path()}'")
         return self._keys[key]
 
     def __setitem__(self, key, value):
@@ -267,9 +268,7 @@ class BoutOptions(object):
         def check_is_section(parent, path):
             if path in parent and not isinstance(parent[path], BoutOptions):
                 raise TypeError(
-                    "'{}:{}' already exists and is not a section!".format(
-                        parent._name, path
-                    )
+                    f"'{parent._name}:{path}' already exists and is not a section!"
                 )
 
         def ensure_sections(parent, path):
@@ -434,20 +433,19 @@ class BoutOptions(object):
 
     def __iter__(self):
         """Iterates over all keys. First values, then sections"""
-        for k in self._keys:
-            yield k
-        for s in self._sections:
-            yield s
+        yield from self._keys
+        yield from self._sections
 
     def as_tree(self, indent=""):
         """Return a string formatted as a pretty version of the options tree"""
         text = self._name + "\n"
 
         for k in self._keys:
-            text += indent + " |- " + k + " = " + str(self._keys[k]) + "\n"
+            text += f"{indent} |- {k} = {self._keys[k]}\n"
 
         for s in self._sections:
-            text += indent + " |- " + self._sections[s].as_tree(indent + " |  ")
+            sub_indent = f"{indent} |  "
+            text += f"{indent} |- {self._sections[s].as_tree(sub_indent)}"
         return text
 
     def __str__(self, basename=None, opts=None, f=None):
@@ -459,15 +457,13 @@ class BoutOptions(object):
         def format_inline_comment(name, options):
             if name in options.inline_comments:
                 f.write(
-                    "{}{}".format(
-                        options._comment_whitespace[name], options.inline_comments[name]
-                    )
+                    f"{options._comment_whitespace[name]}{options.inline_comments[name]}"
                 )
 
         for key, value in opts._keys.items():
             if key in opts.comments:
                 f.write("\n".join(opts.comments[key]) + "\n")
-            f.write("{} = {}".format(key, value))
+            f.write(f"{key} = {value}")
             format_inline_comment(key, opts)
             f.write("\n")
 
@@ -476,7 +472,7 @@ class BoutOptions(object):
             if section in opts.comments:
                 f.write("\n".join(opts.comments[section]))
             if opts[section]._keys:
-                f.write("\n[{}]".format(section_name))
+                f.write(f"\n[{section_name}]")
                 format_inline_comment(section, opts)
                 f.write("\n")
             self.__str__(section_name, opts[section], f)
@@ -645,7 +641,7 @@ class BoutOptionsFile(BoutOptions):
         self.filename = filename
         self.gridfilename = gridfilename
         # Open the file
-        with open(filename, "r") as f:
+        with open(filename) as f:
             # Go through each line in the file
             section = self  # Start with root section
             comments = []
@@ -674,7 +670,7 @@ class BoutOptionsFile(BoutOptions):
                 if startpos != -1:
                     # A section heading
                     if endpos == -1:
-                        raise SyntaxError("Missing ']' on line %d" % (linenr,))
+                        raise SyntaxError(f"Missing ']' on line {linenr}")
                     line = line[(startpos + 1) : endpos].strip()
 
                     parent_section = self
@@ -812,7 +808,7 @@ class BoutOptionsFile(BoutOptions):
                         self.nx = f["nx"]
                         self.ny = f["ny"]
                         nzfromfile = f["MZ"]
-                except (IOError, KeyError):
+                except (OSError, KeyError):
                     try:
                         gridfilename = self["mesh"]["file"]
                     except KeyError:
@@ -956,7 +952,7 @@ class BoutOptionsFile(BoutOptions):
             f.write(str(self))
 
 
-class BoutOutputs(object):
+class BoutOutputs:
     """Emulates a map class, represents the contents of a BOUT++ dmp
     files. Does not allow writing, only reading of data.  By default
     there is no cache, so each time a variable is read it is
@@ -1127,9 +1123,10 @@ class BoutOutputs(object):
             # do like this to catch, e.g. either 'BOUT.dmp.nc' or 'BOUT.dmp.0.nc'
             self._file_list = [latest_file]
         else:
+            path = pathlib.Path(path)
             # Re-create self._file_list so that it is sorted
             self._file_list = [
-                os.path.join(path, self._prefix + "." + str(i) + "." + self._suffix)
+                path / f"{self._prefix}.{i}.{self._suffix}"
                 for i in range(self.grid_info["npes"])
             ]
 
@@ -1210,8 +1207,7 @@ class BoutOutputs(object):
             self._parallel = determineNumberOfCPUs()
         if not isinstance(self._parallel, int) or self._parallel <= 0:
             raise ValueError(
-                "Passed or found inconsistent value %i for number of processes",
-                self._parallel,
+                f"Passed or found inconsistent value {self._parallel} for number of processes"
             )
 
         if self._parallel > self.grid_info["npes"]:
@@ -1401,7 +1397,7 @@ class BoutOutputs(object):
             DataFileCache = None
         # read and write the data
         for v in self.varNames:
-            print("processing {}".format(v))
+            print(f"processing {v}")
             data = collect(
                 v,
                 path=backupdir,
@@ -1440,8 +1436,8 @@ class BoutOutputs(object):
                         # FieldPerp?
                         # check is not perfect, fails if ny=nz
                         raise ValueError(
-                            "Error: Found FieldPerp '{}'. This case is not currently "
-                            "handled by BoutOutputs.redistribute().".format(v)
+                            f"Error: Found FieldPerp '{v}'. This case is not currently "
+                            "handled by BoutOutputs.redistribute()."
                         )
                     outfile.write(
                         v,
@@ -1456,8 +1452,8 @@ class BoutOutputs(object):
                         # evolving Field2D, but this case is not handled
                         # check is not perfect, fails if ny=nx and nx=nt
                         raise ValueError(
-                            "Error: Found evolving Field2D '{}'. This case is not "
-                            "currently handled by BoutOutputs.redistribute().".format(v)
+                            f"Error: Found evolving Field2D '{v}'. This case is not "
+                            "currently handled by BoutOutputs.redistribute()."
                         )
                     outfile.write(
                         v,
@@ -1535,9 +1531,7 @@ class BoutOutputs(object):
         ]
         if unsupported_kwargs:
             raise ValueError(
-                "kwargs {} are not supported when parallel is not False".format(
-                    unsupported_kwargs
-                )
+                f"kwargs {unsupported_kwargs} are not supported when parallel is not False"
             )
 
         if tind_auto:
@@ -1545,7 +1539,7 @@ class BoutOutputs(object):
 
         if varname not in self.keys():
             if strict:
-                raise ValueError("Variable '{}' not found".format(varname))
+                raise ValueError(f"Variable '{varname}' not found")
             else:
                 varname = findVar(varname, self.keys())
 
@@ -1568,11 +1562,9 @@ class BoutOutputs(object):
                 )
         elif any(dim not in ("t", "x", "y", "z") for dim in dimensions):
             raise ValueError(
-                "Dimensions {} of {} contain spatial dimensions but also have "
+                f"Dimensions {dimensions} of {varname} contain spatial dimensions but also have "
                 "dimensions that are not 't', 'x', 'y' or 'z'. This is not supported "
-                "by parallel reading. Try reading with parallel=False".format(
-                    dimensions, varname
-                )
+                "by parallel reading. Try reading with parallel=False"
             )
 
         is_fieldperp = dimensions in (("t", "x", "z"), ("x", "z"))
@@ -1731,8 +1723,7 @@ class BoutOutputs(object):
         through all variables for _caching_collect
 
         """
-        for k in self.varNames:
-            yield k
+        yield from self.varNames
 
     def __str__(self, indent=""):
         """Print a pretty version of the tree"""

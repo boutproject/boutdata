@@ -31,9 +31,7 @@ def pol_slice(var3d, gridfile, n=1, zangle=0.0, nyInterp=None):
 
     s = np.shape(var3d)
     if len(s) != 3:
-        raise ValueError(
-            "pol_slice expects a 3D variable (got {} dimensions)".format(len(s))
-        )
+        raise ValueError(f"pol_slice expects a 3D variable (got {len(s)} dimensions)")
 
     nx, ny, nz = s
 
@@ -43,12 +41,12 @@ def pol_slice(var3d, gridfile, n=1, zangle=0.0, nyInterp=None):
         grid_nx = gf.read("nx")
         if grid_nx != nx:
             raise ValueError(
-                "Grid X size ({}) is different to the variable ({})".format(grid_nx, nx)
+                f"Grid X size ({grid_nx}) is different to the variable ({nx})"
             )
         grid_ny = gf.read("ny")
         if grid_ny != ny:
             raise ValueError(
-                "Grid Y size ({}) is different to the variable ({})".format(grid_ny, ny)
+                f"Grid Y size ({grid_ny}) is different to the variable ({ny})"
             )
 
         # Get the toroidal shift

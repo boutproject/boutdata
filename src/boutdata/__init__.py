@@ -13,16 +13,16 @@ from boututils.run_wrapper import (
 )
 
 __all__ = [
-    "attributes",
-    "collect",
     "BoutArray",
     "alwayswarn",
+    "attributes",
+    "build_and_log",
+    "collect",
+    "determineNumberOfCPUs",
     "launch",
     "launch_safe",
     "shell",
     "shell_safe",
-    "determineNumberOfCPUs",
-    "build_and_log",
 ]
 
 __name__ = "boutdata"

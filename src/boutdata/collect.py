@@ -1,5 +1,6 @@
 import glob
 import os
+import pathlib
 import sys
 
 import numpy as np
@@ -33,27 +34,19 @@ def findVar(varname, varlist):
     v = [name for name in varlist if name.lower() == varname.lower()]
     if len(v) == 1:
         # Found case match
-        print("Variable '{}' not found. Using '{}' instead".format(varname, v[0]))
+        print(f"Variable '{varname}' not found. Using '{v[0]}' instead")
         return v[0]
     elif len(v) > 1:
-        print(
-            "Variable '{}' not found, and is ambiguous. Could be one of: {}".format(
-                varname, v
-            )
-        )
-        raise ValueError("Variable '{}' not found".format(varname))
+        print(f"Variable '{varname}' not found, and is ambiguous. Could be one of: {v}")
+        raise ValueError(f"Variable '{varname}' not found")
 
     # None found. Check if it's an abbreviation
     v = [name for name in varlist if name[: len(varname)].lower() == varname.lower()]
     if len(v) == 1:
-        print("Variable '{}' not found. Using '{}' instead".format(varname, v[0]))
+        print(f"Variable '{varname}' not found. Using '{v[0]}' instead")
         return v[0]
     elif len(v) > 1:
-        print(
-            "Variable '{}' not found, and is ambiguous. Could be one of: {}".format(
-                varname, v
-            )
-        )
+        print(f"Variable '{varname}' not found, and is ambiguous. Could be one of: {v}")
     raise ValueError("Variable '" + varname + "' not found")
 
 
@@ -85,7 +78,7 @@ def _convert_to_nice_slice(r, N, name="range"):
     """
 
     if N == 0:
-        raise ValueError("No data available in {}".format(name))
+        raise ValueError(f"No data available in {name}")
     if r is None:
         temp_slice = slice(N)
     elif isinstance(r, slice):
@@ -94,7 +87,7 @@ def _convert_to_nice_slice(r, N, name="range"):
         if r >= N or r < -N:
             # raise out of bounds error as if we'd tried to index the array with r
             # without this, would return an empty array instead
-            raise IndexError("{} index out of range, value was {}".format(name, r))
+            raise IndexError(f"{name} index out of range, value was {r}")
         elif r == -1:
             temp_slice = slice(r, None)
         else:
@@ -117,7 +110,7 @@ def _convert_to_nice_slice(r, N, name="range"):
         # Convert 3 element list to slice object
         temp_slice = slice(r[0], r[1], r[2])
     else:
-        raise ValueError("Couldn't convert {} ('{}') to slice".format(name, r))
+        raise ValueError(f"Couldn't convert {name} ('{r}') to slice")
 
     # slice.indices converts None to actual values
     return slice(*temp_slice.indices(N))
@@ -232,7 +225,7 @@ def collect(
 
     if varname not in grid_info["varNames"]:
         if strict:
-            raise ValueError("Variable '{}' not found".format(varname))
+            raise ValueError(f"Variable '{varname}' not found")
         else:
             varname = findVar(varname, f.list())
 
@@ -385,7 +378,7 @@ def _collect_from_single_file(
 
     if varname not in f.keys():
         if strict:
-            raise ValueError("Variable '{}' not found".format(varname))
+            raise ValueError(f"Variable '{varname}' not found")
         else:
             varname = findVar(varname, f.list())
 
@@ -395,12 +388,12 @@ def _collect_from_single_file(
         mxg = f["MXG"]
     except KeyError:
         mxg = 0
-        print("MXG not found, setting to {}".format(mxg))
+        print(f"MXG not found, setting to {mxg}")
     try:
         myg = f["MYG"]
     except KeyError:
         myg = 0
-        print("MYG not found, setting to {}".format(myg))
+        print(f"MYG not found, setting to {myg}")
 
     if xguards:
         nx = f["nx"]
@@ -466,8 +459,8 @@ def _read_scalar(f, varname, dimensions, var_attributes, tind):
         if not dimensions[0] == "t":
             # 't' should be the first dimension in the list if present
             raise ValueError(
-                "{} has a 't' dimension, but it is not the first dimension "
-                "in dimensions={}".format(varname, dimensions)
+                f"{varname} has a 't' dimension, but it is not the first dimension "
+                f"in dimensions={dimensions}"
             )
         data = f.read(varname, ranges=[tind] + (len(dimensions) - 1) * [None])
     else:
@@ -590,8 +583,8 @@ def _collect_from_one_proc(
             if not dimensions[0] == "t":
                 # 't' should be the first dimension in the list if present
                 raise ValueError(
-                    "{} has a 't' dimension, but it is not the first dimension "
-                    "in dimensions={}".format(varname, dimensions)
+                    f"{varname} has a 't' dimension, but it is not the first dimension "
+                    f"in dimensions={dimensions}"
                 )
             result[:] = datafile.read(varname, ranges=[tind] + (ndims - 1) * [None])
         else:
@@ -659,17 +652,7 @@ def _collect_from_one_proc(
 
     if info:
         print(
-            "\rReading from {}: [{}-{}][{}-{}] -> [{}-{}][{}-{}]\n".format(
-                i,
-                xstart,
-                xstop - 1,
-                ystart,
-                ystop - 1,
-                xgstart,
-                xgstop - 1,
-                ygstart,
-                ygstop - 1,
-            )
+            f"\rReading from {i}: [{xstart}-{xstop - 1}][{ystart}-{ystop - 1}] -> [{xgstart}-{xgstop - 1}][{ygstart}-{ygstop - 1}]\n"
         )
 
     if is_fieldperp:
@@ -953,16 +936,12 @@ def _check_fieldperp_attributes(
         # and check they are unique
         if yindex_global is not None and yindex_global != temp_yindex:
             raise ValueError(
-                "Found FieldPerp {} at different global y-indices, {} and {}".format(
-                    varname, temp_yindex, yindex_global
-                )
+                f"Found FieldPerp {varname} at different global y-indices, {temp_yindex} and {yindex_global}"
             )
         yindex_global = temp_yindex
         if fieldperp_yproc is not None and fieldperp_yproc != pe_yind:
             raise ValueError(
-                "Found FieldPerp {} on different y-processor indices, {} and {}".format(
-                    varname, fieldperp_yproc, pe_yind
-                )
+                f"Found FieldPerp {varname} on different y-processor indices, {fieldperp_yproc} and {pe_yind}"
             )
         fieldperp_yproc = pe_yind
         var_attributes = temp_f_attributes
@@ -1000,7 +979,7 @@ def _get_grid_info(
     def load_and_check(varname):
         var = f.read(varname)
         if var is None:
-            raise ValueError("Missing {} variable".format(varname))
+            raise ValueError(f"Missing {varname} variable")
         return var
 
     mz = int(load_and_check("MZ"))
@@ -1020,12 +999,12 @@ def _get_grid_info(
         nxpe = int(f["NXPE"])
     except KeyError:
         nxpe = 1
-        print("NXPE not found, setting to {}".format(nxpe))
+        print(f"NXPE not found, setting to {nxpe}")
     try:
         nype = int(f["NYPE"])
     except KeyError:
         nype = nfiles
-        print("NYPE not found, setting to {}".format(nype))
+        print(f"NYPE not found, setting to {nype}")
 
     if "t_array" in f.keys():
         nt = len(f.read("t_array"))
@@ -1046,8 +1025,8 @@ def _get_grid_info(
                 yproc_upper_target = ny_inner // mysub - 1
                 if ny_inner % mysub != 0:
                     raise ValueError(
-                        "Trying to keep upper boundary cells but mysub={} does not "
-                        "divide ny_inner={}".format(mysub, ny_inner)
+                        f"Trying to keep upper boundary cells but mysub={mysub} does not "
+                        f"divide ny_inner={ny_inner}"
                     )
     else:
         ny = mysub * nype
@@ -1191,9 +1170,9 @@ def findFiles(path, prefix):
         files = glob.glob(os.path.join(path, prefix + test_suffix))
         if files:
             if file_list_parallel:  # Already had a list of files
-                raise IOError(
-                    "Parallel dump files with both {0} and {1} extensions are present. "
-                    "Do not know which to read.".format(suffix_parallel, test_suffix)
+                raise OSError(
+                    f"Parallel dump files with both {suffix_parallel} and {test_suffix} extensions are present. "
+                    "Do not know which to read."
                 )
             suffix_parallel = test_suffix
             file_list_parallel = files
@@ -1204,29 +1183,28 @@ def findFiles(path, prefix):
         files = glob.glob(os.path.join(path, prefix + ".*" + test_suffix))
         if files:
             if file_list:  # Already had a list of files
-                raise IOError(
-                    "Dump files with both {0} and {1} extensions are present. Do not "
-                    "know which to read.".format(suffix, test_suffix)
+                raise OSError(
+                    f"Dump files with both {suffix} and {test_suffix} extensions are present. Do not "
+                    "know which to read."
                 )
             suffix = test_suffix
             file_list = files
 
     if file_list_parallel and file_list:
-        raise IOError(
-            "Both regular (with suffix {0}) and parallel (with suffix {1}) dump files "
-            "are present. Do not know which to read.".format(suffix, suffix_parallel)
+        raise OSError(
+            f"Both regular (with suffix {suffix}) and parallel (with suffix {suffix_parallel}) dump files "
+            "are present. Do not know which to read."
         )
     elif file_list_parallel:
         return file_list_parallel, True, suffix_parallel
     elif file_list:
+        path = pathlib.Path(path)
         # make sure files are in the right order
         nfiles = len(file_list)
-        file_list = [
-            os.path.join(path, prefix + "." + str(i) + suffix) for i in range(nfiles)
-        ]
+        file_list = [path / f"{prefix}.{i}{suffix}" for i in range(nfiles)]
         return file_list, False, suffix
     else:
-        raise IOError("ERROR: No data files found in path {0}".format(path))
+        raise OSError(f"ERROR: No data files found in path {path}")
 
 
 def create_cache(path, prefix):

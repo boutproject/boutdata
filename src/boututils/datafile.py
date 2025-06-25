@@ -23,6 +23,8 @@ TODO
 
 """
 
+import pathlib
+
 import numpy as np
 
 from boututils.boutarray import BoutArray
@@ -45,7 +47,7 @@ except ImportError:
     has_h5py = False
 
 
-class DataFile(object):
+class DataFile:
     """File I/O class
 
     A wrapper around various NetCDF libraries and h5py, used by BOUT++
@@ -90,7 +92,8 @@ class DataFile(object):
         - NETCDF4 and NETCDF4_CLASSIC use HDF5 as the disk format
         """
         if filename is not None:
-            if filename.split(".")[-1] in ("hdf5", "hdf", "h5"):
+            filename = pathlib.Path(filename)
+            if filename.suffix in (".hdf5", ".hdf", ".h5"):
                 self.impl = DataFile_HDF5(
                     filename=filename, write=write, create=create, format=format
                 )
@@ -823,9 +826,7 @@ class DataFile_HDF5(DataFile):
         bout_type = self.bout_type(varname)
         dims = BoutArray.dims_from_type(bout_type)
         if dims is None:
-            raise ValueError(
-                "Variable bout_type not recognized (got {})".format(bout_type)
-            )
+            raise ValueError(f"Variable bout_type not recognized (got {bout_type})")
         return dims
 
     def _bout_type_from_array(self, data):

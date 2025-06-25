@@ -19,7 +19,7 @@ z = symbols("z")
 t = symbols("t")
 
 
-class Metric(object):
+class Metric:
     def __init__(self):
         # Create an identity metric
         self.x = symbols("x'")
@@ -284,7 +284,7 @@ def exprMag(expr):
 ##################################
 
 
-class SimpleTokamak(object):
+class SimpleTokamak:
     """
     Simple tokamak
 
@@ -353,11 +353,11 @@ class SimpleTokamak(object):
 
         # Approximate poloidal field for radial width calculation
         Bp0 = Bt * self.r / (q(0.5) * R)
-        print("Bp0 = %e" % Bp0)
+        print(f"Bp0 = {Bp0}")
 
         # dx = Bp * R * dr  -- width of the box in psi space
         self.psiwidth = Bp0 * R * dr
-        print("psi width = %e" % self.psiwidth)
+        print(f"psi width = {self.psiwidth}")
 
         # Integrated shear
         self.sinty = diff(self.zShift, x) / self.psiwidth
@@ -486,7 +486,7 @@ class SimpleTokamak(object):
 # Shaped tokamak
 
 
-class ShapedTokamak(object):
+class ShapedTokamak:
     def __init__(
         self,
         Rmaj=6.0,

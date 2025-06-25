@@ -173,9 +173,9 @@ def squashoutput(
         for f in filenames:
             if os.path.isfile(f):
                 raise ValueError(
-                    "{} already exists, squashoutput() will not overwrite. Also, "
+                    f"{fullpath} already exists, squashoutput() will not overwrite. Also, "
                     "for some filenames collect may try to read from this file, which "
-                    "is presumably not desired behaviour.".format(fullpath)
+                    "is presumably not desired behaviour."
                 )
 
     outputvars = [k for k in outputs.keys() if k not in drop_variables]

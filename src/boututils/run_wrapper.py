@@ -91,7 +91,7 @@ def determineNumberOfCPUs():
             res = bin(int(m.group(1).replace(",", ""), 16)).count("1")
             if res > 0:
                 return res
-    except IOError:
+    except OSError:
         pass
 
     # Python 2.6+
@@ -148,7 +148,7 @@ def determineNumberOfCPUs():
 
         if res > 0:
             return res
-    except IOError:
+    except OSError:
         pass
 
     # Solaris
@@ -170,7 +170,7 @@ def determineNumberOfCPUs():
     try:
         try:
             dmesg = open("/var/run/dmesg.boot").read()
-        except IOError:
+        except OSError:
             dmesgProcess = subprocess.Popen(["dmesg"], stdout=subprocess.PIPE)
             dmesg = dmesgProcess.communicate()[0]
 
@@ -266,8 +266,7 @@ def shell_safe(command, *args, **kwargs):
     s, out = shell(command, *args, **kwargs)
     if s:
         raise RuntimeError(
-            "Run failed with %d.\nCommand was:\n%s\n\n"
-            "Output was\n\n%s" % (s, command, out)
+            f"Run failed with {s}.\nCommand was:\n{command}\n\nOutput was\n\n{out}"
         )
     return s, out
 
@@ -316,7 +315,7 @@ def build_and_log(test):
     # We're using CMake, but we need to know the target name. If
     # bout_add_integrated_test was used (which it should have been!),
     # then the test name is the same as the target name
-    with open(ctest_filename, "r") as f:
+    with open(ctest_filename) as f:
         contents = f.read()
     match = re.search("add_test.(.*) ", contents)
     if match is None:

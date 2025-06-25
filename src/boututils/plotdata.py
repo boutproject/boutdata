@@ -69,7 +69,7 @@ def plotdata(
             _ = plt.colorbar(shrink=0.8, extend="both")
 
     else:
-        print("Sorry, can't handle %d-D variables" % ndims)
+        print(f"Sorry, can't handle {ndims}-D variables")
         return
 
     if title is not None:
