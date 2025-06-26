@@ -182,7 +182,7 @@ class DataFile:
         """
         if ranges is not None:
             for x in ranges:
-                if isinstance(x, (list, tuple)):
+                if isinstance(x, list | tuple):
                     x = slice(*x)
         return self.impl.read(name, ranges=ranges, asBoutArray=asBoutArray)
 

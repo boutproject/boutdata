@@ -423,9 +423,9 @@ def showdata(
     # Generate grids for plotting
     # Try to use provided grids where possible
     # If x and/or y are not lists, apply to all variables
-    if not isinstance(x, (list, tuple)):
+    if not isinstance(x, list | tuple):
         x = [x] * Nvar  # Make list of x with length Nvar
-    if not isinstance(y, (list, tuple)):
+    if not isinstance(y, list | tuple):
         y = [y] * Nvar  # Make list of x with length Nvar
     xnew = []
     ynew = []
