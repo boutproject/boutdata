@@ -36,8 +36,13 @@ def regions(grid, mxg=2):
     j11 = grid["jyseps1_1"]
     j12 = grid["jyseps1_2"]
     j21 = grid["jyseps2_1"]
+
+    if j12 > j21:
+        j12, j21 = j21, j12
+
     j22 = grid["jyseps2_2"]
     ix1 = grid["ixseps1"]
+    ix2 = grid["ixseps2"]
 
     nx = grid["nx"]
     ny = grid["ny"]
@@ -46,7 +51,9 @@ def regions(grid, mxg=2):
     has_lower_inner_leg = j11 >= 0
     has_lower_outer_leg = j22 + 1 < ny
 
-    assert not double_null
+    if double_null:
+        assert ix1 == ix2
+        # Connected double null
 
     regions = {}
     if has_lower_inner_leg:
@@ -65,32 +72,131 @@ def regions(grid, mxg=2):
             "inner": "lower inner pf",
             "outer": None,
             "lower": None,
-            "upper": "sol",
+            "upper": "inner sol" if double_null else "sol",
             "xfirst": ix1,
             "xlast": nx - 1 - mxg,
             "yfirst": 0,
             "ylast": j11,
         }
-    regions["sol"] = {
-        "inner": "core",
-        "outer": None,
-        "lower": "lower inner sol" if has_lower_inner_leg else None,
-        "upper": "lower outer sol" if has_lower_outer_leg else None,
-        "xfirst": ix1,
-        "xlast": nx - 1 - mxg,
-        "yfirst": j11 + 1,
-        "ylast": j22,
-    }
-    regions["core"] = {
-        "inner": None,
-        "outer": "sol",
-        "lower": "core",
-        "upper": "core",
-        "xfirst": mxg,
-        "xlast": ix1 - 1,
-        "yfirst": j11 + 1,
-        "ylast": j22,
-    }
+    if double_null:
+        # Connected double null
+        # "inner sol", "inner core", "outer sol", "outer core"
+        # "upper inner pf", "upper inner sol", "upper outer pf", "upper outer sol"
+
+        ny_inner = grid["ny_inner"]
+
+        has_upper_inner_leg = ny_inner - 1 > j12
+        has_upper_outer_leg = j21 > ny_inner - 1
+
+        regions["inner sol"] = {
+            "inner": "inner core",
+            "outer": None,
+            "lower": "lower inner sol" if has_lower_inner_leg else None,
+            "upper": "upper inner sol" if has_upper_inner_leg else None,
+            "xfirst": ix1,
+            "xlast": nx - 1 - mxg,
+            "yfirst": j11 + 1,
+            "ylast": j12,
+        }
+        regions["inner core"] = {
+            "inner": None,
+            "outer": "inner sol",
+            "lower": "outer core",
+            "upper": "outer core",
+            "xfirst": mxg,
+            "xlast": ix1 - 1,
+            "yfirst": j11 + 1,
+            "ylast": j12,
+        }
+
+        if has_upper_inner_leg:
+            # Upper inner leg
+            regions["upper inner pf"] = {
+                "inner": None,
+                "outer": "upper inner sol",
+                "lower": "upper outer pf" if has_upper_outer_leg else None,
+                "upper": None,
+                "xfirst": mxg,
+                "xlast": ix2 - 1,
+                "yfirst": j12 + 1,
+                "ylast": ny_inner - 1,
+            }
+            regions["upper inner sol"] = {
+                "inner": "upper inner pf",
+                "outer": None,
+                "lower": "inner sol",
+                "upper": None,
+                "xfirst": ix2,
+                "xlast": nx - 1 - mxg,
+                "yfirst": j12 + 1,
+                "ylast": ny_inner - 1,
+            }
+
+        if has_upper_outer_leg:
+            # Upper outer leg
+            regions["upper outer pf"] = {
+                "inner": None,
+                "outer": "upper inner sol",
+                "lower": None,
+                "upper": "upper inner pf" if has_upper_inner_leg else None,
+                "xfirst": mxg,
+                "xlast": ix2 - 1,
+                "yfirst": ny_inner,
+                "ylast": j21,
+            }
+            regions["upper outer sol"] = {
+                "inner": "upper inner pf",
+                "outer": None,
+                "lower": None,
+                "upper": "outer sol",
+                "xfirst": ix2,
+                "xlast": nx - 1 - mxg,
+                "yfirst": ny_inner,
+                "ylast": j21,
+            }
+
+        regions["outer sol"] = {
+            "inner": "outer core",
+            "outer": None,
+            "lower": "upper outer sol" if has_upper_outer_leg else None,
+            "upper": "lower outer sol" if has_lower_outer_leg else None,
+            "xfirst": ix1,
+            "xlast": nx - 1 - mxg,
+            "yfirst": j21 + 1,
+            "ylast": j22,
+        }
+        regions["outer core"] = {
+            "inner": None,
+            "outer": "outer sol",
+            "lower": "inner core",
+            "upper": "inner core",
+            "xfirst": mxg,
+            "xlast": ix1 - 1,
+            "yfirst": j21 + 1,
+            "ylast": j22,
+        }
+    else:
+        # Single null
+        regions["sol"] = {
+            "inner": "core",
+            "outer": None,
+            "lower": "lower inner sol" if has_lower_inner_leg else None,
+            "upper": "lower outer sol" if has_lower_outer_leg else None,
+            "xfirst": ix1,
+            "xlast": nx - 1 - mxg,
+            "yfirst": j11 + 1,
+            "ylast": j22,
+        }
+        regions["core"] = {
+            "inner": None,
+            "outer": "sol",
+            "lower": "core",
+            "upper": "core",
+            "xfirst": mxg,
+            "xlast": ix1 - 1,
+            "yfirst": j11 + 1,
+            "ylast": j22,
+        }
     if has_lower_outer_leg:
         # Lower outer leg
         regions["lower outer pf"] = {
@@ -106,7 +212,7 @@ def regions(grid, mxg=2):
         regions["lower outer sol"] = {
             "inner": "lower outer pf",
             "outer": None,
-            "lower": "sol",
+            "lower": "outer sol" if double_null else "sol",
             "upper": None,
             "xfirst": ix1,
             "xlast": nx - 1 - mxg,
