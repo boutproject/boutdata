@@ -426,6 +426,8 @@ def gridcontourf(
     ylabel="Height [m]",
     separatrix=False,
     log=False,
+    alpha=1.0,
+    antialiased=True,
     remove_xguards=False,
 ):
     """Plots a 2D contour plot, taking into account branch cuts
@@ -576,6 +578,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
 
         yind = [j11, j22 + 1]
@@ -586,6 +590,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
 
         ax.contourf(
@@ -595,6 +601,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
         ystart = j11 + 1
 
@@ -606,6 +614,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
 
     # Inner SOL
@@ -616,6 +626,8 @@ def gridcontourf(
         levels,
         cmap=cmap,
         norm=norm,
+        alpha=alpha,
+        antialiased=antialiased,
     )
     ystart = j21 + 1
 
@@ -630,6 +642,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
         ax.contourf(
             R[:, ystart:nin],
@@ -638,6 +652,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
 
         # Outer leg
@@ -648,6 +664,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
         ax.contourf(
             R[ix1:, j12 : (j12 + 2)],
@@ -656,6 +674,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
         ystart = j12 + 1
 
@@ -667,6 +687,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
 
         yind = [j21 + 1, j12]
@@ -677,6 +699,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
     else:
         ystart -= 1
@@ -688,6 +712,8 @@ def gridcontourf(
         levels,
         cmap=cmap,
         norm=norm,
+        alpha=alpha,
+        antialiased=antialiased,
     )
 
     ystart = j22 + 1
@@ -701,6 +727,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
         ax.contourf(
             R[:, ystart:ny],
@@ -709,6 +737,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
 
         # X-point
@@ -742,6 +772,8 @@ def gridcontourf(
             levels,
             cmap=cmap,
             norm=norm,
+            alpha=alpha,
+            antialiased=antialiased,
         )
 
     if add_colorbar:
