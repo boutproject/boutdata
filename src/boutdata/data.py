@@ -479,6 +479,9 @@ class BoutOptions:
 
         return f.getvalue()
 
+    def __repr__(self):
+        return self.as_dict()
+
     def get_bool(self, name, default=None):
         """
         Convert an option value to a bool, in (almost) the same way as BOUT++.
