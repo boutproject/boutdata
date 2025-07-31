@@ -1024,10 +1024,10 @@ class DataFile_ADIOS2(DataFile):
         else:
             message = "DataFile: Writing to ADIOS2 not supported"
             raise ImportError(message)
-#        elif create:
-#            self.handle = adios2.Stream(filename,"w")
-#        else:
-#            self.handle = adios2.Stream(filename, "a")
+        #        elif create:
+        #            self.handle = adios2.Stream(filename,"w")
+        #        else:
+        #            self.handle = adios2.Stream(filename, "a")
         # Record if writing
         self.writeable = write or create
 
@@ -1237,7 +1237,7 @@ class DataFile_ADIOS2(DataFile):
     def _bout_type_from_dimensions(self, dims, steps):
         t = ()
         if steps > 1:
-            t = t + ('t',)
+            t = t + ("t",)
         for d in dims:
             t = t + (d,)
         bt = BoutArray.type_from_dims(t)
@@ -1280,7 +1280,8 @@ class DataFile_ADIOS2(DataFile):
                 if "__xarray_dimensions__" in attributes:
                     var = self.handle.inquire_variable(varname)
                     attributes["bout_type"] = self._bout_type_from_dimensions(
-                        attributes["__xarray_dimensions__"], var.steps())
+                        attributes["__xarray_dimensions__"], var.steps()
+                    )
 
             # Save the attributes for this variable to the cache
             self._attributes_cache[varname] = attributes
