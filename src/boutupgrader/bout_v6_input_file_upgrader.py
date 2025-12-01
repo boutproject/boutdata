@@ -19,4 +19,4 @@ def run(args):
 
 
 def add_parser(subcommand, default_args, files_args):
-    return add_parser_general(subcommand, default_args, files_args, run)
+    return add_parser_general(subcommand, default_args, files_args, run, "BOUT++ v6+")
