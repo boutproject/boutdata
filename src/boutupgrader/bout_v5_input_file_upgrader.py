@@ -326,7 +326,9 @@ def run_general(REPLACEMENTS, DELETED, args, *, additional_modifications=None):
             continue
 
         try:
-            modified = apply_fixes(REPLACEMENTS, DELETED, original, additional_modifications)
+            modified = apply_fixes(
+                REPLACEMENTS, DELETED, original, additional_modifications
+            )
         except RuntimeError as e:
             print(e)
             continue
