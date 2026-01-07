@@ -322,8 +322,6 @@ def magnetic_field(g, X, Y, Z, rmin, rmax, zmin, zmax, Br, Bz, Btrz):
     bz = np.zeros(np.shape(X))
     bt = np.zeros(np.shape(X))
 
-    nx, ny, nz = np.shape(X)
-
     mask = (rho >= rmin) & (rho <= rmax) & (Z >= zmin) & (Z <= zmax)
     k = np.argwhere(mask is True)
 
@@ -360,8 +358,6 @@ def psi_field(g, X, Y, Z, rmin, rmax, zmin, zmax):
     rho = np.sqrt(X**2 + Y**2)
 
     psi = np.zeros(np.shape(X))
-
-    nx, ny, nz = np.shape(X)
 
     mask = (rho >= rmin) & (rho <= rmax) & (Z >= zmin) & (Z <= zmax)
     k = np.argwhere(mask is True)
