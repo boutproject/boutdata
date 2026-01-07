@@ -523,7 +523,7 @@ class DataFile_netCDF(DataFile):
             return defdims_list[len(np.shape(data))]
 
         if bout_type == "string_t":
-            nt, string_length = data.shape
+            _, string_length = data.shape
             return ("t", f"char{string_length}")
         elif bout_type == "string":
             return (f"char{len(data)}",)
