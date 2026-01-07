@@ -834,7 +834,8 @@ class BoutOptionsFile(BoutOptions):
                 except KeyError:
                     if nzfromfile is not None:
                         self.nz = nzfromfile
-                    else:self.nz = 1
+                    else:
+                        self.nz = 1
 
         mxg = self._keys.get("MXG", 2)
         myg = self._keys.get("MYG", 2)
