@@ -780,8 +780,8 @@ class BoutOptionsFile(BoutOptions):
                     "don't know which parameters to choose"
                 )
             with DataFile(self.gridfilename) as gridfile:
-                self.nx = float(gridfile["nx"])
-                self.ny = float(gridfile["ny"])
+                self.nx = int(gridfile["nx"])
+                self.ny = int(gridfile["ny"])
                 try:
                     nzfromfile = gridfile["MZ"]
                 except KeyError:
@@ -817,10 +817,10 @@ class BoutOptionsFile(BoutOptions):
                     except KeyError:
                         gridfilename = self["grid"]
                     with DataFile(gridfilename) as gridfile:
-                        self.nx = float(gridfile["nx"])
-                        self.ny = float(gridfile["ny"])
+                        self.nx = int(gridfile["nx"])
+                        self.ny = int(gridfile["ny"])
                         try:
-                            nzfromfile = float(gridfile["MZ"])
+                            nzfromfile = int(gridfile["MZ"])
                         except KeyError:
                             pass
         if nz is not None:
@@ -834,6 +834,8 @@ class BoutOptionsFile(BoutOptions):
                 except KeyError:
                     if nzfromfile is not None:
                         self.nz = nzfromfile
+                    else:self.nz = 1
+
         mxg = self._keys.get("MXG", 2)
         myg = self._keys.get("MYG", 2)
 
