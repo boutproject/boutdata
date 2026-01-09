@@ -837,6 +837,11 @@ class BoutOptionsFile(BoutOptions):
                     else:
                         self.nz = 1
 
+        # Ensure grid sizes are integers for numpy.linspace
+        self.nx = int(self.nx)
+        self.ny = int(self.ny)
+        self.nz = int(self.nz)
+        
         mxg = self._keys.get("MXG", 2)
         myg = self._keys.get("MYG", 2)
 
