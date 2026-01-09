@@ -60,7 +60,7 @@ def rename_simple_component(
     if section_name in NEW_NAMES:
         new_names = NEW_NAMES[section_name]
         if isinstance(new_names, dict):
-            old_section = options_file.getSection(section_name)
+            old_section = options_file.pop(section_name)
             new_components = []
             for new_name, configs in new_names.items():
                 new_components.append(new_name)
