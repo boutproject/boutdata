@@ -203,7 +203,7 @@ def remove_deleted(deleted, options_file):
             del options_file[key]
 
 
-def apply_fixes(replacements, deleted, options_file):
+def apply_fixes(replacements, deleted, options_file, additional_modifications):
     """Apply all fixes in this module"""
 
     modified = copy.deepcopy(options_file)
@@ -211,6 +211,8 @@ def apply_fixes(replacements, deleted, options_file):
     fix_replacements(replacements, modified)
 
     remove_deleted(deleted, modified)
+
+    additional_modifications(modified)
 
     return modified
 
@@ -236,14 +238,14 @@ def possibly_apply_patch(patch, options_file, quiet=False, force=False):
     return make_change
 
 
-def add_parser_general(subcommand, default_args, files_args, run):
+def add_parser_general(subcommand, default_args, files_args, run, name):
     parser = subcommand.add_parser(
         "input",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         help="Fix input files",
         description=textwrap.dedent(
-            """\
-            Fix input files for BOUT++ v5+
+            f"""\
+            Fix input files for {name}
 
             Please note that this will only fix input options in sections with
             standard or default names. You may also need to fix options in custom
@@ -290,7 +292,7 @@ def add_parser_general(subcommand, default_args, files_args, run):
     parser.set_defaults(func=run)
 
 
-def run_general(REPLACEMENTS, DELETED, args):
+def run_general(REPLACEMENTS, DELETED, args, *, additional_modifications=None):
     from boutdata.data import BoutOptions, BoutOptionsFile
 
     # Monkey-patch BoutOptions to make sure it's case sensitive
@@ -324,7 +326,9 @@ def run_general(REPLACEMENTS, DELETED, args):
             continue
 
         try:
-            modified = apply_fixes(REPLACEMENTS, DELETED, original)
+            modified = apply_fixes(
+                REPLACEMENTS, DELETED, original, additional_modifications
+            )
         except RuntimeError as e:
             print(e)
             continue
@@ -347,4 +351,4 @@ def run(args):
 
 
 def add_parser(subcommand, default_args, files_args):
-    return add_parser_general(subcommand, default_args, files_args, run)
+    return add_parser_general(subcommand, default_args, files_args, run, "BOUT++ v5+")

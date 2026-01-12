@@ -11,6 +11,7 @@ from .bout_v5_physics_model_upgrader import add_parser as add_model_parser
 from .bout_v5_xzinterpolation_upgrader import add_parser as add_xzinterp_parser
 from .bout_v6_coordinates_upgrader import add_parser as add_v6_coordinates_parser
 from .bout_v6_input_file_upgrader import add_parser as add_v6_input_parser
+from .hermes_collisions_input_file_upgrader import add_parser as add_hermes_input_parser
 
 try:
     # This gives the version if the boututils package was installed
@@ -63,6 +64,10 @@ def main():
         "v6", help="BOUT++ v6 upgrades"
     ).add_subparsers(title="v6 subcommands", required=True)
 
+    hermes_subcommand = subcommand.add_parser(
+        "hermes_refactor_closure", help="Hermes-3 upgrade following closure refactor"
+    ).add_subparsers(title="hermes subcommands", required=True)
+
     add_3to4_parser(v4_subcommand, common_args, files_args)
     add_factory_parser(v5_subcommand, common_args, files_args)
     add_format_parser(v5_subcommand, common_args, files_args)
@@ -73,6 +78,7 @@ def main():
     add_xzinterp_parser(v5_subcommand, common_args, files_args)
     add_v6_coordinates_parser(v6_subcommand, common_args, files_args)
     add_v6_input_parser(v6_subcommand, common_args, files_args)
+    add_hermes_input_parser(hermes_subcommand, common_args, files_args)
 
     args = parser.parse_args()
     args.func(args)
