@@ -65,8 +65,7 @@ def main():
     ).add_subparsers(title="v6 subcommands", required=True)
 
     hermes_subcommand = subcommand.add_parser(
-        "hermes_refactor_closure",
-        help="Hermes-3 upgrade following closure refactor"
+        "hermes_refactor_closure", help="Hermes-3 upgrade following closure refactor"
     ).add_subparsers(title="hermes subcommands", required=True)
 
     add_3to4_parser(v4_subcommand, common_args, files_args)
