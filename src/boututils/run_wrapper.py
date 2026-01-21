@@ -50,15 +50,11 @@ def shell(command, pipe=False, env=None):
     """
 
     result = subprocess.run(
-        command,
-        shell=True,
-        capture_output=pipe,
-        env=env,
-        text=True
-        )
-    output = result.stdout if pipe else ''
+        command, shell=True, capture_output=pipe, env=env, text=True
+    )
+    output = result.stdout if pipe else ""
     if result.stderr:
-        output += '\nSTDERR:\n' + result.stderr
+        output += "\nSTDERR:\n" + result.stderr
     return result.returncode, output
 
 
