@@ -1,6 +1,4 @@
-"""Import an entire BOUT++ DataFile into memory
-
-"""
+"""Import an entire BOUT++ DataFile into memory"""
 
 from boututils.datafile import DataFile
 

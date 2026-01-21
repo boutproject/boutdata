@@ -1,5 +1,5 @@
-""" Functions for calculating sources for the
-    Method of Manufactured Solutions (MMS)
+"""Functions for calculating sources for the
+Method of Manufactured Solutions (MMS)
 
 """
 

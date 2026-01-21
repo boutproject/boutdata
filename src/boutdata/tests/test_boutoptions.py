@@ -210,16 +210,14 @@ def test_str():
     options["other top-level"] = 3
 
     # lstrip to remove the first empty line
-    expected = textwrap.dedent(
-        """
+    expected = textwrap.dedent("""
         top-level value = 0
         other top-level = 3
 
         [section]
         first = 1
         second = 2
-        """
-    ).lstrip()
+        """).lstrip()
 
     assert str(options) == expected
 

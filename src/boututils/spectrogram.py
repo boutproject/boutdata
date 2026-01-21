@@ -135,9 +135,9 @@ def test_spectrogram(n, d, s):
     s2 = test_sigma
     s3 = test_sigma * 10.0
 
-    (spec2, omega2, xx) = spectrogram(test_data, dx, s2, clip=5.0, nskip=nskip)
-    (spec3, omega3, xx) = spectrogram(test_data, dx, s3, clip=5.0, nskip=nskip)
-    (spec1, omega1, xx) = spectrogram(test_data, dx, s1, clip=5.0, nskip=nskip)
+    spec2, omega2, xx = spectrogram(test_data, dx, s2, clip=5.0, nskip=nskip)
+    spec3, omega3, xx = spectrogram(test_data, dx, s3, clip=5.0, nskip=nskip)
+    spec1, omega1, xx = spectrogram(test_data, dx, s1, clip=5.0, nskip=nskip)
 
     levels = linspace(min(spec1), max(spec1), 100)
     plt.subplot(311)

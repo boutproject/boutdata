@@ -1,6 +1,4 @@
-"""Average over a surface
-
-"""
+"""Average over a surface"""
 
 import numpy as np
 from past.utils import old_div

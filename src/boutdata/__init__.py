@@ -1,4 +1,4 @@
-""" Routines for exchanging data to/from BOUT++ """
+"""Routines for exchanging data to/from BOUT++"""
 
 from boutdata.collect import attributes, collect
 from boututils.boutarray import BoutArray

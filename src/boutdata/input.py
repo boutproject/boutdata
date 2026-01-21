@@ -1,6 +1,4 @@
-"""Fourier transform data for input to BOUT++
-
-"""
+"""Fourier transform data for input to BOUT++"""
 
 from numpy import ndarray
 from numpy.fft import rfft
