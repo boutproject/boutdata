@@ -480,7 +480,7 @@ class BoutOptions:
         return f.getvalue()
 
     def __repr__(self):
-        return self.as_dict()
+        return f"{self.as_dict()}"
 
     def get_bool(self, name, default=None):
         """
