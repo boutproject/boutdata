@@ -1111,6 +1111,7 @@ class BoutOutputs:
                 f,
                 xguards=self._xguards,
                 yguards=self._yguards,
+                zguards=False,
                 tind=tind,
                 xind=xind,
                 yind=yind,
@@ -1667,6 +1668,7 @@ class BoutOutputs:
                     zind=self.zind,
                     xguards=self._xguards,
                     yguards=self._yguards,
+                    zguards=False,
                     info=self._info,
                     parallel_read=True,
                 )
