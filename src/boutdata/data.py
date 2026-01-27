@@ -1044,6 +1044,7 @@ class BoutOutputs:
         info=False,
         xguards=True,
         yguards=False,
+        zguards=False,
         tind=None,
         xind=None,
         yind=None,
@@ -1063,6 +1064,7 @@ class BoutOutputs:
         self._info = info
         self._xguards = xguards
         self._yguards = yguards
+        self._zguards = zguards
         self._kwargs = kwargs
         self._parallel = parallel
         if suffix is None:
@@ -1111,7 +1113,7 @@ class BoutOutputs:
                 f,
                 xguards=self._xguards,
                 yguards=self._yguards,
-                zguards=False,
+                zguards=self._zguards,
                 tind=tind,
                 xind=xind,
                 yind=yind,
@@ -1143,16 +1145,17 @@ class BoutOutputs:
 
         if self._info:
             print(
-                "mxsub = {} mysub = {} mz = {}\n".format(
+                "mxsub = {} mysub = {} mzsub = {}\n".format(
                     self.grid_info["mxsub"],
                     self.grid_info["mysub"],
-                    self.grid_info["nz"],
+                    self.grid_info["mzsub"],
                 )
             )
             print(
-                "nxpe = {}, nype = {}, npes = {}\n".format(
+                "nxpe = {}, nype = {}, nzpe = {}, npes = {}\n".format(
                     self.grid_info["nxpe"],
                     self.grid_info["nype"],
+                    self.grid_info["nzpe"],
                     self.grid_info["npes"],
                 )
             )
@@ -1536,6 +1539,7 @@ class BoutOutputs:
             info=self._info,
             xguards=self._xguards,
             yguards=self._yguards,
+            zguards=self._zguards,
             tind=self.tind,
             xind=self.xind,
             yind=self.yind,
@@ -1631,7 +1635,7 @@ class BoutOutputs:
         else:
             global_slices.append(0)
         if "z" in dimensions:
-            global_slices.append(slice(None))
+            global_slices.append(slice(None, None, self.zind.step))
         else:
             global_slices.append(0)
         global_slices = tuple(global_slices)
@@ -1681,7 +1685,7 @@ class BoutOutputs:
                     zind=self.zind,
                     xguards=self._xguards,
                     yguards=self._yguards,
-                    zguards=False,
+                    zguards=self._zguards,
                     info=self._info,
                     parallel_read=True,
                 )
