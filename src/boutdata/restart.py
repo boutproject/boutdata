@@ -568,6 +568,7 @@ def redistribute(
     outformat=None,
     mxg=None,
     myg=None,
+    mzg=None,
 ):
     """Resize restart files across NPES processors.
 
@@ -640,7 +641,7 @@ def redistribute(
         "Grid sizes: ",
         old_processor_layout.nx,
         old_processor_layout.ny,
-        old_processor_layout.mz,
+        old_processor_layout.nz,
     )
 
     if nfiles != old_processor_layout.npes:
@@ -665,17 +666,21 @@ def redistribute(
 
     old_mxg = old_processor_layout.mxg
     old_myg = old_processor_layout.myg
+    old_mzg = old_processor_layout.mzg
 
     if mxg is None:
         mxg = old_mxg
     if myg is None:
         myg = old_myg
+    if mzg is None:
+        mzg = old_mzg
 
     nxpe = new_processor_layout.nxpe
     nype = new_processor_layout.nype
+    nzpe = new_processor_layout.nzpe
     mxsub = new_processor_layout.mxsub
     mysub = new_processor_layout.mysub
-    mzsub = new_processor_layout.mz
+    mzsub = new_processor_layout.mzsub
 
     if "jyseps2_1" not in f.keys():
         # Workaround for older output files that are missing jyseps* values
@@ -700,7 +705,7 @@ def redistribute(
 
         # collect data
         data = collect(
-            v, xguards=True, yguards=True, info=False, datafile_cache=DataFileCache
+            v, xguards=True, yguards=True, zguards=True, info=False, datafile_cache=DataFileCache
         )
 
         # write data
@@ -759,6 +764,8 @@ def redistribute(
                 outfile.write(v, nxpe)
             elif v == "NYPE":
                 outfile.write(v, nype)
+            elif v == "NZPE":
+                outfile.write(v, nzpe)
             elif v == "MXSUB":
                 outfile.write(v, mxsub)
             elif v == "MYSUB":
@@ -769,6 +776,8 @@ def redistribute(
                 outfile.write(v, mxg)
             elif v == "MYG":
                 outfile.write(v, myg)
+            elif v == "MZG":
+                outfile.write(v, mzg)
             elif v == "PE_XIND":
                 outfile.write(v, ix)
             elif v == "PE_YIND":
@@ -805,7 +814,7 @@ def redistribute(
                     outfile.write(v, data[ix * mxsub : (ix + 1) * mxsub + 2 * mxg, :])
                 else:
                     nullarray = BoutArray(
-                        np.zeros([mxsub + 2 * mxg, mzsub]),
+                        np.zeros([mxsub + 2 * mxg, mzsub + 2 * mzg]),
                         attributes={
                             "bout_type": "FieldPerp",
                             "yindex_global": yindex_global,

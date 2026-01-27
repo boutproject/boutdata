@@ -8,7 +8,7 @@ from math import sqrt
 
 processor_layout_ = namedtuple(
     "BOUT_processor_layout",
-    ["nxpe", "nype", "npes", "mxsub", "mysub", "nx", "ny", "mz", "mxg", "myg"],
+    ["nxpe", "nype", "nzpe", "npes", "mxsub", "mysub", "mzsub", "nx", "ny", "nz", "mxg", "myg", "mzg"],
 )
 
 
@@ -36,7 +36,7 @@ class processor_layout(processor_layout_):
     pass
 
 
-def get_processor_layout(boutfile, has_t_dimension=True, mxg=None, myg=None):
+def get_processor_layout(boutfile, has_t_dimension=True, mxg=None, myg=None, mzg=None):
     """Given a BOUT.restart.* or BOUT.dmp.* file (as a DataFile object),
     return the processor layout for its data
 
@@ -58,10 +58,12 @@ def get_processor_layout(boutfile, has_t_dimension=True, mxg=None, myg=None):
 
     mxg = mxg or boutfile.get("MXG", 2)
     myg = myg or boutfile.get("MYG", 2)
+    mzg = mzg or boutfile.get("MZG", 2)
 
     nxpe = boutfile.read("NXPE")
     nype = boutfile.read("NYPE")
-    npes = nxpe * nype
+    nzpe = boutfile.read("NZPE")
+    npes = nxpe * nype * nzpe
 
     # Get list of variables
     var_list = boutfile.list()
@@ -70,7 +72,7 @@ def get_processor_layout(boutfile, has_t_dimension=True, mxg=None, myg=None):
 
     mxsub = 0
     mysub = 0
-    mz = 0
+    mzsub = 0
 
     if has_t_dimension:
         maxdims = 4
@@ -103,30 +105,44 @@ def get_processor_layout(boutfile, has_t_dimension=True, mxg=None, myg=None):
                     print("Number of y points is wrong?")
                     return False
 
-            mz = s[maxdims - 1]
+            mzsub = s[maxdims - 1] - 2 * mzg
+            if mzsub < 0:
+                if s[maxdims - 2] == 1:
+                    mzsub = 1
+                    mzg = 0
+                elif s[maxdims - 2] == 3:
+                    mzsub = 1
+                    mzg = 1
+                else:
+                    print("Number of z points is wrong?")
+                    return False
             break
 
     # Calculate total size of the grid
     nx = mxsub * nxpe
     ny = mysub * nype
+    nz = mzsub * nzpe
 
     result = processor_layout(
         nxpe=nxpe,
         nype=nype,
+        nzpe=nzpe,
         npes=npes,
         mxsub=mxsub,
         mysub=mysub,
+        mzsub=mzsub,
         nx=nx,
         ny=ny,
-        mz=mz,
+        nz=nz,
         mxg=mxg,
         myg=myg,
+        mzg=mzg,
     )
 
     return result
 
 
-def create_processor_layout(old_processor_layout, npes, nxpe=None):
+def create_processor_layout(old_processor_layout, npes, nxpe=None, nzpe=1):
     """Convert one processor layout into another one with a different
     total number of processors
 
@@ -148,6 +164,8 @@ def create_processor_layout(old_processor_layout, npes, nxpe=None):
         A description of the processor layout and grid sizes
 
     """
+
+    npes = npes // nzpe
 
     if nxpe is None:  # Copy algorithm from BoutMesh for selecting nxpe
         ideal = sqrt(
@@ -179,18 +197,22 @@ def create_processor_layout(old_processor_layout, npes, nxpe=None):
 
     mxsub = int(old_processor_layout.nx / nxpe)
     mysub = int(old_processor_layout.ny / nype)
+    mzsub = int(old_processor_layout.nz / nzpe)
 
     result = processor_layout(
         nxpe=nxpe,
         nype=nype,
+        nzpe=nzpe,
         npes=npes,
         mxsub=mxsub,
         mysub=mysub,
+        mzsub=mzsub,
         nx=old_processor_layout.nx,
         ny=old_processor_layout.ny,
-        mz=old_processor_layout.mz,
+        nz=old_processor_layout.nz,
         mxg=old_processor_layout.mxg,
         myg=old_processor_layout.myg,
+        mzg=old_processor_layout.mzg,
     )
 
     return result

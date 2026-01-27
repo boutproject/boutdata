@@ -1322,7 +1322,7 @@ class BoutOutputs:
         else:
             return self._file0.list_file_attributes()
 
-    def redistribute(self, npes, nxpe=None, mxg=2, myg=2, include_restarts=True):
+    def redistribute(self, npes, nxpe=None, mxg=2, myg=2, mzg=2, include_restarts=True):
         """Create a new set of dump files for npes processors.
 
         Useful for restarting simulations using more or fewer processors.
@@ -1354,12 +1354,18 @@ class BoutOutputs:
 
         # use get_processor_layout to get nx, ny
         old_processor_layout = get_processor_layout(
-            DataFile(self._file_list[0]), has_t_dimension=True, mxg=mxg, myg=myg
+            DataFile(self._file_list[0]),
+            has_t_dimension=True,
+            mxg=mxg,
+            myg=myg,
+            mzg=mzg,
         )
         nx = old_processor_layout.nx
         ny = old_processor_layout.ny
+        nz = old_processor_layout.nz
         mxg = old_processor_layout.mxg
         myg = old_processor_layout.myg
+        mzg = old_processor_layout.mzg
 
         # calculate new processor layout
         new_processor_layout = create_processor_layout(
@@ -1367,8 +1373,10 @@ class BoutOutputs:
         )
         nxpe = new_processor_layout.nxpe
         nype = new_processor_layout.nype
+        nzpe = new_processor_layout.nzpe
         mxsub = new_processor_layout.mxsub
         mysub = new_processor_layout.mysub
+        mzsub = new_processor_layout.mzsub
 
         # move existing files to backup directory
         # don't overwrite backup: os.mkdir will raise exception if directory already
@@ -1411,6 +1419,7 @@ class BoutOutputs:
                 prefix=self._prefix,
                 xguards=True,
                 yguards=True,
+                zguards=True,
                 info=False,
                 datafile_cache=DataFileCache,
             )
@@ -1427,10 +1436,14 @@ class BoutOutputs:
                     outfile.write(v, nxpe)
                 elif v == "NYPE":
                     outfile.write(v, nype)
+                elif v == "NZPE":
+                    outfile.write(v, nzpe)
                 elif v == "MXSUB":
                     outfile.write(v, mxsub)
                 elif v == "MYSUB":
                     outfile.write(v, mysub)
+                elif v == "MZSUB":
+                    outfile.write(v, mzsub)
                 elif ndims == 0:
                     # scalar
                     outfile.write(v, data)
