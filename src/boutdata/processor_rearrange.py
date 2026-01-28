@@ -8,7 +8,21 @@ from math import sqrt
 
 processor_layout_ = namedtuple(
     "BOUT_processor_layout",
-    ["nxpe", "nype", "nzpe", "npes", "mxsub", "mysub", "mzsub", "nx", "ny", "nz", "mxg", "myg", "mzg"],
+    [
+        "nxpe",
+        "nype",
+        "nzpe",
+        "npes",
+        "mxsub",
+        "mysub",
+        "mzsub",
+        "nx",
+        "ny",
+        "nz",
+        "mxg",
+        "myg",
+        "mzg",
+    ],
 )
 
 

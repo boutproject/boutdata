@@ -705,7 +705,12 @@ def redistribute(
 
         # collect data
         data = collect(
-            v, xguards=True, yguards=True, zguards=True, info=False, datafile_cache=DataFileCache
+            v,
+            xguards=True,
+            yguards=True,
+            zguards=True,
+            info=False,
+            datafile_cache=DataFileCache,
         )
 
         # write data
