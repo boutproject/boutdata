@@ -639,6 +639,7 @@ class BoutOptionsFile(BoutOptions):
         nx=None,
         ny=None,
         nz=None,
+        recalculate_xyz=True,
     ):
         BoutOptions.__init__(self, name)
         self.filename = filename
@@ -759,15 +760,16 @@ class BoutOptionsFile(BoutOptions):
                         section.inline_comments[value_name] = inline_comment
                         section._comment_whitespace[value_name] = comment_whitespace
 
-        try:
-            self.recalculate_xyz(nx=nx, ny=ny, nz=nz)
-        except Exception as e:
-            alwayswarn(
-                "While building x, y, z coordinate arrays, an "
-                "exception occured: "
-                + str(e)
-                + "\nEvaluating non-scalar options not available"
-            )
+        if recalculate_xyz:
+            try:
+                self.recalculate_xyz(nx=nx, ny=ny, nz=nz)
+            except Exception as e:
+                alwayswarn(
+                    "While building x, y, z coordinate arrays, an "
+                    "exception occured: "
+                    + str(e)
+                    + "\nEvaluating non-scalar options not available"
+                )
 
     def recalculate_xyz(self, *, nx=None, ny=None, nz=None):
         """
