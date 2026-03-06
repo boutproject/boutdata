@@ -743,8 +743,12 @@ class BoutOptionsFile(BoutOptions):
                                 # Try to convert to float
                                 value = float(value)
                             except ValueError:
-                                # Leave as a string
-                                pass
+                                # Leave as a string, stripping surrounding quotes
+                                if len(value) >= 2 and (
+                                    (value[0] == '"' and value[-1] == '"')
+                                    or (value[0] == "'" and value[-1] == "'")
+                                ):
+                                    value = value[1:-1]
 
                         value_name = line[:eqpos].strip()
                         section[value_name] = value
