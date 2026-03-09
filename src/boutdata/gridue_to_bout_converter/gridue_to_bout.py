@@ -769,6 +769,13 @@ def Convert_grids(gridue_file: str, output_filename: str, plotting: bool = False
     jyseps1_2 = g["ix_cut3"]
     jyseps2_2 = g["ix_cut4"] - 1
 
+        #jyseps2_1 should always be smaller that jyseps1_2. Only inconsistency found here is for SN.
+    if jyseps1_2 < jyseps2_1:
+        jyseps1_2 = jyseps2_1
+        ny_inner = jyseps2_1
+        #For Single Null (SN) cases, Ingrid sets this values to be different, but BOUT++ expects them to be the same.
+        print ("WARNING: Adjusting jyseps1_2 to be equal to jyseps2_1 for consistency with BOUT++ expectations. This is expected for Single Null cases.")
+
     # Calculate metric tensor
     grd.update(calcMetric(grd, bpsign, verbose, ignore_checks))
 
@@ -930,6 +937,13 @@ def getMeshTopology(g, nx, ny):
     ny_inner = g["ix_inner"]
     jyseps1_2 = g["ix_cut3"]
     jyseps2_2 = g["ix_cut4"] - 1
+
+    #jyseps2_1 should always be smaller that jyseps1_2. Only inconsistency found here is for SN.
+    if jyseps1_2 < jyseps2_1:
+        jyseps1_2 = jyseps2_1
+        ny_inner = jyseps2_1
+        #For Single Null (SN) cases, Ingrid sets this values to be different, but BOUT++ expects them to be the same.
+        print ("WARNING: Adjusting jyseps1_2 to be equal to jyseps2_1 for consistency with BOUT++ expectations. This is expected for Single Null cases.")
     
     if (jyseps1_1 < 0 and jyseps2_2 >= ny - 1):
         return "CFL"
