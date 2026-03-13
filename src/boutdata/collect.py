@@ -334,7 +334,7 @@ def collect(
                 varname,
                 yindex_global,
                 temp_yindex,
-                i // grid_info["nxpe"],
+                grid_info["nype"],
                 fieldperp_yproc,
                 var_attributes,
                 temp_f_attributes,
