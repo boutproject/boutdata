@@ -12,6 +12,7 @@ import glob
 import multiprocessing
 import os
 import pathlib
+from re import sub
 
 import numpy as np
 from natsort import natsorted
@@ -1054,6 +1055,7 @@ def change_grid(
         except KeyError:
             pass  # No y_boundary_guards key
         from_regions = griddata.regions(g)
+        from_psixy =  np.array(g["psixy"])
 
     with DataFile(to_grid_file) as g:
         # Check for y boundary cells
@@ -1067,6 +1069,7 @@ def change_grid(
         to_regions = griddata.regions(g)
         to_nx = g["nx"]
         to_ny = g["ny"]
+        to_psixy =  np.array(g["psixy"])
 
     file_list = glob.glob(os.path.join(path, "BOUT.restart.*.nc"))
     if len(file_list) == 0:
@@ -1134,21 +1137,35 @@ def change_grid(
             # Allocate array including one boundary cell all around
             f_data = np.zeros((f_nx + 2, f_ny + 2))
             f_data[1:-1, 1:-1] = from_data[f_xf : (f_xl + 1), f_yf : (f_yl + 1)]
+            f_psixy = np.zeros(f_nx + 2)
+            f_psixy[1:-1] = from_psixy[f_xf : (f_xl + 1),f_yf]
+            # f_psixy[:] = from_psixy[f_xf -1 : (f_xl + 1) + 1,f_yf]
+
+            test_psixy = from_psixy[f_xf : (f_xl + 1), f_yf : (f_yl + 1)]
+            for j in range(1, test_psixy.shape[1]):
+                assert np.allclose(test_psixy[:, j], test_psixy[:, 0]), f"Column {j} differs!"
+
+
             # Fill each boundary from connecting regions
             if from_region["inner"] is not None:
                 reg = from_regions[from_region["inner"]]
                 f_data[0, 1:-1] = from_data[
                     reg["xlast"], reg["yfirst"] : (reg["ylast"] + 1)
                 ]
+                f_psixy[0] = from_psixy[reg["xlast"], reg["yfirst"]]                
             else:
                 f_data[0, 1:-1] = f_data[1, 1:-1]
+                f_psixy[0] = from_psixy[f_xf-1, f_yf]
             if from_region["outer"] is not None:
                 reg = from_regions[from_region["outer"]]
                 f_data[-1, 1:-1] = from_data[
                     reg["xfirst"], reg["yfirst"] : (reg["ylast"] + 1)
                 ]
+                f_psixy[-1] = from_psixy[reg["xfirst"], reg["yfirst"]]
             else:
                 f_data[-1, 1:-1] = f_data[-2, 1:-1]
+                f_psixy[-1] = from_psixy[f_xl+1, f_yf]
+
             if from_region["lower"] is not None:
                 reg = from_regions[from_region["lower"]]
                 f_data[1:-1, 0] = from_data[
@@ -1169,15 +1186,32 @@ def change_grid(
             f_data[0, -1] = (f_data[0, -2] + f_data[1, -1] + f_data[1, -2]) / 3
             f_data[-1, -1] = (f_data[-1, -2] + f_data[-2, -1] + f_data[-2, -2]) / 3
 
+
+            dpsi = np.diff(f_psixy)
+            assert np.all(dpsi > 0) or np.all(dpsi < 0), \
+                f"f_psixy is not monotonic in region {region_name}: {f_psixy}"
+
             # Have data, can interpolate onto new region
             # Create coordinates that go from 0 to 1 on cell boundaries
+
+            # interpolator = RegularGridInterpolator(
+            #     (
+            #         (np.arange(f_nx + 2) - 0.5) / f_nx,
+            #         (np.arange(f_ny + 2) - 0.5) / f_ny,
+            #     ),
+            #     f_data,
+            #     method=method,
+            # )
+
             interpolator = RegularGridInterpolator(
                 (
-                    (np.arange(f_nx + 2) - 0.5) / f_nx,
+                    f_psixy,
                     (np.arange(f_ny + 2) - 0.5) / f_ny,
                 ),
                 f_data,
                 method=method,
+                bounds_error=False, 
+                fill_value=None,
             )
 
             # Look up region in to_regions
@@ -1189,8 +1223,20 @@ def change_grid(
             t_nx = t_xl - t_xf + 1
             t_ny = t_yl - t_yf + 1
 
+            t_psixy = to_psixy[t_xf : (t_xl + 1), t_yf]
+
+            test_psixy = to_psixy[t_xf : (t_xl + 1), t_yf : (t_yl + 1)]
+            for j in range(1, test_psixy.shape[1]):
+                assert np.allclose(test_psixy[:, j], test_psixy[:, 0]), f"Column {j} differs!"
+
+            # xinds, yinds = np.meshgrid(
+            #     (np.arange(t_nx) + 0.5) / t_nx,
+            #     (np.arange(t_ny) + 0.5) / t_ny,
+            #     indexing="ij",
+            # )
+
             xinds, yinds = np.meshgrid(
-                (np.arange(t_nx) + 0.5) / t_nx,
+                t_psixy,
                 (np.arange(t_ny) + 0.5) / t_ny,
                 indexing="ij",
             )
