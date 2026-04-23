@@ -1055,7 +1055,7 @@ def change_grid(
         except KeyError:
             pass  # No y_boundary_guards key
         from_regions = griddata.regions(g)
-        from_psixy =  np.array(g["psixy"])
+        from_psixy = np.array(g["psixy"])
 
     with DataFile(to_grid_file) as g:
         # Check for y boundary cells
@@ -1069,7 +1069,7 @@ def change_grid(
         to_regions = griddata.regions(g)
         to_nx = g["nx"]
         to_ny = g["ny"]
-        to_psixy =  np.array(g["psixy"])
+        to_psixy = np.array(g["psixy"])
 
     file_list = glob.glob(os.path.join(path, "BOUT.restart.*.nc"))
     if len(file_list) == 0:
@@ -1138,13 +1138,14 @@ def change_grid(
             f_data = np.zeros((f_nx + 2, f_ny + 2))
             f_data[1:-1, 1:-1] = from_data[f_xf : (f_xl + 1), f_yf : (f_yl + 1)]
             f_psixy = np.zeros(f_nx + 2)
-            f_psixy[1:-1] = from_psixy[f_xf : (f_xl + 1),f_yf]
+            f_psixy[1:-1] = from_psixy[f_xf : (f_xl + 1), f_yf]
             # f_psixy[:] = from_psixy[f_xf -1 : (f_xl + 1) + 1,f_yf]
 
             test_psixy = from_psixy[f_xf : (f_xl + 1), f_yf : (f_yl + 1)]
             for j in range(1, test_psixy.shape[1]):
-                assert np.allclose(test_psixy[:, j], test_psixy[:, 0]), f"Column {j} differs!"
-
+                assert np.allclose(test_psixy[:, j], test_psixy[:, 0]), (
+                    f"Column {j} differs!"
+                )
 
             # Fill each boundary from connecting regions
             if from_region["inner"] is not None:
@@ -1152,10 +1153,10 @@ def change_grid(
                 f_data[0, 1:-1] = from_data[
                     reg["xlast"], reg["yfirst"] : (reg["ylast"] + 1)
                 ]
-                f_psixy[0] = from_psixy[reg["xlast"], reg["yfirst"]]                
+                f_psixy[0] = from_psixy[reg["xlast"], reg["yfirst"]]
             else:
                 f_data[0, 1:-1] = f_data[1, 1:-1]
-                f_psixy[0] = from_psixy[f_xf-1, f_yf]
+                f_psixy[0] = from_psixy[f_xf - 1, f_yf]
             if from_region["outer"] is not None:
                 reg = from_regions[from_region["outer"]]
                 f_data[-1, 1:-1] = from_data[
@@ -1164,7 +1165,7 @@ def change_grid(
                 f_psixy[-1] = from_psixy[reg["xfirst"], reg["yfirst"]]
             else:
                 f_data[-1, 1:-1] = f_data[-2, 1:-1]
-                f_psixy[-1] = from_psixy[f_xl+1, f_yf]
+                f_psixy[-1] = from_psixy[f_xl + 1, f_yf]
 
             if from_region["lower"] is not None:
                 reg = from_regions[from_region["lower"]]
@@ -1186,10 +1187,10 @@ def change_grid(
             f_data[0, -1] = (f_data[0, -2] + f_data[1, -1] + f_data[1, -2]) / 3
             f_data[-1, -1] = (f_data[-1, -2] + f_data[-2, -1] + f_data[-2, -2]) / 3
 
-
             dpsi = np.diff(f_psixy)
-            assert np.all(dpsi > 0) or np.all(dpsi < 0), \
+            assert np.all(dpsi > 0) or np.all(dpsi < 0), (
                 f"f_psixy is not monotonic in region {region_name}: {f_psixy}"
+            )
 
             # Have data, can interpolate onto new region
             # Create coordinates that go from 0 to 1 on cell boundaries
@@ -1210,7 +1211,7 @@ def change_grid(
                 ),
                 f_data,
                 method=method,
-                bounds_error=False, 
+                bounds_error=False,
                 fill_value=None,
             )
 
@@ -1227,7 +1228,9 @@ def change_grid(
 
             test_psixy = to_psixy[t_xf : (t_xl + 1), t_yf : (t_yl + 1)]
             for j in range(1, test_psixy.shape[1]):
-                assert np.allclose(test_psixy[:, j], test_psixy[:, 0]), f"Column {j} differs!"
+                assert np.allclose(test_psixy[:, j], test_psixy[:, 0]), (
+                    f"Column {j} differs!"
+                )
 
             # xinds, yinds = np.meshgrid(
             #     (np.arange(t_nx) + 0.5) / t_nx,
