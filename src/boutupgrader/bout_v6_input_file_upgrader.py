@@ -11,7 +11,7 @@ REPLACEMENTS = [
     {"old": "grid", "new": "mesh:file"},
     {
         "old": "solver:use_precon",
-        "new": "solver:precon_method",
+        "new": "solver:cvode_precon_method",
         "old_type": bool,
         "new_values": {False: "none", True: "user"},
     },
