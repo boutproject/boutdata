@@ -323,9 +323,7 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
             (cosBeta, "cos(beta)"),
             (tanBeta, "tan(beta)"),
         ]:
-            print(
-                f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}"
-            )
+            print(f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}")
 
     dphidy = hy * Btxy / (Bpxy * Rxy)
 
@@ -341,7 +339,10 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
     )
     g12 = Rxy * np.abs(Bpxy) * tanBeta / hy
     g13 = -Rxy * Bpxy * dphidy * tanBeta / hy - sinty * (Rxy * Bpxy) ** 2
-    g23 = -bpsign * dphidy / (hy * cosBeta) ** 2 - Rxy * np.abs(Bpxy) * sinty * tanBeta / hy
+    g23 = (
+        -bpsign * dphidy / (hy * cosBeta) ** 2
+        - Rxy * np.abs(Bpxy) * sinty * tanBeta / hy
+    )
 
     J = hy / Bpxy
 
@@ -374,9 +375,7 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
             (J - Jcheck, "J - Jcheck"),
             (rel_error, "(J - Jcheck)/J"),
         ]:
-            print(
-                f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}"
-            )
+            print(f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}")
 
     if np.max(np.abs(rel_error)) > 1e-6:
         if ignore_checks:
@@ -429,9 +428,7 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
             (bxcvy, "bxcvy"),
             (bxcvz, "bxcvz"),
         ]:
-            print(
-                f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}"
-            )
+            print(f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}")
 
     return {
         "dphidy": dphidy,
