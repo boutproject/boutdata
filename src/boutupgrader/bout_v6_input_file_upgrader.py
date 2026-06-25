@@ -9,6 +9,12 @@ REPLACEMENTS = [
     {"old": "timestep", "new": "solver:output_step"},
     {"old": "nout", "new": "solver:nout"},
     {"old": "grid", "new": "mesh:file"},
+    {
+        "old": "solver:use_precon",
+        "new": "solver:precon_method",
+        "old_type": bool,
+        "new_values": {False: "none", True: "user"},
+    },
 ]
 
 DELETED = []
