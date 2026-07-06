@@ -781,12 +781,19 @@ def Convert_grids(
         nx, ny = var.shape
         newvar = np.zeros((nx + 2, ny))
         newvar[2:-2, :] = var[1:-1, :]
-        if name in ["Rxy", "Zxy", "psixy",
-                    "Rxy_corners", "Zxy_corners",
-                    "Rxy_lower_right_corners", "Zxy_lower_right_corners",
-                    "Rxy_upper_right_corners", "Zxy_upper_right_corners",
-                    "Rxy_upper_left_corners", "Zxy_upper_left_corners",
-                    ]:
+        if name in [
+            "Rxy",
+            "Zxy",
+            "psixy",
+            "Rxy_corners",
+            "Zxy_corners",
+            "Rxy_lower_right_corners",
+            "Zxy_lower_right_corners",
+            "Rxy_upper_right_corners",
+            "Zxy_upper_right_corners",
+            "Rxy_upper_left_corners",
+            "Zxy_upper_left_corners",
+        ]:
             # Linear extrapolation
             newvar[1, :] = 2.0 * newvar[2, :] - newvar[3, :]
             newvar[0, :] = 2.0 * newvar[1, :] - newvar[2, :]
