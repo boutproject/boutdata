@@ -687,14 +687,14 @@ def Convert_grids(
     #  |  (0) |  -> Radial, BOUT++ "x"
     #  |      |
     # (2) -- (4)
-    Rxy_corners = rm[:, :, 2].T
-    Zxy_corners = zm[:, :, 2].T
-    Rxy_lower_right_corners = rm[:, :, 4].T
-    Zxy_lower_right_corners = zm[:, :, 4].T
+    Rxy_corners = rm[:, :, 1].T
+    Zxy_corners = zm[:, :, 1].T
+    Rxy_lower_right_corners = rm[:, :, 2].T
+    Zxy_lower_right_corners = zm[:, :, 2].T
     Rxy_upper_right_corners = rm[:, :, 3].T
     Zxy_upper_right_corners = zm[:, :, 3].T
-    Rxy_upper_left_corners = rm[:, :, 1].T
-    Zxy_upper_left_corners = zm[:, :, 1].T
+    Rxy_upper_left_corners = rm[:, :, 4].T
+    Zxy_upper_left_corners = zm[:, :, 4].T
 
     # Collect 2D variables for output
     grd = {
