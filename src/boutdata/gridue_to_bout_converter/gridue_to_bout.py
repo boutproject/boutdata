@@ -46,7 +46,7 @@ def _importBody(gridue_settings, f):
         if line == "\n":
             try:
                 Key = next(k)
-            except:
+            except StopIteration:
                 continue
         else:
             Str[Key].append(line)
@@ -67,7 +67,7 @@ def _importBody(gridue_settings, f):
 
                     try:
                         vv = next(_l)
-                    except:
+                    except StopIteration:
                         continue
                     gridue_settings[k] = data_
     return gridue_settings
@@ -114,7 +114,7 @@ def _importDN(values, f):
         values = [int(x) for x in next(f).split()]
         if len(values) != len(row):
             raise ValueError(
-                "Expected row with {} integers, found {}".format(len(row), len(values))
+                f"Expected row with {len(row)} integers, found {len(values)}"
             )
         gridue_settings.update(zip(row, values))
 
@@ -137,7 +137,7 @@ def importGridue(fname: str = "gridue") -> dict:
     A dict containing header and body information from the gridue file.
 
     """
-    f = open(fname, mode="r")
+    f = open(fname)
     values = [int(x) for x in next(f).split()]
 
     if len(values) == 5:
@@ -168,7 +168,7 @@ def plot(GridueParams: dict, edgecolor="black", ax: object = None, show=True):
     z = GridueParams["zm"]
     Nx = len(r)
     Ny = len(r[0])
-    patches = []
+
     plt.figure(figsize=(6, 10))
     if ax is None:
         ax = plt.gca()
@@ -222,7 +222,6 @@ def calcGridAngle(g: dict):
     Bzxy = g["bz"][:, :, 0].T
     Bpxy = g["bpol"][:, :, 0].T
 
-    psi = g["psi"]
     rm = g["rm"]
     zm = g["zm"]
 
@@ -307,7 +306,6 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
     """
 
     Rxy = grd["Rxy"]
-    Zxy = grd["Zxy"]
     Brxy = grd["Brxy"]
     Bzxy = grd["Bzxy"]
     Btxy = grd["Btxy"]
@@ -325,35 +323,34 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
             (cosBeta, "cos(beta)"),
             (tanBeta, "tan(beta)"),
         ]:
-            print(
-                "{} min {}, mean {}, max {}".format(
-                    name, np.amin(var), np.mean(var), np.amax(var)
-                )
-            )
+            print(f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}")
 
     dphidy = hy * Btxy / (Bpxy * Rxy)
 
-    I = np.zeros(Rxy.shape)
+    sinty = np.zeros(Rxy.shape)
 
     g11 = (Rxy * Bpxy) ** 2
     g22 = 1.0 / (hy * cosBeta) ** 2
     g33 = (
         1.0 / Rxy**2
-        + (Rxy * Bpxy * I) ** 2
+        + (Rxy * Bpxy * sinty) ** 2
         + (dphidy / (hy * cosBeta)) ** 2
-        + 2.0 * Rxy * Bpxy * I * dphidy * tanBeta / hy
+        + 2.0 * Rxy * Bpxy * sinty * dphidy * tanBeta / hy
     )
     g12 = Rxy * np.abs(Bpxy) * tanBeta / hy
-    g13 = -Rxy * Bpxy * dphidy * tanBeta / hy - I * (Rxy * Bpxy) ** 2
-    g23 = -bpsign * dphidy / (hy * cosBeta) ** 2 - Rxy * np.abs(Bpxy) * I * tanBeta / hy
+    g13 = -Rxy * Bpxy * dphidy * tanBeta / hy - sinty * (Rxy * Bpxy) ** 2
+    g23 = (
+        -bpsign * dphidy / (hy * cosBeta) ** 2
+        - Rxy * np.abs(Bpxy) * sinty * tanBeta / hy
+    )
 
     J = hy / Bpxy
 
-    g_11 = 1.0 / (Rxy * Bpxy * cosBeta) ** 2 + (I * Rxy) ** 2
+    g_11 = 1.0 / (Rxy * Bpxy * cosBeta) ** 2 + (sinty * Rxy) ** 2
     g_22 = hy**2 + (dphidy * Rxy) ** 2
     g_33 = Rxy**2
-    g_12 = bpsign * I * dphidy * Rxy**2 - hy * tanBeta / (Rxy * np.abs(Bpxy))
-    g_13 = I * Rxy**2
+    g_12 = bpsign * sinty * dphidy * Rxy**2 - hy * tanBeta / (Rxy * np.abs(Bpxy))
+    g_13 = sinty * Rxy**2
     g_23 = bpsign * dphidy * Rxy**2
 
     Jcheck = (
@@ -378,11 +375,7 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
             (J - Jcheck, "J - Jcheck"),
             (rel_error, "(J - Jcheck)/J"),
         ]:
-            print(
-                "{} min {}, mean {}, max {}".format(
-                    name, np.amin(var), np.mean(var), np.amax(var)
-                )
-            )
+            print(f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}")
 
     if np.max(np.abs(rel_error)) > 1e-6:
         if ignore_checks:
@@ -422,7 +415,7 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
     curl_bOverB_z = (
         curl_bOverB_zetahat / Rxy
         - Btxy * hy / (Bpxy * Rxy) * curl_bOverB_y
-        - I * curl_bOverB_x
+        - sinty * curl_bOverB_x
     )
 
     bxcvx = Bxy / 2.0 * curl_bOverB_x
@@ -435,11 +428,7 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
             (bxcvy, "bxcvy"),
             (bxcvz, "bxcvz"),
         ]:
-            print(
-                "{} min {}, mean {}, max {}".format(
-                    name, np.amin(var), np.mean(var), np.amax(var)
-                )
-            )
+            print(f"{name} min {np.amin(var)}, mean {np.mean(var)}, max {np.amax(var)}")
 
     return {
         "dphidy": dphidy,
@@ -460,7 +449,7 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
         # Jacobian
         "J": J,
         # Integrated shear
-        "sinty": I,
+        "sinty": sinty,
         # Curvature
         "curl_bOverB_x": curl_bOverB_x,
         "curl_bOverB_y": curl_bOverB_y,
@@ -485,8 +474,8 @@ def calcRZCurvature(g: dict):
     Z = g["zm"]
 
     dBzetadR, dBzetadZ = calcRZderivs(R, Z, Bzeta)
-    dBRdR, dBRdZ = calcRZderivs(R, Z, BR)
-    dBZdR, dBZdZ = calcRZderivs(R, Z, BZ)
+    _, dBRdZ = calcRZderivs(R, Z, BR)
+    dBZdR, _ = calcRZderivs(R, Z, BZ)
     dB2dR, dB2dZ = calcRZderivs(R, Z, B2)
 
     # Select point at centre of cell
@@ -869,11 +858,7 @@ def Convert_grids(
 
     if verbose:
         print(
-            "Safety factor: min {}, mean {}, max {}".format(
-                np.amin(ShiftAngle[:ixseps1]) / (2 * np.pi),
-                np.mean(ShiftAngle[:ixseps1]) / (2 * np.pi),
-                np.amax(ShiftAngle[:ixseps1]) / (2 * np.pi),
-            )
+            f"Safety factor: min {np.amin(ShiftAngle[:ixseps1]) / (2 * np.pi)}, mean {np.mean(ShiftAngle[:ixseps1]) / (2 * np.pi)}, max {np.amax(ShiftAngle[:ixseps1]) / (2 * np.pi)}"
         )
 
     if plotting:
