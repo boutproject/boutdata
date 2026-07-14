@@ -762,17 +762,19 @@ def Convert_grids(
         ixseps1 = g["iyseparatrix1"] + 2  # Lower X-point separatrix
         ixseps2 = min(g["iyseparatrix2"] + 2, nx)  # Upper X-point separatrix
         # Double null -> Remove upper Y guard cells
-        ny_inner = g["ix_inner"]
-        for name in grd:
-            var = grd[name]
-            nx, ny = var.shape
-            newvar = np.zeros((nx, ny - 2))
-            newvar[:, :ny_inner] = var[:, :ny_inner]
-            newvar[:, ny_inner:] = var[:, (ny_inner + 2) :]
-            grd[name] = newvar
-        g["ix_cut2"] = g["ix_cut2"] - 1
-        g["ix_cut3"] = g["ix_cut3"] - 3
-        g["ix_cut4"] = g["ix_cut4"] - 2
+        # check if CDN or UDN
+        if mesh_topology[1:] == "DN":
+            ny_inner = g["ix_inner"]
+            for name in grd:
+                var = grd[name]
+                nx, ny = var.shape
+                newvar = np.zeros((nx, ny - 2))
+                newvar[:, :ny_inner] = var[:, :ny_inner]
+                newvar[:, ny_inner:] = var[:, (ny_inner + 2) :]
+                grd[name] = newvar
+            g["ix_cut2"] = g["ix_cut2"] - 1
+            g["ix_cut3"] = g["ix_cut3"] - 3
+            g["ix_cut4"] = g["ix_cut4"] - 2
 
     # Extrapolate X (radial) boundary cells
     # Removing one cell, adding two on each X boundary
