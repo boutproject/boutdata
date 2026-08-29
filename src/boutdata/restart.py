@@ -456,7 +456,13 @@ def scalevar(var, factor, path="."):
 
 
 def create(
-    averagelast=1, final=-1, path="data", output="./", informat="nc", outformat=None
+    averagelast=1,
+    averageZ=0.0,
+    final=-1,
+    path="data",
+    output="./",
+    informat="nc",
+    outformat=None,
 ):
     """Create restart files from data (dmp) files.
 
@@ -475,12 +481,15 @@ def create(
         File extension of original files (default: "nc")
     outformat : str, optional
         File extension of new files (default: use the same as `informat`)
-
+    averageZ : float, optional
+        Weight average in Z direction: 0 = no averaging, 1 = average in Z
+        e.g. averageZ = 0.99 will reduce Z fluctuations to 1% of original
     """
 
     if outformat is None:
         outformat = informat
 
+    averageZ = min([averageZ, 1.0])
     path = pathlib.Path(path)
     output = pathlib.Path(output)
 
@@ -540,6 +549,13 @@ def create(
                     data_slice = mean(
                         data[(final - averagelast) : final, :, :, :], axis=0
                     )
+
+                if averageZ > 0.0:
+                    data_averaged = np.tile(
+                        np.mean(data_slice, axis=-1)[..., np.newaxis],
+                        (1, 1, data_slice.shape[-1]),
+                    )
+                    data_slice = averageZ * data_averaged + (1 - averageZ) * data_slice
 
                 print(data_slice.shape)
                 # This attribute results in the correct (x,y,z) dimension labels
