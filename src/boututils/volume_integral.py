@@ -75,7 +75,7 @@ def volume_integral(var, grid, xr=False):
             last = 1
 
         if (xi >= np.min(xr)) & (xi <= np.max(xr)):
-            dtheta = 2.0 * np.pi / np.float(ny)
+            dtheta = 2.0 * np.pi / float(ny)
             r = grid["Rxy"][xi, yi]
             z = grid["Zxy"][xi, yi]
             # n = np.size(r)

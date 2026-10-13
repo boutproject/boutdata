@@ -107,7 +107,7 @@ def mode_structure(
 
     nz = s[2]
 
-    dz = 2.0 * numpy.pi / numpy.float(period * (nz - 1))
+    dz = 2.0 * numpy.pi / float(period * (nz - 1))
 
     # GET THE TOROIDAL SHIFT
     tn = list(grid.keys())
@@ -187,8 +187,8 @@ def mode_structure(
             dzi = old_div((zip1 - zi0), (nskip[y] + 1))
 
             for i in range(nskip[y]):
-                zi = zi0 + numpy.float(i + 1) * dzi  # zindex
-                w = old_div(numpy.float(i + 1), numpy.float(nskip[y] + 1))  # weighting
+                zi = zi0 + float(i + 1) * dzi  # zindex
+                w = old_div(float(i + 1), float(nskip[y] + 1))  # weighting
 
                 f[ypos + i] = w * zinterp(vr[x, y + 1, :], zi) + (1.0 - w) * zinterp(
                     vr[x, y, :], zi
@@ -235,9 +235,7 @@ def mode_structure(
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         # ; take Fourier transform in theta angle
 
-        tarr = (
-            2.0 * numpy.pi * numpy.arange(np) / numpy.float(np)
-        )  # regular array in theta
+        tarr = 2.0 * numpy.pi * numpy.arange(np) / float(np)  # regular array in theta
 
         farr = numpy.interp(tarr, theta, f)
 
@@ -265,7 +263,7 @@ def mode_structure(
     xtitle = "Radial index"
     if xq is not None:
         # show as a function of q*n
-        xarr = qprof * numpy.float(n)
+        xarr = qprof * float(n)
 
         xtitle = "q * n"
     elif xpsi is not None:
@@ -306,7 +304,7 @@ def mode_structure(
                 xlabel(xtitle)
                 show(block=False)
 
-                q = old_div(numpy.float(i + 1), numpy.float(n))
+                q = old_div(float(i + 1), float(n))
 
                 pos = numpy.interp(q, qprof, xarr)
 
@@ -377,7 +375,7 @@ def mode_structure(
             for i in range(minind, maxind + 1, subset):
                 plot(xarr, famp[:, i])
 
-                q = old_div(numpy.float(i + 1), numpy.float(n))
+                q = old_div(float(i + 1), float(n))
                 pos = numpy.interp(q, qprof, xarr)
 
                 plot([pos, pos], [0, 2.0 * numpy.max(fmax)], "--")

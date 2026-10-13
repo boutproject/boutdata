@@ -64,9 +64,7 @@ def View3D(g, path=None, gb=None):
 
     # define the x (psi) array
     xf = (
-        np.arange(np.float(g.qpsi.size))
-        * (g.sibdry - g.simagx)
-        / np.float(g.qpsi.size - 1)
+        np.arange(float(g.qpsi.size)) * (g.sibdry - g.simagx) / float(g.qpsi.size - 1)
         + g.simagx
     )
 

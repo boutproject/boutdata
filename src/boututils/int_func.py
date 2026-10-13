@@ -2,7 +2,7 @@ import copy
 
 import numpy
 from past.utils import old_div
-from scipy.integrate import simps
+from scipy.integrate import simpson
 
 # integrate a function, always using the maximum
 # number of grid-points possible for highest accuracy
@@ -36,13 +36,13 @@ def int_func(xin, fin=None, simple=None):
             g[i] = g[i - 1] + 0.5 * (x[i] - x[i - 1]) * (f[i] + f[i - 1])
 
     else:
-        n2 = numpy.int(old_div(n, 2))
+        n2 = int(old_div(n, 2))
 
         g[0] = 0.0
         for i in range(n2, n):
-            g[i] = simps(f[0 : i + 1], x[0 : i + 1])
+            g[i] = simpson(f[0 : i + 1], x=x[0 : i + 1])
 
         for i in range(1, n2):
-            g[i] = g[n - 1] - simps(f[i::], x[i::])
+            g[i] = g[n - 1] - simpson(f[i::], x=x[i::])
 
     return g
