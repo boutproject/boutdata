@@ -2,9 +2,8 @@
 
 import numpy as np
 import scipy
-from past.utils import old_div
 
-from boututils.calculus import deriv
+from boututils.calculus import deriv, old_div
 from boututils.int_func import int_func
 
 

@@ -1,8 +1,9 @@
 import copy
 
 import numpy
-from past.utils import old_div
 from scipy.integrate import simpson
+
+from boututils.calculus import old_div
 
 # integrate a function, always using the maximum
 # number of grid-points possible for highest accuracy

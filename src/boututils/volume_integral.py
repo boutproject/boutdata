@@ -1,9 +1,8 @@
 """Integrate over a volume"""
 
 import numpy as np
-from past.utils import old_div
 
-from boututils.calculus import deriv
+from boututils.calculus import deriv, old_div
 
 
 def volume_integral(var, grid, xr=False):

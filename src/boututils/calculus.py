@@ -5,16 +5,20 @@ Derivatives and integrals of periodic and non-periodic functions
 B.Dudson, University of York, Nov 2009
 """
 
-try:
-    from past.utils import old_div
-except ImportError:
-
-    def old_div(a, b):
-        return a / b
-
+import numbers
 
 from numpy import arange, array, multiply, pi, sum, transpose, where, zeros
 from numpy.fft import irfft, rfft
+
+
+def old_div(a, b):
+    """Python 2 style division: floor division if both are integers
+
+    Equivalent to past.utils.old_div from the python-future package
+    """
+    if isinstance(a, numbers.Integral) and isinstance(b, numbers.Integral):
+        return a // b
+    return a / b
 
 
 def deriv(*args, **kwargs):

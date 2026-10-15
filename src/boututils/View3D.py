@@ -12,10 +12,10 @@ https://docs.enthought.com/mayavi/mayavi/auto/example_magnetic_field.html#exampl
 
 import numpy as np
 from mayavi import mlab
-from past.utils import old_div
 from scipy import interpolate
 
 from boutdata.collect import collect
+from boututils.calculus import old_div
 from boututils.View2D import View2D
 
 from .boutgrid import create_grid
