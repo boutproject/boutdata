@@ -1,7 +1,7 @@
 import numpy as np
-from past.utils import old_div
 
 from boututils.bunch import Bunch
+from boututils.calculus import old_div
 
 
 def RMSvalue(vec1d):

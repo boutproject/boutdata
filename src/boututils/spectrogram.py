@@ -6,8 +6,8 @@ updated:    23/06/2016
 
 """
 
-from numpy import arange, cos, exp, linspace, max, min, power, sin, transpose, zeros
-from scipy import fftpack, pi
+from numpy import arange, cos, exp, linspace, max, min, pi, power, sin, transpose, zeros
+from scipy import fftpack
 
 
 def spectrogram(data, dx, sigma, clip=1.0, optimise_clipping=True, nskip=1.0):

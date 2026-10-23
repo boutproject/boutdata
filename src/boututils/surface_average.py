@@ -2,9 +2,8 @@
 
 import numpy as np
 import scipy
-from past.utils import old_div
 
-from boututils.calculus import deriv
+from boututils.calculus import deriv, old_div
 from boututils.int_func import int_func
 
 
@@ -73,7 +72,7 @@ def surface_average(var, grid, area=None):
         if xi == nx - 1:
             last = 1
 
-        dtheta = 2.0 * np.pi / np.float(ny)
+        dtheta = 2.0 * np.pi / float(ny)
         r = grid["Rxy"][xi, yi]
         z = grid["Zxy"][xi, yi]
         n = np.size(r)
