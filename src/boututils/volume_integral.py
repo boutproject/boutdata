@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from boututils.calculus import deriv, old_div
+from boututils.calculus import deriv
 
 
 def volume_integral(var, grid, xr=False):
@@ -78,7 +78,7 @@ def volume_integral(var, grid, xr=False):
             r = grid["Rxy"][xi, yi]
             z = grid["Zxy"][xi, yi]
             # n = np.size(r)
-            dl = old_div(np.sqrt(deriv(r) ** 2 + deriv(z) ** 2), dtheta)
+            dl = np.sqrt(deriv(r) ** 2 + deriv(z) ** 2) / dtheta
 
             # Area of flux-surface
             dA = (grid["Bxy"][xi, yi] / grid["Bpxy"][xi, yi] * dl) * (r * 2.0 * np.pi)

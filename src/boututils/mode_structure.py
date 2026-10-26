@@ -4,7 +4,6 @@ import numpy as numpy
 from pylab import clf, draw, gca, plot, savefig, show, title, xlabel, xlim, ylim
 
 from boutupgrader.common import yes_or_no as query_yes_no
-from boututils.calculus import old_div
 from boututils.fft_integrate import fft_integrate
 
 # ; Calculates mode structure from BOUT++ output
@@ -138,7 +137,7 @@ def mode_structure(
 
     np = 4 * ny
 
-    nf = old_div((np - 2), 2)
+    nf = (np - 2) // 2
     famp = numpy.zeros((nx, nf))
 
     for x in range(nx):
@@ -149,7 +148,7 @@ def mode_structure(
         nskip = numpy.zeros(ny - 1)
         for y in range(ny - 1):
             yp = y + 1
-            nskip[y] = old_div(numpy.abs(zshift[x, yp] - zshift[x, y]), dz) - 1
+            nskip[y] = (numpy.abs(zshift[x, yp] - zshift[x, y]) // dz) - 1
 
         nskip = numpy.int_(numpy.round(nskip))
         nskip = numpy.where(nskip > 0, nskip, 0)
@@ -168,27 +167,27 @@ def mode_structure(
         ypos = 0
         for y in range(ny - 1):
             # original points
-            zind = old_div((zangle - zshift[x, y]), dz)
+            zind = (zangle - zshift[x, y]) // dz
 
             if numpy.size(zind) != 1:
                 sys.exit()
             f[ypos] = zinterp(vr[x, y, :], zind)
             R[ypos] = rxy[x, y]
             Z[ypos] = zxy[x, y]
-            BtBp[ypos] = old_div(Btxy[x, y], Bpxy[x, y])
+            BtBp[ypos] = Btxy[x, y] / Bpxy[x, y]
 
             ypos = ypos + 1
 
             # add the extra points
 
-            zi0 = old_div((zangle - zshift[x, y]), dz)
-            zip1 = old_div((zangle - zshift[x, y + 1]), dz)
+            zi0 = (zangle - zshift[x, y]) / dz
+            zip1 = (zangle - zshift[x, y + 1]) / dz
 
-            dzi = old_div((zip1 - zi0), (nskip[y] + 1))
+            dzi = (zip1 - zi0) // (nskip[y] + 1)
 
             for i in range(nskip[y]):
                 zi = zi0 + float(i + 1) * dzi  # zindex
-                w = old_div(float(i + 1), float(nskip[y] + 1))  # weighting
+                w = float(i + 1) / float(nskip[y] + 1)  # weighting
 
                 f[ypos + i] = w * zinterp(vr[x, y + 1, :], zi) + (1.0 - w) * zinterp(
                     vr[x, y, :], zi
@@ -196,21 +195,21 @@ def mode_structure(
 
                 R[ypos + i] = w * rxy[x, y + 1] + (1.0 - w) * rxy[x, y]
                 Z[ypos + i] = w * zxy[x, y + 1] + (1.0 - w) * zxy[x, y]
-                BtBp[ypos + i] = old_div(
-                    (w * Btxy[x, y + 1] + (1.0 - w) * Btxy[x, y]),
-                    (w * Bpxy[x, y + 1] + (1.0 - w) * Bpxy[x, y]),
+                BtBp[ypos + i] = (
+                    (w * Btxy[x, y + 1] + (1.0 - w) * Btxy[x, y])
+                    / (w * Bpxy[x, y + 1] + (1.0 - w) * Bpxy[x, y]),
                 )
 
             ypos = ypos + nskip[y]
 
             # final point
 
-            zind = old_div((zangle - zShift[x, ny - 1]), dz)
+            zind = (zangle - zShift[x, ny - 1]) // dz
 
             f[ypos] = zinterp(vr[x, ny - 1, :], zind)
             R[ypos] = rxy[x, ny - 1]
             Z[ypos] = zxy[x, ny - 1]
-            BtBp[ypos] = old_div(Btxy[x, ny - 1], Bpxy[x, ny - 1])
+            BtBp[ypos] = Btxy[x, ny - 1] / Bpxy[x, ny - 1]
 
         # STOP
 
@@ -222,13 +221,13 @@ def mode_structure(
         dl = numpy.sqrt(drxy * drxy + dzxy * dzxy)
 
         nu = dl * BtBp / R  # field-line pitch
-        theta = old_div(numpy.real(fft_integrate(nu)), shiftangle[x])
+        theta = numpy.real(fft_integrate(nu)) / shiftangle[x]
 
         if numpy.max(theta) > 1.0:
             # mis-match between q and nu (integration error?)
             if quiet is None:
                 print("Mismatch  ", x, numpy.max(theta))
-            theta = old_div(theta, (numpy.max(theta) + numpy.abs(theta[1] - theta[0])))
+            theta = theta / (numpy.max(theta) + numpy.abs(theta[1] - theta[0]))
 
         theta = 2.0 * numpy.pi * theta
 
@@ -241,7 +240,7 @@ def mode_structure(
 
         # STOP
 
-        ff = old_div(numpy.fft.fft(farr), numpy.size(farr))
+        ff = numpy.fft.fft(farr) / numpy.size(farr)
 
         for i in range(nf):
             famp[x, i] = 2.0 * numpy.abs(ff[i + 1])
@@ -257,7 +256,7 @@ def mode_structure(
     if pmodes is None:
         pmodes = 10
 
-    qprof = old_div(numpy.abs(shiftangle), (2.0 * numpy.pi))
+    qprof = numpy.abs(shiftangle) / (2.0 * numpy.pi)
 
     xarr = numpy.arange(nx)
     xtitle = "Radial index"
@@ -275,7 +274,7 @@ def mode_structure(
         count2 = numpy.where(tn == "PSI_BNDRY")
 
         if (numpy.size(count1) > 0) and (numpy.size(count2) > 0):
-            xarr = old_div((xarr - psi_axis), (psi_bndry - psi_axis))
+            xarr = (xarr - psi_axis) / (psi_bndry - psi_axis)
 
         else:
             # Use hard-wired values
@@ -286,7 +285,7 @@ def mode_structure(
             # xarr = xarr / 0.74156
 
             # cbm18_dens8
-            xarr = old_div((xarr + 0.854856), (0.854856 + 0.0760856))
+            xarr = (xarr + 0.854856) / (0.854856 + 0.0760856)
 
         xtitle = "Psi normalised"
 
@@ -304,7 +303,7 @@ def mode_structure(
                 xlabel(xtitle)
                 show(block=False)
 
-                q = old_div(float(i + 1), float(n))
+                q = (i + 1) / n
 
                 pos = numpy.interp(q, qprof, xarr)
 
@@ -375,7 +374,7 @@ def mode_structure(
             for i in range(minind, maxind + 1, subset):
                 plot(xarr, famp[:, i])
 
-                q = old_div(float(i + 1), float(n))
+                q = (i + 1) / n
                 pos = numpy.interp(q, qprof, xarr)
 
                 plot([pos, pos], [0, 2.0 * numpy.max(fmax)], "--")

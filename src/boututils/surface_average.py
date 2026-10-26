@@ -3,7 +3,7 @@
 import numpy as np
 import scipy
 
-from boututils.calculus import deriv, old_div
+from boututils.calculus import deriv
 from boututils.int_func import int_func
 
 
@@ -77,9 +77,9 @@ def surface_average(var, grid, area=None):
         z = grid["Zxy"][xi, yi]
         n = np.size(r)
 
-        dl = old_div(np.sqrt(deriv(r) ** 2 + deriv(z) ** 2), dtheta)
+        dl = np.sqrt(deriv(r) ** 2 + deriv(z) ** 2) / dtheta
         if area:
-            dA = (old_div(grid["Bxy"][xi, yi], grid["Bpxy"][xi, yi])) * r * dl
+            dA = (grid["Bxy"][xi, yi] / grid["Bpxy"][xi, yi]) * r * dl
             A = int_func(np.arange(n), dA)
             theta[xi, yi] = 2.0 * np.pi * A / A[n - 1]
         else:
@@ -96,6 +96,6 @@ def surface_average(var, grid, area=None):
         for y in range(ny):
             vy[y] = np.mean(var[x, y, :])
 
-        result[x] = old_div(idl_tabulate(theta[x, :], vy), (2.0 * np.pi))
+        result[x] = idl_tabulate(theta[x, :], vy) / (2.0 * np.pi)
 
     return result

@@ -1,7 +1,6 @@
 import numpy as np
 
 from boututils.bunch import Bunch
-from boututils.calculus import old_div
 
 
 def RMSvalue(vec1d):
@@ -10,8 +9,8 @@ def RMSvalue(vec1d):
     # ;------------------------
 
     nel = np.size(vec1d)
-    valav = old_div(np.sum(vec1d), nel)
-    valrms = np.sqrt(old_div(np.sum((vec1d - valav) ** 2), nel))
+    valav = np.sum(vec1d) / nel
+    valrms = np.sqrt(np.sum((vec1d - valav) ** 2) / nel)
     acvec = vec1d - valav
 
     return Bunch(valrms=valrms, valav=valav, acvec=acvec)

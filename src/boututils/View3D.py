@@ -15,7 +15,6 @@ from mayavi import mlab
 from scipy import interpolate
 
 from boutdata.collect import collect
-from boututils.calculus import old_div
 from boututils.View2D import View2D
 
 from .boutgrid import create_grid
@@ -82,7 +81,7 @@ def View3D(g, path=None, gb=None):
 
     # calculate Toroidal field
 
-    Btrz = old_div(f(g.psi), g.r)
+    Btrz = f(g.psi) // g.r
 
     rmin = g.r[:, 0].min()
     rmax = g.r[:, 0].max()

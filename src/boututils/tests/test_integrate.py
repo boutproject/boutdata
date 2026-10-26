@@ -1,6 +1,5 @@
 import numpy as np
 
-from boututils.calculus import old_div
 from boututils.fft_integrate import fft_integrate
 from boututils.spectrogram import spectrogram
 
@@ -19,14 +18,6 @@ def test_int_func():
     x = np.linspace(0.0, 1.0, 101)
     result = int_func(x, 3.0 * x**2)
     np.testing.assert_allclose(result, x**3, atol=1e-6)
-
-
-def test_old_div():
-    assert old_div(7, 2) == 3
-    assert old_div(-7, 2) == -4
-    assert old_div(np.int64(7), 2) == 3
-    assert old_div(7.0, 2) == 3.5
-    np.testing.assert_allclose(old_div(np.array([1, 3]), 2), [0.5, 1.5])
 
 
 def test_spectrogram():
