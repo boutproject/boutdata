@@ -166,6 +166,17 @@ def collect(
         do not have to re-open the dump files to read another variable
         (default: None)
 
+    Notes
+    -----
+    NetCDF-4 dump files are read using h5py if it is installed, because it opens
+    files much faster than netCDF4. Set the environment variable
+    ``BOUTDATA_NETCDF_READER=netcdf4`` to always use netCDF4 (see
+    :py:mod:`boututils.datafile`).
+
+    When reading many variables, it is still faster to pass a `datafile_cache`, or
+    to use :py:obj:`~boutdata.data.BoutData`, so that the files are only opened
+    once.
+
     Examples
     --------
 
