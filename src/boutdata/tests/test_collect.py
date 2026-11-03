@@ -23,6 +23,10 @@ from boututils.datafile import DataFile
 
 # Note - using tmp_path fixture requires pytest>=3.9.0
 
+# Run every test with each library that can read NetCDF files
+pytestmark = pytest.mark.usefixtures("netcdf_reader")
+
+
 collect_kwargs_list = [
     pytest.param({"xguards": True, "yguards": "include_upper"}, id="collect_guards"),
     pytest.param({"xguards": False, "yguards": False}, id="collect_noguards"),
