@@ -282,9 +282,8 @@ def collect(
             f.close()
         return result
 
-    if datafile_cache is None:
-        # close the DataFile if we are not keeping it in a cache
-        f.close()
+    # Keep the 0'th file open: it is read again in the loop over processors below
+    f0 = f
 
     # Create a list with size of each dimension
     ddims = [grid_info["sizes"][d] for d in dimensions]
@@ -301,7 +300,7 @@ def collect(
         is_fieldperp = False
 
     for i in range(grid_info["npes"]):
-        f = getDataFile(i)
+        f = f0 if i == 0 else getDataFile(i)
         temp_yindex, temp_f_attributes = _collect_from_one_proc(
             i,
             f,

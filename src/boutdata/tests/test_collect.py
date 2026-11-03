@@ -1279,3 +1279,27 @@ class TestCollect:
             collect_kwargs=collect_kwargs,
             squash_kwargs=squash_kwargs,
         )
+
+    @pytest.mark.parametrize("scenario", ["core_min", "single_null_full"])
+    def test_collect_opens_each_file_once(
+        self, tmp_path, scenario, request, monkeypatch
+    ):
+        """Check that collecting a field opens each dump file exactly once"""
+        data_path, _, _ = request.getfixturevalue(scenario)
+        symlink_dump_files(data_path, tmp_path)
+
+        with DataFile(tmp_path / "BOUT.dmp.0.nc") as f:
+            npes = int(f["NXPE"]) * int(f["NYPE"])
+
+        opened_files = []
+        original_init = DataFile.__init__
+
+        def counting_init(self, filename=None, *args, **kwargs):
+            opened_files.append(filename)
+            original_init(self, filename, *args, **kwargs)
+
+        monkeypatch.setattr(DataFile, "__init__", counting_init)
+
+        collect("field3d_t_1", path=tmp_path, info=False)
+
+        assert len(opened_files) == npes
