@@ -36,6 +36,7 @@ dependencies = [
     "natsort>=8.1.0",
     "scipy >= 1.12.0",
     "netCDF4",
+    "h5py",
 ]
 dynamic = ["version"]
 
