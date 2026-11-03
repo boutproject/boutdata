@@ -663,7 +663,10 @@ def _collect_from_one_proc(
             # No data for FieldPerp on this processor
             return None, None
 
-    result[global_slices] = datafile.read(varname, ranges=local_slices)
+    # Attributes are not needed here, so do not create a BoutArray
+    result[global_slices] = datafile.read(
+        varname, ranges=local_slices, asBoutArray=False
+    )
 
     if is_fieldperp:
         return temp_yindex, f_attributes
