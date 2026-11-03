@@ -895,9 +895,12 @@ class DataFile_netCDF_h5py(DataFile_netCDF):
         return needs_netcdf4[name]
 
     def _check_needs_netcdf4(self, var):
-        if var.dtype.kind not in "biuf":
+        if var.dtype.kind not in "iuf":
             # Only scalar strings are handled here
             return not (var.shape == () and h5py.check_string_dtype(var.dtype))
+        if not var.dtype.isnative:
+            # Leave byte-swapping to netCDF4
+            return True
         if (
             var.shape != ()
             and "DIMENSION_LIST" not in var.attrs
