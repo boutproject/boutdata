@@ -77,9 +77,8 @@ def clang_parse(filename, source):
 def clang_find_interpolations(node, typename, nodes=None):
     if nodes is None:
         nodes = []
-    if node.kind == clang.cindex.CursorKind.TYPE_REF:
-        if node.type.spelling == typename:
-            nodes.append(node)
+    if node.kind == clang.cindex.CursorKind.TYPE_REF and node.type.spelling == typename:
+        nodes.append(node)
     for child in node.get_children():
         clang_find_interpolations(child, typename, nodes)
     return nodes
