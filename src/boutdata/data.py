@@ -12,6 +12,7 @@ import pathlib
 import re
 from collections import OrderedDict, UserDict
 from multiprocessing import Pipe, Process, RawArray
+from warnings import warn
 
 import numpy
 
@@ -839,6 +840,12 @@ class BoutOptionsFile(BoutOptions):
 
         mxg = self._keys.get("MXG", 2)
         myg = self._keys.get("MYG", 2)
+        # FIXME(peter): Not sure there's actually a sensible default for Z
+        # guards! We'll break with either newer/older versions. Instead, let's
+        # warn if not set
+        if (mzg := self._keys.get("MZG", None)) is None:
+            warn("MZG not set, using 2. Set explicitly if this is not correct!")
+            mzg = 2
 
         # make self.x, self.y, self.z three dimensional now so
         # that expressions broadcast together properly.
@@ -859,9 +866,11 @@ class BoutOptionsFile(BoutOptions):
         self.z = (
             2.0
             * numpy.pi
-            * numpy.linspace(0.5 / self.nz, 1.0 - 0.5 / self.nz, self.nz)[
-                numpy.newaxis, numpy.newaxis, :
-            ]
+            * numpy.linspace(
+                (0.5 - mzg) / self.nz,
+                1.0 - (0.5 - mzg) / self.nz,
+                self.nz + 2 * mzg,
+            )[numpy.newaxis, numpy.newaxis, :]
         )
 
         # Also create staggered versions of the coordinates
@@ -882,9 +891,11 @@ class BoutOptionsFile(BoutOptions):
         self.zlow = (
             2.0
             * numpy.pi
-            * numpy.linspace(0.0, 1.0 - 1.0 / self.nz, self.nz)[
-                numpy.newaxis, numpy.newaxis, :
-            ]
+            * numpy.linspace(
+                -mzg / self.nz,
+                1.0 + (mzg - 1.0) / self.nz,
+                self.nz + 2 * mzg,
+            )[numpy.newaxis, numpy.newaxis, :]
         )
 
     def evaluate(self, name, *, location="CELL_CENTRE"):
