@@ -2,6 +2,7 @@ from glob import glob
 
 import numpy as np
 import numpy.testing as npt
+import pytest
 
 from boutdata import restart
 from boutdata.collect import collect
@@ -11,6 +12,9 @@ from boutdata.tests.make_test_data import (
     expected_attributes,
     make_grid_info,
 )
+
+# Run every test with each library that can read NetCDF files
+pytestmark = pytest.mark.usefixtures("netcdf_reader")
 
 
 def check_redistributed_data(

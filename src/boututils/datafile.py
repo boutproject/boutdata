@@ -8,6 +8,15 @@ Supported libraries:
 - ``h5py`` (for HDF5 files)
 - ``netCDF4`` (preferred NetCDF library)
 
+NetCDF-4 files are HDF5 files. When ``h5py`` is available, NetCDF-4 files
+opened read-only are read with ``h5py``, which opens files much faster than
+``netCDF4``. The reader can be chosen with the environment variable
+``BOUTDATA_NETCDF_READER`` (or by setting ``boututils.datafile.netcdf_reader``):
+
+- ``"auto"`` (default): use ``h5py`` if it is installed, otherwise ``netCDF4``
+- ``"netcdf4"``: always use ``netCDF4``
+- ``"h5py"``: always use ``h5py`` for NetCDF-4 files opened read-only
+
 NOTE
 ----
 NetCDF and HDF5 include unlimited dimensions, but this library is just
@@ -23,6 +32,7 @@ TODO
 
 """
 
+import os
 import pathlib
 
 import numpy as np
@@ -31,7 +41,7 @@ from boututils.boutarray import BoutArray
 from boututils.boutwarnings import alwayswarn
 
 try:
-    from netCDF4 import Dataset
+    from netCDF4 import Dataset, default_fillvals
 
     has_netCDF = True
 except ImportError:
@@ -45,6 +55,26 @@ try:
     has_h5py = True
 except ImportError:
     has_h5py = False
+
+# Which library to use to read NetCDF-4 files: "auto", "netcdf4" or "h5py"
+netcdf_reader = os.environ.get("BOUTDATA_NETCDF_READER", "auto")
+
+
+def _use_h5py_reader(filename, write, create):
+    """Should the NetCDF file `filename` be read with h5py?"""
+    if netcdf_reader not in ("auto", "netcdf4", "h5py"):
+        raise ValueError(
+            f"Invalid netcdf_reader '{netcdf_reader}'. Should be 'auto', 'netcdf4' "
+            "or 'h5py'"
+        )
+    if write or create or netcdf_reader == "netcdf4":
+        return False
+    if netcdf_reader == "h5py" and not has_h5py:
+        raise ImportError("netcdf_reader is 'h5py' but h5py is not available")
+    if not has_h5py or filename.suffix not in (".nc", ".ncdf"):
+        return False
+    # NetCDF-3 files are not HDF5 files, so need to be read with netCDF4
+    return h5py.is_hdf5(filename)
 
 
 class DataFile:
@@ -97,6 +127,8 @@ class DataFile:
                 self.impl = DataFile_HDF5(
                     filename=filename, write=write, create=create, format=format
                 )
+            elif _use_h5py_reader(filename, write, create):
+                self.impl = DataFile_netCDF_h5py(filename=filename)
             else:
                 self.impl = DataFile_netCDF(
                     filename=filename,
@@ -716,6 +748,445 @@ class DataFile_netCDF(DataFile):
 
             # Save the attributes for this variable to the cache
             self._attributes_cache[varname] = attributes
+
+            return attributes
+
+
+class DataFile_netCDF_h5py(DataFile_netCDF):
+    """Read-only access to NetCDF-4 files using h5py
+
+    NetCDF-4 files are HDF5 files, and h5py opens them much faster than netCDF4,
+    which reads the metadata of all variables when opening a file. Results are the
+    same as from DataFile_netCDF. Variables that h5py cannot read in the same way
+    as netCDF4 (e.g. strings arrays or packed data) are read using DataFile_netCDF.
+    """
+
+    # Attributes used internally by NetCDF-4 and HDF5 dimension scales, which netCDF4
+    # does not show
+    _hidden_attributes = (
+        "_Netcdf4Coordinates",
+        "_Netcdf4Dimid",
+        "_NCProperties",
+        "_IsNetcdf4",
+        "_SuperblockVersion",
+        "_nc3_strict",
+        "DIMENSION_LIST",
+        "REFERENCE_LIST",
+        "CLASS",
+        "NAME",
+    )
+
+    # Attributes that make netCDF4 modify the data it reads
+    _netcdf4_conversion_attributes = (
+        "scale_factor",
+        "add_offset",
+        "missing_value",
+        "valid_min",
+        "valid_max",
+        "valid_range",
+        "_Unsigned",
+        "_Encoding",
+    )
+
+    _netcdf4_file = None
+
+    # Metadata (list of variables, dimensions, attributes) of files that have been
+    # opened, so that it only needs to be read once, rather than every time a file is
+    # opened. Keys are (path, modification time, size, inode), so the metadata is read
+    # again if a file changes.
+    _metadata_cache = {}  # noqa: RUF012
+    _metadata_cache_max_files = 10000
+
+    def open(self, filename, write=False, create=False, format=None):
+        if write or create:
+            raise ValueError("DataFile_netCDF_h5py can only read files")
+        self.handle = h5py.File(filename, mode="r")
+        self.writeable = False
+
+        stat = os.stat(filename)
+        cache_key = (
+            os.path.abspath(filename),
+            stat.st_mtime_ns,
+            stat.st_size,
+            stat.st_ino,
+        )
+        if len(self._metadata_cache) >= self._metadata_cache_max_files:
+            self._metadata_cache.clear()
+        self._metadata = self._metadata_cache.setdefault(
+            cache_key,
+            {
+                "contents": None,
+                "attributes": {},
+                "needs_netcdf4": {},
+                "dimension_lengths": {},
+            },
+        )
+
+    def close(self):
+        if self.handle is not None:
+            self.handle.close()
+        self.handle = None
+        if self._netcdf4_file is not None:
+            self._netcdf4_file.close()
+        self._netcdf4_file = None
+
+    def __init__(self, filename=None, write=False, create=False, format=None):
+        if not has_h5py:
+            message = "DataFile: No supported HDF5 python-modules available"
+            raise ImportError(message)
+        self._filename = filename
+        self._kwargs = {}
+        if filename is not None:
+            self.open(filename, write=write, create=create, format=format)
+        self._attributes_cache = {}
+
+    def _get_netcdf4_file(self):
+        """DataFile_netCDF for the same file, for variables h5py cannot read"""
+        if self._netcdf4_file is None:
+            self._netcdf4_file = DataFile_netCDF(self._filename)
+        return self._netcdf4_file
+
+    def _read_name_attribute(self, name):
+        """Read the "NAME" attribute of dimension scale `name`, or None if not a scale
+
+        Uses the low-level h5py API, because this is much faster than opening the
+        dataset.
+        """
+        name = name.encode()
+        try:
+            if not h5py.h5a.exists(self.handle.id, b"NAME", obj_name=name):
+                return None
+        except (KeyError, RuntimeError):
+            # No object called `name`
+            return None
+        attribute = h5py.h5a.open(self.handle.id, b"NAME", obj_name=name)
+        value = np.empty((), dtype=attribute.dtype)
+        attribute.read(value)
+        return bytes(value)
+
+    def _is_dimension_only(self, name):
+        """Is `name` a NetCDF dimension that is not also a variable?"""
+        scale_name = self._read_name_attribute(name)
+        return scale_name is not None and scale_name.startswith(
+            b"This is a netCDF dimension but not"
+        )
+
+    def _get_variable(self, name):
+        """Get the h5py.Dataset of a variable, or None if there is no such variable"""
+        if self.handle is None or "/" in name or name.startswith("_nc4_non_coord_"):
+            return None
+        if self._is_dimension_only(name):
+            # A variable with the same name as a dimension, but different
+            # dimensions, is renamed by NetCDF
+            name = "_nc4_non_coord_" + name
+        try:
+            var = self.handle[name]
+        except KeyError:
+            return None
+        if not isinstance(var, h5py.Dataset):
+            return None
+        return var
+
+    def _needs_netcdf4(self, name, var):
+        """Does variable `var` have to be read with netCDF4 to get the same result?"""
+        needs_netcdf4 = self._metadata["needs_netcdf4"]
+        if name not in needs_netcdf4:
+            needs_netcdf4[name] = self._check_needs_netcdf4(var)
+        return needs_netcdf4[name]
+
+    def _check_needs_netcdf4(self, var):
+        if var.dtype.kind not in "iuf":
+            # Only scalar strings are handled here
+            return not (var.shape == () and h5py.check_string_dtype(var.dtype))
+        if not var.dtype.isnative:
+            # Leave byte-swapping to netCDF4
+            return True
+        if (
+            var.shape != ()
+            and "DIMENSION_LIST" not in var.attrs
+            and (var.attrs.get("CLASS") != b"DIMENSION_SCALE" or len(var.shape) != 1)
+        ):
+            # Not a NetCDF-4 variable, and not a 1d coordinate variable
+            return True
+        if any(a in var.attrs for a in self._netcdf4_conversion_attributes):
+            return True
+        # netCDF4 pads variables that are shorter than an unlimited dimension with
+        # fill values
+        return any(
+            maxsize is None and size < length
+            for size, maxsize, length in zip(
+                var.shape, var.maxshape, self._variable_dimension_lengths(var)
+            )
+        )
+
+    @staticmethod
+    def _convert_attribute(value):
+        """Convert an attribute read by h5py to the value netCDF4 would give"""
+        if isinstance(value, h5py.Empty):
+            return ""
+        if isinstance(value, bytes | np.bytes_):
+            return value.decode("utf-8", "replace").replace("\x00", "")
+        if isinstance(value, np.ndarray):
+            if value.dtype.kind in "OSU":
+                strings = [DataFile_netCDF_h5py._convert_attribute(v) for v in value]
+                return strings[0] if len(strings) == 1 else strings
+            if value.shape == (1,):
+                return value[0]
+        return value
+
+    def _mask_fill_values(self, var, data):
+        """Mask fill values in the same way as netCDF4"""
+        fill_value = var.attrs.get("_FillValue")
+        if fill_value is None:
+            no_fill = (
+                var.id.get_create_plist().get_fill_time() == h5py.h5d.FILL_TIME_NEVER
+            )
+            if no_fill or var.dtype.str[1:] in ("i1", "u1"):
+                return np.ma.masked_array(data)
+            fill_value = default_fillvals[var.dtype.str[1:]]
+        if np.isnan(fill_value):
+            return np.ma.masked_array(data, mask=np.isnan(data))
+        return np.ma.masked_array(data, mask=(data == fill_value))
+
+    def read(self, name, ranges=None, asBoutArray=True):
+        """Read a variable from the file."""
+        if self.handle is None:
+            return None
+
+        var = self._get_variable(name)
+        n = name
+        if var is None:
+            # Not found. Try to find using case-insensitive search
+            for n in self.list():
+                if n.lower() == name.lower():
+                    print(f"WARNING: Reading '{n}' instead of '{name}'")
+                    var = self._get_variable(n)
+            if var is None:
+                return None
+
+        if self._needs_netcdf4(n, var):
+            return self._get_netcdf4_file().read(n, ranges, asBoutArray)
+
+        if asBoutArray:
+            attributes = self.attributes(n)
+
+        ndims = len(var.shape)
+        if ndims == 0:
+            if h5py.check_string_dtype(var.dtype):
+                data = var.asstr()[()]
+            else:
+                data = np.asarray(var[()])
+                if not asBoutArray:
+                    data = self._mask_fill_values(var, data)
+            if asBoutArray:
+                data = BoutArray(data, attributes=attributes)
+            return data
+
+        if ranges:
+            if len(ranges) == 2 * ndims:
+                # Reform list of pairs of ints into slices
+                ranges = [slice(a, b) for a, b in zip(ranges[::2], ranges[1::2])]
+            elif len(ranges) != ndims:
+                raise ValueError(
+                    "Incorrect number of elements in ranges argument "
+                    f"(got {ranges}, expected {ndims} or {2 * ndims})"
+                )
+            ranges = ranges[:ndims]
+            if any(
+                r is None or (isinstance(r, slice) and (r.step or 1) < 0)
+                for r in ranges
+            ):
+                # Indexing that h5py does not support in the same way as netCDF4
+                return self._get_netcdf4_file().read(n, ranges, asBoutArray)
+            data = var[tuple(ranges)]
+        else:
+            data = var[...]
+
+        if asBoutArray:
+            return BoutArray(data, attributes=attributes)
+        return self._mask_fill_values(var, data)
+
+    def sync(self):
+        self.handle.flush()
+
+    def _get_contents(self):
+        """Scan the file for its variables and dimensions
+
+        Returns
+        -------
+        variables : list of str
+            Names of the variables, in the same order as netCDF4 lists them
+        dimension_names : dict
+            Map from NetCDF dimension IDs to dimension names
+        """
+        if self._metadata["contents"] is not None:
+            return self._metadata["contents"]
+
+        datasets = []
+
+        def add_dataset(name, info):
+            # visit() is recursive, so skip objects inside groups
+            if info.type == h5py.h5o.TYPE_DATASET and b"/" not in name:
+                datasets.append(name.decode())
+
+        # Use the creation order of the variables, like netCDF4, if it was saved
+        try:
+            h5py.h5o.visit(
+                self.handle.id, add_dataset, info=True, idx_type=h5py.h5.INDEX_CRT_ORDER
+            )
+        except (KeyError, RuntimeError, ValueError):
+            datasets = []
+            h5py.h5o.visit(
+                self.handle.id, add_dataset, info=True, idx_type=h5py.h5.INDEX_NAME
+            )
+
+        variables = []
+        dimension_names = {}
+        for name in datasets:
+            scale_name = self._read_name_attribute(name)
+            if scale_name is not None:
+                # A dimension scale, i.e. a NetCDF dimension
+                dimension_id = self.handle[name].attrs.get("_Netcdf4Dimid")
+                if dimension_id is not None:
+                    dimension_names[int(dimension_id)] = name
+                if scale_name.startswith(b"This is a netCDF dimension but not"):
+                    continue
+            variables.append(name.removeprefix("_nc4_non_coord_"))
+
+        self._metadata["contents"] = variables, dimension_names
+        return self._metadata["contents"]
+
+    def list(self):
+        if self.handle is None:
+            return []
+        return list(self._get_contents()[0])
+
+    def dimensions(self, varname):
+        if self.handle is None:
+            return None
+        var = self._get_variable(varname)
+        if var is None:
+            raise ValueError("No such variable")
+        if self._needs_netcdf4(varname, var):
+            return self._get_netcdf4_file().dimensions(varname)
+        if var.shape == ():
+            return ()
+        if "DIMENSION_LIST" not in var.attrs:
+            # 1d coordinate variable: the variable is its own dimension
+            return (varname,)
+        dimension_names = self._get_contents()[1]
+        dimension_ids = var.attrs.get("_Netcdf4Coordinates")
+        if dimension_ids is not None and all(
+            i in dimension_names for i in dimension_ids
+        ):
+            return tuple(dimension_names[i] for i in dimension_ids)
+        # Look up the names of the dimension scales. This is slow, because HDF5 has to
+        # search the file for the name of each referenced object
+        return tuple(
+            self.handle[refs[0]].name.removeprefix("/")
+            for refs in var.attrs["DIMENSION_LIST"]
+        )
+
+    def ndims(self, varname):
+        if self.handle is None:
+            raise ValueError("File not open")
+        return len(self.dimensions(varname))
+
+    def size(self, varname):
+        if self.handle is None:
+            return []
+        var = self._get_variable(varname)
+        if var is None:
+            return []
+        if self._needs_netcdf4(varname, var):
+            return self._get_netcdf4_file().size(varname)
+        # Use the size of the dimensions, like netCDF4
+        return self._variable_dimension_lengths(var)
+
+    def _variable_dimension_lengths(self, var):
+        """Lengths of the dimensions of `var`, as NetCDF defines them"""
+        if var.shape == ():
+            return []
+        if "DIMENSION_LIST" not in var.attrs:
+            # 1d coordinate variable, which is its own dimension
+            return [self._dimension_length(var)]
+        return [
+            self._dimension_length(self.handle[refs[0]])
+            for refs in var.attrs["DIMENSION_LIST"]
+        ]
+
+    def _dimension_length(self, dimension):
+        """Length of a dimension, given its dimension scale dataset"""
+        if dimension.maxshape[0] is not None:
+            return dimension.shape[0]
+
+        # Unlimited dimension: NetCDF uses the longest variable that uses it
+        dimension_lengths = self._metadata["dimension_lengths"]
+        dimension_id = int(dimension.attrs.get("_Netcdf4Dimid", -1))
+        if dimension_id in dimension_lengths:
+            return dimension_lengths[dimension_id]
+        length = dimension.shape[0]
+        if "REFERENCE_LIST" in dimension.attrs:
+            for ref, axis in dimension.attrs["REFERENCE_LIST"]:
+                length = max(length, self.handle[ref].shape[axis])
+        if dimension_id >= 0:
+            dimension_lengths[dimension_id] = length
+        return length
+
+    def write(self, name, data, info=False, *, dims=None):
+        raise Exception("File not writeable. Open with write=True keyword")
+
+    def read_file_attribute(self, name):
+        if name in self._hidden_attributes or name not in self.handle.attrs:
+            raise AttributeError(f"DataFile (netCDF4) has no file attribute {name}")
+        return self._convert_attribute(self.handle.attrs[name])
+
+    def write_file_attribute(self, name, value):
+        raise Exception("File not writeable. Open with write=True keyword")
+
+    def list_file_attributes(self):
+        return [a for a in self.handle.attrs if a not in self._hidden_attributes]
+
+    def attributes(self, varname):
+        try:
+            return self._attributes_cache[varname]
+        except KeyError:
+            # Need to build the attributes dictionary for this variable
+            if self.handle is None:
+                return None
+            shared_attributes = self._metadata["attributes"]
+            if varname in shared_attributes:
+                # Copy, so that changing the result does not change the shared cache
+                attributes = dict(shared_attributes[varname])
+                self._attributes_cache[varname] = attributes
+                return attributes
+
+            var = self._get_variable(varname)
+            n = varname
+            if var is None:
+                # Not found. Try to find using case-insensitive search
+                for n in self.list():
+                    if n.lower() == varname.lower():
+                        print(f"WARNING: Reading '{n}' instead of '{varname}'")
+                        var = self._get_variable(n)
+                if var is None:
+                    return None
+
+            if self._needs_netcdf4(n, var):
+                attributes = self._get_netcdf4_file().attributes(varname)
+            else:
+                attributes = {
+                    attrname: self._convert_attribute(value)
+                    for attrname, value in var.attrs.items()
+                    if attrname not in self._hidden_attributes
+                }
+                if "bout_type" not in attributes:
+                    attributes["bout_type"] = self._bout_type_from_dimensions(varname)
+
+            # Save the attributes for this variable to the caches
+            self._attributes_cache[varname] = attributes
+            if n == varname:
+                shared_attributes[varname] = dict(attributes)
 
             return attributes
 

@@ -26,6 +26,11 @@ sudo apt-get install libhdf5-serial-dev netcdf-bin libnetcdf-dev
 
 in ubuntu
 
+`boutdata` also uses [`h5py`](https://www.h5py.org) to read NetCDF-4 files,
+because it opens files much faster than `netCDF4`. If `h5py` is not
+installed, `netCDF4` is used. To always use `netCDF4` for reading, set the
+environment variable `BOUTDATA_NETCDF_READER=netcdf4`.
+
 # Install
 
 `pip install boutdata`

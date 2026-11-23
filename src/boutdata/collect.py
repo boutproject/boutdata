@@ -166,6 +166,17 @@ def collect(
         do not have to re-open the dump files to read another variable
         (default: None)
 
+    Notes
+    -----
+    NetCDF-4 dump files are read using h5py if it is installed, because it opens
+    files much faster than netCDF4. Set the environment variable
+    ``BOUTDATA_NETCDF_READER=netcdf4`` to always use netCDF4 (see
+    :py:mod:`boututils.datafile`).
+
+    When reading many variables, it is still faster to pass a `datafile_cache`, or
+    to use :py:obj:`~boutdata.data.BoutData`, so that the files are only opened
+    once.
+
     Examples
     --------
 
@@ -282,9 +293,8 @@ def collect(
             f.close()
         return result
 
-    if datafile_cache is None:
-        # close the DataFile if we are not keeping it in a cache
-        f.close()
+    # Keep the 0'th file open: it is read again in the loop over processors below
+    f0 = f
 
     # Create a list with size of each dimension
     ddims = [grid_info["sizes"][d] for d in dimensions]
@@ -301,7 +311,7 @@ def collect(
         is_fieldperp = False
 
     for i in range(grid_info["npes"]):
-        f = getDataFile(i)
+        f = f0 if i == 0 else getDataFile(i)
         temp_yindex, temp_f_attributes = _collect_from_one_proc(
             i,
             f,
@@ -664,7 +674,10 @@ def _collect_from_one_proc(
             # No data for FieldPerp on this processor
             return None, None
 
-    result[global_slices] = datafile.read(varname, ranges=local_slices)
+    # Attributes are not needed here, so do not create a BoutArray
+    result[global_slices] = datafile.read(
+        varname, ranges=local_slices, asBoutArray=False
+    )
 
     if is_fieldperp:
         return temp_yindex, f_attributes
