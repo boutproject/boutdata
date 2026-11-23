@@ -137,13 +137,13 @@ def importGridue(fname: str = "gridue") -> dict:
     A dict containing header and body information from the gridue file.
 
     """
-    f = open(fname)
-    values = [int(x) for x in next(f).split()]
+    with open(fname) as f:
+        values = [int(x) for x in next(f).split()]
 
-    if len(values) == 5:
-        return _importSN(values, f)
-    if len(values) == 2:
-        return _importDN(values, f)
+        if len(values) == 5:
+            return _importSN(values, f)
+        if len(values) == 2:
+            return _importDN(values, f)
 
     raise ValueError("Unrecognised gridue format")
 
