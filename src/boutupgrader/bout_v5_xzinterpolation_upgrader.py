@@ -101,9 +101,9 @@ def clang_fix_single_interpolation(
 def clang_fix_interpolation(old_interpolation, new_interpolation, node, source):
     nodes = clang_find_interpolations(node, old_interpolation)
     modified = source
-    for node in nodes:
+    for node_ in nodes:
         modified = clang_fix_single_interpolation(
-            old_interpolation, new_interpolation, modified, node.location
+            old_interpolation, new_interpolation, modified, node_.location
         )
     return modified
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import copy
 import pathlib
@@ -93,10 +92,9 @@ def use_metric_accessors(original_string):
 
     metric_components = {match[1] + match[2]: match[3] for match in line_matches}
     lines_to_remove = indices_of_matching_lines(SETTING_METRIC_COMPONENT_REGEX, lines)
-    lines_removed_count = 0
-    for line_index in lines_to_remove:
+    for lines_removed_count, line_index in enumerate(lines_to_remove):
         del lines[line_index - lines_removed_count]
-        lines_removed_count += 1
+
     metric_components_with_value = {
         key: value for key, value in metric_components.items() if value is not None
     }

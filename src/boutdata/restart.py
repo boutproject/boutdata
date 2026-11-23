@@ -708,7 +708,7 @@ def redistribute(
             ix = i % nxpe
             iy = int(i / nxpe)
 
-            def get_block(data):
+            def get_block(data, ix=i % nxpe, iy=int(i / nxpe)):
                 if mxg > old_mxg or myg > old_myg:
                     # need to make a new array as some boundary cell points are not
                     # present in data
@@ -1241,7 +1241,7 @@ def change_grid(
         ix = i % nxpe
         iy = i // nxpe
 
-        def get_block(data):
+        def get_block(data, ix=i % nxpe, iy=i // nxpe):
             sliced = np.zeros((mxsub + 2 * mxg, mysub + 2 * myg))
             sliced[:, myg:-myg] = data[
                 ix * mxsub : (ix + 1) * mxsub + 2 * mxg,

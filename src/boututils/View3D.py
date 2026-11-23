@@ -187,7 +187,6 @@ def View3D(g, path=None, gb=None):
     # scp.enable_contours = True
     # scp.contour.number_of_contours = 20
 
-
     # Magnetic Axis
 
     s = mlab.pipeline.streamline(field)
@@ -307,7 +306,6 @@ def View3D(g, path=None, gb=None):
 
     # ww = tvtk.XMLStructuredGridWriter(input=sgrid, file_name='sgrid.vts')
     # ww.write()
-
 
 
 def magnetic_field(g, X, Y, Z, rmin, rmax, zmin, zmax, Br, Bz, Btrz):

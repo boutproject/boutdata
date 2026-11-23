@@ -705,7 +705,7 @@ def showdata(
         pause ^= True
 
     def control():
-        global j, pause
+        global j
         if j == Nframes - 1:
             j = -1
         if not pause:
