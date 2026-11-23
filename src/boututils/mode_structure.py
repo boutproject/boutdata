@@ -1,6 +1,6 @@
 import sys
 
-import numpy as numpy
+import numpy
 from past.utils import old_div
 from pylab import clf, draw, gca, plot, savefig, show, title, xlabel, xlim, ylim
 

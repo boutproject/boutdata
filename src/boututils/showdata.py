@@ -32,10 +32,10 @@ pause = False
 
 def showdata(
     vars,
-    titles=[],
-    legendlabels=[],
-    surf=[],
-    polar=[],
+    titles=None,
+    legendlabels=None,
+    surf=None,
+    polar=None,
     tslice=0,
     t_array=None,
     movie=0,
@@ -43,8 +43,8 @@ def showdata(
     dpi=200,
     intv=1,
     Ncolors=25,
-    x=[],
-    y=[],
+    x=None,
+    y=None,
     global_colors=False,
     symmetric_colors=False,
     hold_aspect=False,
@@ -154,6 +154,18 @@ def showdata(
     - Figureplot
 
     """
+    if y is None:
+        y = []
+    if x is None:
+        x = []
+    if polar is None:
+        polar = []
+    if surf is None:
+        surf = []
+    if legendlabels is None:
+        legendlabels = []
+    if titles is None:
+        titles = []
     plt.ioff()
 
     # Check to see whether vars is a list or not.

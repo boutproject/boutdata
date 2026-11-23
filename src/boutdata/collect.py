@@ -376,7 +376,7 @@ def _collect_from_single_file(
     if info:
         print("Single (parallel) data file")
 
-    if varname not in f.keys():
+    if varname not in f:
         if strict:
             raise ValueError(f"Variable '{varname}' not found")
         else:
@@ -673,12 +673,10 @@ def _collect_from_one_proc(
 
 
 def _fieldperp_from_this(nype, pe_yind, mysub, myg, temp_yindex):
-    if pe_yind == 0:
-        if temp_yindex < mysub + myg:
-            return True
-    if pe_yind == nype - 1:
-        if myg + mysub * pe_yind <= temp_yindex:
-            return True
+    if pe_yind == 0 and temp_yindex < mysub + myg:
+        return True
+    if pe_yind == nype - 1 and myg + mysub * pe_yind <= temp_yindex:
+        return True
     return myg + mysub * pe_yind <= temp_yindex < myg + mysub * (pe_yind + 1)
 
 
@@ -1004,7 +1002,7 @@ def _get_grid_info(
         nype = nfiles
         print(f"NYPE not found, setting to {nype}")
 
-    if "t_array" in f.keys():
+    if "t_array" in f:
         nt = len(f.read("t_array"))
     else:
         nt = 1

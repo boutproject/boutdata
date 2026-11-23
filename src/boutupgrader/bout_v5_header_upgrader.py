@@ -2,6 +2,7 @@ import argparse
 import copy
 import re
 import subprocess
+import sys
 import textwrap
 from pathlib import Path
 
@@ -143,7 +144,7 @@ def run(args):
 
     if args.move_deprecated_headers:
         fix_library_header_locations(args.include_path, args.quiet)
-        exit(0)
+        sys.exit(0)
 
     header_regex = make_header_regex(deprecated_headers)
 

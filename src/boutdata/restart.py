@@ -677,7 +677,7 @@ def redistribute(
     mysub = new_processor_layout.mysub
     mzsub = new_processor_layout.mz
 
-    if "jyseps2_1" not in f.keys():
+    if "jyseps2_1" not in f:
         # Workaround for older output files that are missing jyseps* values
         is_doublenull = False
     else:

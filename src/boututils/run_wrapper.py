@@ -77,7 +77,7 @@ def determineNumberOfCPUs():
     try:
         m = re.search(r"(?m)^Cpus_allowed:\s*(.*)$", open("/proc/self/status").read())
         if m:
-            res = bin(int(m.group(1).replace(",", ""), 16)).count("1")
+            res = int(m.group(1).replace(",", ""), 16).bit_count()
             if res > 0:
                 return res
     except OSError:

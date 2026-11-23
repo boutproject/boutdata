@@ -53,7 +53,7 @@ def check_collected_data(
     path,
     squash,
     collect_kwargs,
-    squash_kwargs={},
+    squash_kwargs=None,
 ):
     """
     Use `collect()` to read 'actual' data from the files. Test that 'actual' and
@@ -76,6 +76,8 @@ def check_collected_data(
     squash_kwargs : dict, optional
         Keyword arguments passed to `squashoutput()`.
     """
+    if squash_kwargs is None:
+        squash_kwargs = {}
     expected = copy.deepcopy(expected_in)
 
     # Apply effect of arguments to expected data
