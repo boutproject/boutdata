@@ -48,7 +48,7 @@ def run(args):
     for filename in args.files:
         try:
             contents = pathlib.Path(filename).read_text()
-        except Exception as e:
+        except OSError as e:
             error_message = textwrap.indent(f"{e}", " ")
             print(f"Error reading {filename}:\n\n{error_message}")
             continue

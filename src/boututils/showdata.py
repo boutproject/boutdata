@@ -802,27 +802,13 @@ def showdata(
     if isinstance(movie, str) == 1:
         movietype = movie.split(".")[-1]
         if movietype == "mp4":
-            try:
-                anim.save(
-                    movie,
-                    writer=FFwriter,
-                    fps=fps,
-                    dpi=dpi,
-                    extra_args=["-vcodec", "libx264"],
-                )
-            except Exception:
-                # Try specifying writer by string if ffmpeg not found
-                try:
-                    anim.save(
-                        movie,
-                        writer="ffmpeg",
-                        fps=fps,
-                        dpi=dpi,
-                        extra_args=["-vcodec", "libx264"],
-                    )
-                except Exception:
-                    print("Save failed: Check ffmpeg path")
-                    raise
+            anim.save(
+                movie,
+                writer=FFwriter,
+                fps=fps,
+                dpi=dpi,
+                extra_args=["-vcodec", "libx264"],
+            )
         elif movietype == "gif":
             anim.save(movie, writer="imagemagick", fps=fps, dpi=dpi)
         else:

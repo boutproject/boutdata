@@ -757,12 +757,11 @@ class BoutOptionsFile(BoutOptions):
 
         try:
             self.recalculate_xyz(nx=nx, ny=ny, nz=nz)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             alwayswarn(
                 "While building x, y, z coordinate arrays, an "
-                "exception occured: "
-                + str(e)
-                + "\nEvaluating non-scalar options not available"
+                f"exception occured: {e}"
+                "\nEvaluating non-scalar options not available"
             )
 
     def recalculate_xyz(self, *, nx=None, ny=None, nz=None):

@@ -172,7 +172,7 @@ def determineNumberOfCPUs():
     except OSError:
         pass
 
-    raise Exception("Can not determine number of CPUs on this system")
+    raise RuntimeError("Can not determine number of CPUs on this system")
 
 
 def launch(

@@ -380,8 +380,10 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
     if np.max(np.abs(rel_error)) > 1e-6:
         if ignore_checks:
             print("WARNING: Relative error in Jacobian too large.")
-        # else:
-        #    raise ValueError(f"Relative error in Jacobian too large: {np.max(np.abs(rel_error))}")
+        else:
+            raise ValueError(
+                f"Relative error in Jacobian too large: {np.max(np.abs(rel_error))}"
+            )
 
     # We want to output contravariant components of Curl(b/B) in the
     # locally field-aligned coordinate system.
