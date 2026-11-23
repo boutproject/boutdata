@@ -739,8 +739,7 @@ def Convert_grids(
         ixseps2 = min(g["iyseparatrix3"] + 2, nx)  # Secondary X-point separatrix
         # Remove guard cells on either side of X-point.
         ny_inner = g["ix_inner"]
-        for name in grd:
-            var = grd[name]
+        for name, var in grd.items():
             nx, ny = var.shape
             newvar = np.zeros((nx, ny - 2))
             newvar[:, :ny_inner] = var[:, :ny_inner]
@@ -756,8 +755,7 @@ def Convert_grids(
         # check if CDN or UDN
         if mesh_topology[1:] == "DN":
             ny_inner = g["ix_inner"]
-            for name in grd:
-                var = grd[name]
+            for name, var in grd.items():
                 nx, ny = var.shape
                 newvar = np.zeros((nx, ny - 2))
                 newvar[:, :ny_inner] = var[:, :ny_inner]
@@ -769,8 +767,7 @@ def Convert_grids(
 
     # Extrapolate X (radial) boundary cells
     # Removing one cell, adding two on each X boundary
-    for name in grd:
-        var = grd[name]
+    for name, var in grd.items():
         nx, ny = var.shape
         newvar = np.zeros((nx + 2, ny))
         newvar[2:-2, :] = var[1:-1, :]
@@ -948,8 +945,8 @@ def Convert_grids(
         f.write("topology", mesh_topology)
 
         # 2D fields
-        for name in grd:
-            f.write(name, grd[name])
+        for name, var in grd.items():
+            f.write(name, var)
 
         f.write("zShift", zShift)
         f.write("ShiftAngle", ShiftAngle)

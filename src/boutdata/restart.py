@@ -1257,12 +1257,12 @@ def change_grid(
             f.write("PE_YIND", iy)
 
             # Write the scalars
-            for k in copy_data:
-                f.write(k, copy_data[k])
+            for k, v in copy_data.items():
+                f.write(k, v)
 
             # Write fields
-            for k in interp_data:
-                f.write(k, get_block(interp_data[k]))
+            for k, v in interp_data.items():
+                f.write(k, get_block(v))
 
 
 def shift_v3_to_v4(
