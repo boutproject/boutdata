@@ -992,7 +992,7 @@ def getMeshTopology(g, nx, ny):
         return "CFL"
     elif jyseps2_1 == jyseps1_2:
         return "SN"
-    elif jyseps1_2 <= ny_inner and ny_inner <= jyseps2_2:
+    elif jyseps1_2 <= ny_inner <= jyseps2_2:
         return "SF"
     elif ixseps1 == ixseps2:
         return "CDN"

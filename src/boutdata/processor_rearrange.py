@@ -33,7 +33,6 @@ class processor_layout(processor_layout_):
 
     """
 
-    pass
 
 
 def get_processor_layout(boutfile, has_t_dimension=True, mxg=None, myg=None):

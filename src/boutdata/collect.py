@@ -709,8 +709,7 @@ def _check_local_range_lower(start, stop, lower_index, inrange):
     inrange : bool
         Updated (if necessary) version of inrange argument
     """
-    if start < lower_index:
-        start = lower_index
+    start = max(start, lower_index)
     if stop <= lower_index:
         inrange = False
     return start, inrange
@@ -745,8 +744,7 @@ def _check_local_range_upper(start, stop, upper_index, inrange):
     """
     if start >= upper_index:
         inrange = False
-    if stop > upper_index:
-        stop = upper_index
+    stop = min(stop, upper_index)
     return stop, inrange
 
 
