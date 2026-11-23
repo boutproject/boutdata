@@ -49,7 +49,7 @@ def shell(command, pipe=False, env=None):
     """
 
     result = subprocess.run(
-        command, shell=True, capture_output=pipe, env=env, text=True
+        command, shell=True, capture_output=pipe, env=env, text=True, check=False
     )
     output = result.stdout if pipe else ""
     if result.stderr:
