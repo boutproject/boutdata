@@ -331,6 +331,9 @@ class DataFile:
     def __setitem__(self, key, value):
         self.impl.__setitem__(key, value)
 
+    def __contains__(self, key):
+        return key in self.keys()
+
     def attributes(self, varname):
         """Return a dictionary of attributes
 

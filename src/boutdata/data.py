@@ -1727,15 +1727,18 @@ class BoutOutputs:
         through all variables for _caching_collect
 
         """
-        yield from self.varNames
+        yield from self.keys()
 
     def __str__(self, indent=""):
         """Print a pretty version of the tree"""
         text = ""
-        for k in self.varNames:
+        for k in self.keys():
             text += indent + k + "\n"
 
         return text
+
+    def __contains__(self, key):
+        return key in self.keys()
 
 
 def BoutData(path=".", prefix="BOUT.dmp", caching=False, **kwargs):
