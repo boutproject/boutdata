@@ -206,7 +206,9 @@ def create_processor_layout(old_processor_layout, npes, nxpe=None, nzpe=1):
         raise ValueError("ERROR: requested nxpe is invalid, it does not divide npes")
 
     if npes % nzpe != 0:
-        raise ValueError(f"ERROR: requested {nzpe=} is invalid, it does not divide {npes=}")
+        raise ValueError(
+            f"ERROR: requested {nzpe=} is invalid, it does not divide {npes=}"
+        )
 
     nype = int(npes / nxpe)
 

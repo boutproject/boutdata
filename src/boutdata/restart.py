@@ -764,7 +764,9 @@ def redistribute(
                     data_slice = (data_slice_x, data_slice_y, data_slice_z)
                     result_slice = (result_slice_x, result_slice_y, result_slice_z)
                 else:
-                    raise RuntimeError(f"Unexpected number of data dimensions, expected 2 or 3, got {ndims}")
+                    raise RuntimeError(
+                        f"Unexpected number of data dimensions, expected 2 or 3, got {ndims}"
+                    )
 
                 if mxg > old_mxg or myg > old_myg:
                     # need to make a new array as some boundary cell points are not

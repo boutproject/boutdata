@@ -13,13 +13,7 @@ from boutdata.tests.make_test_data import (
 )
 
 
-def check_redistributed_data(
-    expected,
-    *,
-    fieldperp_global_yind,
-    path,
-        subtests
-):
+def check_redistributed_data(expected, *, fieldperp_global_yind, path, subtests):
     """
     Use `collect()` to read 'actual' data from the files. Test that 'actual' and
     'expected' data and attributes match.
@@ -178,5 +172,5 @@ class TestRestart:
             expected,
             fieldperp_global_yind=fieldperp_global_yind,
             path=new_path,
-            subtests=subtests
+            subtests=subtests,
         )

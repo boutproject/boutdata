@@ -1334,7 +1334,9 @@ class BoutOutputs:
         else:
             return self._file0.list_file_attributes()
 
-    def redistribute(self, npes, nxpe=None, nzpe=1, mxg=2, myg=2, mzg=2, include_restarts=True):
+    def redistribute(
+        self, npes, nxpe=None, nzpe=1, mxg=2, myg=2, mzg=2, include_restarts=True
+    ):
         """Create a new set of dump files for npes processors.
 
         Useful for restarting simulations using more or fewer processors.
