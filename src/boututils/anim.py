@@ -94,7 +94,6 @@ if __name__ == "__main__":
     # #, representation='wireframe')
     s.enable_contours = True
     s.contour.filled_contours = True
-    #
 
     # x, y, z= mgrid[0:ns:1, 0:ne:1, 0:nz:1]
     #

@@ -10,13 +10,13 @@ from .common import create_patch, yes_or_no
 
 
 def case_sensitive_init(self, name="root", parent=None):
-    self._sections = dict()
-    self._keys = dict()
+    self._sections = {}
+    self._keys = {}
     self._name = name
     self._parent = parent
-    self.comments = dict()
-    self.inline_comments = dict()
-    self._comment_whitespace = dict()
+    self.comments = {}
+    self.inline_comments = {}
+    self._comment_whitespace = {}
 
 
 # This should be a list of dicts, each containing "old", "new" and optionally "new_values".

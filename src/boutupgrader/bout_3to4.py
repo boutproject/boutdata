@@ -206,25 +206,26 @@ def add_parser(subcommand, default_args, files_args):
 
 def run(args):
     # Loops over all lines across all files
-    for line in fileinput.input(files=args.files, inplace=args.replace):
-        filename = fileinput.filename()
-        line_num = fileinput.filelineno()
+    with fileinput.input(files=args.files, inplace=args.replace) as f:
+        for line in f:
+            filename = fileinput.filename()
+            line_num = fileinput.filelineno()
 
-        # Apply the transformations and then update the line if we're doing a replacement
-        new_line = fix_nonmembers(line, filename, line_num, args.replace)
-        line = new_line if args.replace else line
+            # Apply the transformations and then update the line if we're doing a replacement
+            new_line = fix_nonmembers(line, filename, line_num, args.replace)
+            line = new_line if args.replace else line
 
-        new_line = fix_subscripts(line, filename, line_num, args.replace)
-        line = new_line if args.replace else line
+            new_line = fix_subscripts(line, filename, line_num, args.replace)
+            line = new_line if args.replace else line
 
-        new_line = fix_coordinates(line, filename, line_num, args.replace)
-        line = new_line if args.replace else line
+            new_line = fix_coordinates(line, filename, line_num, args.replace)
+            line = new_line if args.replace else line
 
-        new_line = fix_local_mesh_size(line, filename, line_num, args.replace)
-        line = new_line if args.replace else line
+            new_line = fix_local_mesh_size(line, filename, line_num, args.replace)
+            line = new_line if args.replace else line
 
-        new_line = throw_warnings(line, filename, line_num)
+            new_line = throw_warnings(line, filename, line_num)
 
-        # If we're doing a replacement, then we need to print all lines, without a newline
-        if args.replace:
-            print(line, end="")
+            # If we're doing a replacement, then we need to print all lines, without a newline
+            if args.replace:
+                print(line, end="")

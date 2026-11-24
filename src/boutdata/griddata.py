@@ -361,55 +361,53 @@ def rotate(gridfile, yshift, output=None):
 
     print(f"Rotating grid file '{gridfile}' -> '{output}'")
 
-    # Open input grid file
-    with DataFile(gridfile) as d:
-        # Open output file
-        with DataFile(output, write=True, create=True) as out:
-            # Loop over variables
-            for varname in d.list():
-                # Number of dimensions
-                ndims = d.ndims(varname)
+    # Open input and output grid files
+    with DataFile(gridfile) as d, DataFile(output, write=True, create=True) as out:
+        # Loop over variables
+        for varname in d.list():
+            # Number of dimensions
+            ndims = d.ndims(varname)
 
-                if ndims == 2:
-                    print(f"Shifting '{varname}' (x,y)")
-                    # 2D, assume X-Y
+            if ndims == 2:
+                print(f"Shifting '{varname}' (x,y)")
+                # 2D, assume X-Y
 
-                    var = d[varname]  # Read
-                    ny = var.shape[1]
+                var = d[varname]  # Read
+                ny = var.shape[1]
 
-                    # Make sure yshift is positive and in range
-                    yshift = ((yshift % ny) + ny) % ny
+                # Make sure yshift is positive and in range
+                yshift = ((yshift % ny) + ny) % ny
 
-                    newvar = ndarray(var.shape)
+                newvar = ndarray(var.shape)
 
-                    # Rotate
-                    newvar[:, 0 : (ny - yshift)] = var[:, yshift:ny]
-                    newvar[:, (ny - yshift) :] = var[:, :yshift]
+                # Rotate
+                newvar[:, 0 : (ny - yshift)] = var[:, yshift:ny]
+                newvar[:, (ny - yshift) :] = var[:, :yshift]
 
-                    # Write to output
-                    # out[varname] = newvar # Write
-                    out.write(varname, newvar)
-                elif ndims == 3:
-                    print(f"Shifting '{varname}' (x,y,z)")
-                    # 3D, assume X-Y-Z
+                # Write to output
+                # out[varname] = newvar # Write
+                out.write(varname, newvar)
+            elif ndims == 3:
+                print(f"Shifting '{varname}' (x,y,z)")
+                # 3D, assume X-Y-Z
 
-                    var = d[varname]  # Read
-                    ny = var.shape[1]
+                var = d[varname]  # Read
+                ny = var.shape[1]
 
-                    # Make sure yshift is positive and in range
-                    yshift = ((yshift % ny) + ny) % ny
+                # Make sure yshift is positive and in range
+                yshift = ((yshift % ny) + ny) % ny
 
-                    newvar = ndarray(var.shape)
+                newvar = ndarray(var.shape)
 
-                    newvar[:, 0 : (ny - yshift), :] = var[:, yshift:ny, :]
-                    newvar[:, (ny - yshift) :, :] = var[:, :yshift, :]
+                newvar[:, 0 : (ny - yshift), :] = var[:, yshift:ny, :]
+                newvar[:, (ny - yshift) :, :] = var[:, :yshift, :]
 
-                    # Write to output
-                    out.write(varname, newvar)
-                else:
-                    # Just copy
-                    print(f"Copying '{varname}' ({ndims} dimensions)")
-                    out.write(varname, d[varname])
+                # Write to output
+                out.write(varname, newvar)
+            else:
+                # Just copy
+                print(f"Copying '{varname}' ({ndims} dimensions)")
+                out.write(varname, d[varname])
 
 
 def gridcontourf(

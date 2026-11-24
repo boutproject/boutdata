@@ -137,13 +137,13 @@ def importGridue(fname: str = "gridue") -> dict:
     A dict containing header and body information from the gridue file.
 
     """
-    f = open(fname)
-    values = [int(x) for x in next(f).split()]
+    with open(fname) as f:
+        values = [int(x) for x in next(f).split()]
 
-    if len(values) == 5:
-        return _importSN(values, f)
-    if len(values) == 2:
-        return _importDN(values, f)
+        if len(values) == 5:
+            return _importSN(values, f)
+        if len(values) == 2:
+            return _importDN(values, f)
 
     raise ValueError("Unrecognised gridue format")
 
@@ -380,8 +380,10 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
     if np.max(np.abs(rel_error)) > 1e-6:
         if ignore_checks:
             print("WARNING: Relative error in Jacobian too large.")
-        # else:
-        #    raise ValueError(f"Relative error in Jacobian too large: {np.max(np.abs(rel_error))}")
+        else:
+            raise ValueError(
+                f"Relative error in Jacobian too large: {np.max(np.abs(rel_error))}"
+            )
 
     # We want to output contravariant components of Curl(b/B) in the
     # locally field-aligned coordinate system.
@@ -737,8 +739,7 @@ def Convert_grids(
         ixseps2 = min(g["iyseparatrix3"] + 2, nx)  # Secondary X-point separatrix
         # Remove guard cells on either side of X-point.
         ny_inner = g["ix_inner"]
-        for name in grd:
-            var = grd[name]
+        for name, var in grd.items():
             nx, ny = var.shape
             newvar = np.zeros((nx, ny - 2))
             newvar[:, :ny_inner] = var[:, :ny_inner]
@@ -754,8 +755,7 @@ def Convert_grids(
         # check if CDN or UDN
         if mesh_topology[1:] == "DN":
             ny_inner = g["ix_inner"]
-            for name in grd:
-                var = grd[name]
+            for name, var in grd.items():
                 nx, ny = var.shape
                 newvar = np.zeros((nx, ny - 2))
                 newvar[:, :ny_inner] = var[:, :ny_inner]
@@ -767,8 +767,7 @@ def Convert_grids(
 
     # Extrapolate X (radial) boundary cells
     # Removing one cell, adding two on each X boundary
-    for name in grd:
-        var = grd[name]
+    for name, var in grd.items():
         nx, ny = var.shape
         newvar = np.zeros((nx + 2, ny))
         newvar[2:-2, :] = var[1:-1, :]
@@ -946,8 +945,8 @@ def Convert_grids(
         f.write("topology", mesh_topology)
 
         # 2D fields
-        for name in grd:
-            f.write(name, grd[name])
+        for name, var in grd.items():
+            f.write(name, var)
 
         f.write("zShift", zShift)
         f.write("ShiftAngle", ShiftAngle)
@@ -992,7 +991,7 @@ def getMeshTopology(g, nx, ny):
         return "CFL"
     elif jyseps2_1 == jyseps1_2:
         return "SN"
-    elif jyseps1_2 <= ny_inner and ny_inner <= jyseps2_2:
+    elif jyseps1_2 <= ny_inner <= jyseps2_2:
         return "SF"
     elif ixseps1 == ixseps2:
         return "CDN"
