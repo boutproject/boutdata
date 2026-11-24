@@ -12,6 +12,7 @@ import pathlib
 import re
 from collections import OrderedDict, UserDict
 from multiprocessing import Pipe, Process, RawArray
+from warnings import warn
 
 import numpy
 
@@ -838,6 +839,12 @@ class BoutOptionsFile(BoutOptions):
 
         mxg = self._keys.get("MXG", 2)
         myg = self._keys.get("MYG", 2)
+        # FIXME(peter): Not sure there's actually a sensible default for Z
+        # guards! We'll break with either newer/older versions. Instead, let's
+        # warn if not set
+        if (mzg := self._keys.get("MZG", None)) is None:
+            warn("MZG not set, using 2. Set explicitly if this is not correct!")
+            mzg = 2
 
         # make self.x, self.y, self.z three dimensional now so
         # that expressions broadcast together properly.
@@ -858,9 +865,11 @@ class BoutOptionsFile(BoutOptions):
         self.z = (
             2.0
             * numpy.pi
-            * numpy.linspace(0.5 / self.nz, 1.0 - 0.5 / self.nz, self.nz)[
-                numpy.newaxis, numpy.newaxis, :
-            ]
+            * numpy.linspace(
+                (0.5 - mzg) / self.nz,
+                1.0 - (0.5 - mzg) / self.nz,
+                self.nz + 2 * mzg,
+            )[numpy.newaxis, numpy.newaxis, :]
         )
 
         # Also create staggered versions of the coordinates
@@ -881,9 +890,11 @@ class BoutOptionsFile(BoutOptions):
         self.zlow = (
             2.0
             * numpy.pi
-            * numpy.linspace(0.0, 1.0 - 1.0 / self.nz, self.nz)[
-                numpy.newaxis, numpy.newaxis, :
-            ]
+            * numpy.linspace(
+                -mzg / self.nz,
+                1.0 + (mzg - 1.0) / self.nz,
+                self.nz + 2 * mzg,
+            )[numpy.newaxis, numpy.newaxis, :]
         )
 
     def evaluate(self, name, *, location="CELL_CENTRE"):
@@ -1043,6 +1054,7 @@ class BoutOutputs:
         info=False,
         xguards=True,
         yguards=False,
+        zguards=False,
         tind=None,
         xind=None,
         yind=None,
@@ -1062,6 +1074,7 @@ class BoutOutputs:
         self._info = info
         self._xguards = xguards
         self._yguards = yguards
+        self._zguards = zguards
         self._kwargs = kwargs
         self._parallel = parallel
         if suffix is None:
@@ -1110,6 +1123,7 @@ class BoutOutputs:
                 f,
                 xguards=self._xguards,
                 yguards=self._yguards,
+                zguards=self._zguards,
                 tind=tind,
                 xind=xind,
                 yind=yind,
@@ -1141,16 +1155,17 @@ class BoutOutputs:
 
         if self._info:
             print(
-                "mxsub = {} mysub = {} mz = {}\n".format(
+                "mxsub = {} mysub = {} mzsub = {}\n".format(
                     self.grid_info["mxsub"],
                     self.grid_info["mysub"],
-                    self.grid_info["nz"],
+                    self.grid_info["mzsub"],
                 )
             )
             print(
-                "nxpe = {}, nype = {}, npes = {}\n".format(
+                "nxpe = {}, nype = {}, nzpe = {}, npes = {}\n".format(
                     self.grid_info["nxpe"],
                     self.grid_info["nype"],
+                    self.grid_info["nzpe"],
                     self.grid_info["npes"],
                 )
             )
@@ -1319,7 +1334,9 @@ class BoutOutputs:
         else:
             return self._file0.list_file_attributes()
 
-    def redistribute(self, npes, nxpe=None, mxg=2, myg=2, include_restarts=True):
+    def redistribute(
+        self, npes, nxpe=None, nzpe=1, mxg=2, myg=2, mzg=2, include_restarts=True
+    ):
         """Create a new set of dump files for npes processors.
 
         Useful for restarting simulations using more or fewer processors.
@@ -1335,6 +1352,8 @@ class BoutOutputs:
         nxpe : int, optional
             If nxpe is None (the default), then an 'optimal' number will be
             selected automatically
+        nzpe : int
+            Number of processors in Z
         mxg, myg : int, optional
             Number of guard cells in x, y (default: 2)
         include_restarts : bool, optional
@@ -1351,21 +1370,29 @@ class BoutOutputs:
 
         # use get_processor_layout to get nx, ny
         old_processor_layout = get_processor_layout(
-            DataFile(self._file_list[0]), has_t_dimension=True, mxg=mxg, myg=myg
+            DataFile(self._file_list[0]),
+            has_t_dimension=True,
+            mxg=mxg,
+            myg=myg,
+            mzg=mzg,
         )
         nx = old_processor_layout.nx
         ny = old_processor_layout.ny
+        nz = old_processor_layout.nz
         mxg = old_processor_layout.mxg
         myg = old_processor_layout.myg
+        mzg = old_processor_layout.mzg
 
         # calculate new processor layout
         new_processor_layout = create_processor_layout(
-            old_processor_layout, npes, nxpe=nxpe
+            old_processor_layout, npes, nxpe=nxpe, nzpe=nzpe
         )
         nxpe = new_processor_layout.nxpe
         nype = new_processor_layout.nype
+        nzpe = new_processor_layout.nzpe
         mxsub = new_processor_layout.mxsub
         mysub = new_processor_layout.mysub
+        mzsub = new_processor_layout.mzsub
 
         # move existing files to backup directory
         # don't overwrite backup: os.mkdir will raise exception if directory already
@@ -1408,6 +1435,7 @@ class BoutOutputs:
                 prefix=self._prefix,
                 xguards=True,
                 yguards=True,
+                zguards=True,
                 info=False,
                 datafile_cache=DataFileCache,
             )
@@ -1416,7 +1444,8 @@ class BoutOutputs:
             # write data
             for i in range(npes):
                 ix = i % nxpe
-                iy = int(i / nxpe)
+                iy = (i // nxpe) % nype
+                iz = i // (nxpe * nype)
                 outfile = outfile_list[i]
                 if v == "NPES":
                     outfile.write(v, npes)
@@ -1424,10 +1453,14 @@ class BoutOutputs:
                     outfile.write(v, nxpe)
                 elif v == "NYPE":
                     outfile.write(v, nype)
+                elif v == "NZPE":
+                    outfile.write(v, nzpe)
                 elif v == "MXSUB":
                     outfile.write(v, mxsub)
                 elif v == "MYSUB":
                     outfile.write(v, mysub)
+                elif v == "MZSUB":
+                    outfile.write(v, mzsub)
                 elif ndims == 0:
                     # scalar
                     outfile.write(v, data)
@@ -1452,7 +1485,7 @@ class BoutOutputs:
                     )
                 elif ndims == 3:
                     # Field3D
-                    if data.shape[:2] != (nx + 2 * mxg, ny + 2 * myg):
+                    if data.shape != (nx + 2 * mxg, ny + 2 * myg, nz + 2 * mzg):
                         # evolving Field2D, but this case is not handled
                         # check is not perfect, fails if ny=nx and nx=nt
                         raise ValueError(
@@ -1464,7 +1497,7 @@ class BoutOutputs:
                         data[
                             ix * mxsub : (ix + 1) * mxsub + 2 * mxg,
                             iy * mysub : (iy + 1) * mysub + 2 * myg,
-                            :,
+                            iz * mzsub : (iz + 1) * mzsub + 2 * mzg,
                         ],
                     )
                 elif ndims == 4:
@@ -1474,7 +1507,7 @@ class BoutOutputs:
                             :,
                             ix * mxsub : (ix + 1) * mxsub + 2 * mxg,
                             iy * mysub : (iy + 1) * mysub + 2 * myg,
-                            :,
+                            iz * mzsub : (iz + 1) * mzsub + 2 * mzg,
                         ],
                     )
                 else:
@@ -1520,6 +1553,7 @@ class BoutOutputs:
             info=self._info,
             xguards=self._xguards,
             yguards=self._yguards,
+            zguards=self._zguards,
             tind=self.tind,
             xind=self.xind,
             yind=self.yind,
@@ -1615,7 +1649,7 @@ class BoutOutputs:
         else:
             global_slices.append(0)
         if "z" in dimensions:
-            global_slices.append(slice(None))
+            global_slices.append(slice(None, None, self.zind.step))
         else:
             global_slices.append(0)
         global_slices = tuple(global_slices)
@@ -1665,6 +1699,7 @@ class BoutOutputs:
                     zind=self.zind,
                     xguards=self._xguards,
                     yguards=self._yguards,
+                    zguards=self._zguards,
                     info=self._info,
                     parallel_read=True,
                 )

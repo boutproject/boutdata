@@ -13,12 +13,7 @@ from boutdata.tests.make_test_data import (
 )
 
 
-def check_redistributed_data(
-    expected,
-    *,
-    fieldperp_global_yind,
-    path,
-):
+def check_redistributed_data(expected, *, fieldperp_global_yind, path, subtests):
     """
     Use `collect()` to read 'actual' data from the files. Test that 'actual' and
     'expected' data and attributes match.
@@ -33,7 +28,7 @@ def check_redistributed_data(
     path : pathlib.Path or str
         Path to collect data from.
     """
-    expected_different = ["MXSUB", "MYSUB", "NXPE", "NYPE"]
+    expected_different = ["MXSUB", "MYSUB", "MZSUB", "NXPE", "NYPE", "NZPE"]
     for varname in expected:
         if varname in expected_different:
             # These variables are expected to be changed by restart.redistribute
@@ -41,7 +36,8 @@ def check_redistributed_data(
         actual = collect(
             varname, path=path, prefix="BOUT.restart", xguards=False, yguards=False
         )
-        npt.assert_array_equal(expected[varname], actual)
+        with subtests.test(msg=varname):
+            npt.assert_array_equal(expected[varname], actual)
         actual_keys = list(actual.attributes.keys())
         if varname in expected_attributes:
             for a in expected_attributes[varname]:
@@ -65,13 +61,13 @@ def check_redistributed_data(
 
 
 class TestRestart:
-    def test_redistribute_connected_doublenull(self, tmp_path):
+    def test_redistribute_connected_doublenull(self, tmp_path, subtests):
         """
         Check for a connected double-null case using a large number of processes.
         'Large' means there is at least one process in each region with no edges
         touching another region.
         """
-        npes_redistributed = 6
+        npes_redistributed = 12
 
         grid_info = make_grid_info(nxpe=3, nype=18, ixseps1=7, ixseps2=7, xpoints=2)
 
@@ -163,7 +159,9 @@ class TestRestart:
 
         new_path = tmp_path.joinpath("new_restarts")
         new_path.mkdir()
-        restart.redistribute(npes=npes_redistributed, path=tmp_path, output=new_path)
+        restart.redistribute(
+            npes=npes_redistributed, nzpe=2, path=tmp_path, output=new_path
+        )
 
         # Check the right number of files have been created
         new_files = glob(str(new_path.joinpath("*")))
@@ -174,4 +172,5 @@ class TestRestart:
             expected,
             fieldperp_global_yind=fieldperp_global_yind,
             path=new_path,
+            subtests=subtests,
         )
