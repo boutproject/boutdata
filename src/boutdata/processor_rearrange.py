@@ -47,8 +47,6 @@ class processor_layout(processor_layout_):
 
     """
 
-    pass
-
 
 def get_processor_layout(boutfile, has_t_dimension=True, mxg=None, myg=None, mzg=None):
     """Given a BOUT.restart.* or BOUT.dmp.* file (as a DataFile object),
@@ -195,12 +193,10 @@ def create_processor_layout(old_processor_layout, npes, nxpe=None, nzpe=1):
                 and old_processor_layout.nx % i == 0
                 and int(old_processor_layout.nx / i) >= old_processor_layout.mxg
                 and old_processor_layout.ny % (npes / i) == 0
-            ):
+            ) and (nxpe is None or abs(ideal - i) < abs(ideal - nxpe)):
                 # Found an acceptable value
                 # Warning: does not check branch cuts!
-
-                if nxpe is None or abs(ideal - i) < abs(ideal - nxpe):
-                    nxpe = i  # Keep value nearest to the ideal
+                nxpe = i  # Keep value nearest to the ideal
 
         if nxpe is None:
             raise ValueError("ERROR: could not find a valid value for nxpe")

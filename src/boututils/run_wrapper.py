@@ -4,7 +4,6 @@ import os
 import pathlib
 import re
 import subprocess
-from subprocess import PIPE, STDOUT, Popen, call
 
 if os.name == "nt":
     # Default on Windows
@@ -32,7 +31,7 @@ def getmpirun(default=DEFAULT_MPIRUN):
     return MPIRUN
 
 
-def shell(command, pipe=False):
+def shell(command, pipe=False, env=None):
     """Run a shell command
 
     Parameters
@@ -48,24 +47,14 @@ def shell(command, pipe=False):
     tuple : (int, str)
         The return code, and either command output if pipe=True else None
     """
-    output = None
-    status = 0
-    if pipe:
-        child = Popen(command, stderr=STDOUT, stdout=PIPE, shell=True)
-        # This returns a b'string' which is casted to string in
-        # python 2. However, as we want to use f.write() in our
-        # runtest, we cast this to utf-8 here
-        output = child.stdout.read().decode("utf-8", "ignore")
-        # Wait for the process to finish. Note that child.wait()
-        # would have deadlocked the system as stdout is PIPEd, we
-        # therefore use communicate, which in the end also waits for
-        # the process to finish
-        child.communicate()
-        status = child.returncode
-    else:
-        status = call(command, shell=True)
 
-    return status, output
+    result = subprocess.run(
+        command, shell=True, capture_output=pipe, env=env, text=True, check=False
+    )
+    output = result.stdout if pipe else ""
+    if result.stderr:
+        output = f"{output}\nSTDERR:\n{result.stderr}"
+    return result.returncode, output
 
 
 def determineNumberOfCPUs():
@@ -86,9 +75,11 @@ def determineNumberOfCPUs():
     # cpuset
     # cpuset may restrict the number of *available* processors
     try:
-        m = re.search(r"(?m)^Cpus_allowed:\s*(.*)$", open("/proc/self/status").read())
+        m = re.search(
+            r"(?m)^Cpus_allowed:\s*(.*)$", pathlib.Path("/proc/self/status").read_text()
+        )
         if m:
-            res = bin(int(m.group(1).replace(",", ""), 16)).count("1")
+            res = int(m.group(1).replace(",", ""), 16).bit_count()
             if res > 0:
                 return res
     except OSError:
@@ -144,7 +135,7 @@ def determineNumberOfCPUs():
 
     # Linux
     try:
-        res = open("/proc/cpuinfo").read().count("processor\t:")
+        res = pathlib.Path("/proc/cpuinfo").read_text().count("processor\t:")
 
         if res > 0:
             return res
@@ -169,7 +160,7 @@ def determineNumberOfCPUs():
     # Other UNIXes (heuristic)
     try:
         try:
-            dmesg = open("/var/run/dmesg.boot").read()
+            dmesg = pathlib.Path("/var/run/dmesg.boot").read_text()
         except OSError:
             dmesgProcess = subprocess.Popen(["dmesg"], stdout=subprocess.PIPE)
             dmesg = dmesgProcess.communicate()[0]
@@ -183,7 +174,7 @@ def determineNumberOfCPUs():
     except OSError:
         pass
 
-    raise Exception("Can not determine number of CPUs on this system")
+    raise RuntimeError("Can not determine number of CPUs on this system")
 
 
 def launch(
@@ -236,17 +227,15 @@ def launch(
     if output is not None:
         cmd = f"{cmd} > {output}"
 
-    if mthread is not None:
-        if os.name == "nt":
-            # We're on windows, so we have to do it a little different
-            cmd = f'cmd /C "set OMP_NUM_THREADS={mthread} && {cmd}"'
-        else:
-            cmd = f"OMP_NUM_THREADS={mthread} {cmd}"
+    # Set OMP_NUM_THREADS if mthread is provided (for OpenMP in BOUT++)
+    env = os.environ.copy()
+    if mthread:
+        env["OMP_NUM_THREADS"] = str(mthread)
 
     if verbose:
         print(cmd)
 
-    return shell(cmd, pipe=pipe)
+    return shell(cmd, pipe=pipe, env=env)
 
 
 def shell_safe(command, *args, **kwargs):
@@ -284,8 +273,9 @@ def launch_safe(command, *args, **kwargs):
         Optional arguments passed to `shell`
 
     """
+
     s, out = launch(command, *args, **kwargs)
-    if s:
+    if s != 0:
         raise RuntimeError(
             f"Run failed with {s}.\nCommand was:\n{command}\n\nOutput was\n\n{out}"
         )

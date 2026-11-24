@@ -180,7 +180,7 @@ def squashoutput(
                     "is presumably not desired behaviour."
                 )
 
-    outputvars = [k for k in outputs.keys() if k not in drop_variables]
+    outputvars = [k for k in outputs if k not in drop_variables]
 
     # Read a value to cache the files
     outputs[outputvars[0]]
@@ -223,15 +223,13 @@ def squashoutput(
 
         var = outputs[varname]
         dims = outputs.dimensions[varname]
-        if append:
-            if "t" in dims:
-                var = var[cropnew:, ...]
-                varold = old[varname]
-                var = BoutArray(numpy.append(varold, var, axis=0), var.attributes)
+        if append and "t" in dims:
+            var = var[cropnew:, ...]
+            varold = old[varname]
+            var = BoutArray(numpy.append(varold, var, axis=0), var.attributes)
 
-        if singleprecision:
-            if not isinstance(var, int):
-                var = BoutArray(numpy.float32(var), var.attributes)
+        if singleprecision and not isinstance(var, int):
+            var = BoutArray(numpy.float32(var), var.attributes)
 
         if "t" in dims:
             for f, t_slice in zip(files, t_slices):

@@ -28,12 +28,12 @@ class BoutArray(numpy.ndarray):
     # See https://docs.scipy.org/doc/numpy-1.13.0/user/basics.subclassing.html
     # for explanation of the structure of this numpy.ndarray wrapper
 
-    def __new__(cls, input_array, attributes={}):
+    def __new__(cls, input_array, attributes=None):
         # Input array is an already formed ndarray instance
         # We first cast to be our class type
         obj = numpy.asarray(input_array).view(cls)
         # add the dict of attributes to the created instance
-        obj.attributes = attributes
+        obj.attributes = attributes or {}
         # Finally, we must return the newly created object:
         return obj
 
@@ -61,7 +61,7 @@ class BoutArray(numpy.ndarray):
         # the default value for 'attributes', because this method sees all
         # creation of default objects - with the BoutArray.__new__ constructor,
         # but also with arr.view(BoutArray).
-        self.attributes = getattr(obj, "attributes", None)
+        self.attributes = getattr(obj, "attributes", {})
         # We do not need to return anything
 
     def __format__(self, str):

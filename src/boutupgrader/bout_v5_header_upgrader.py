@@ -2,6 +2,7 @@ import argparse
 import copy
 import re
 import subprocess
+import sys
 import textwrap
 from pathlib import Path
 
@@ -49,7 +50,9 @@ def fix_library_header_locations(
         print("No headers to move!")
         return
 
-    out = subprocess.run("git diff-index --cached HEAD --quiet", shell=True)
+    out = subprocess.run(
+        "git diff-index --cached HEAD --quiet", shell=True, check=False
+    )
     if out.returncode:
         raise RuntimeError(
             "git index not clean! Please commit or discard any changes before continuing"
@@ -61,16 +64,20 @@ def fix_library_header_locations(
         new_path = include_bout_path / header.name
         if not quiet:
             print(f"Moving '{header}' to '{new_path}'")
-        run(f"git mv {header} {new_path}", shell=True, check=True)
+        subprocess.run(f"git mv {header} {new_path}", shell=True, check=True)
 
-    run(r"git commit -m 'Move headers to `include/bout`'", shell=True, check=True)
+    subprocess.run(
+        r"git commit -m 'Move headers to `include/bout`'", shell=True, check=True
+    )
 
     # Now we can write the compatibility shim
     for header in unmoved_headers:
         write_header_shim(header)
 
-    run(f"git add {' '.join(map(str, unmoved_headers))}", shell=True, check=True)
-    run(
+    subprocess.run(
+        f"git add {' '.join(map(str, unmoved_headers))}", shell=True, check=True
+    )
+    subprocess.run(
         r"git commit -m 'Add compatibility shims for old header locations'",
         shell=True,
         check=True,
@@ -143,7 +150,7 @@ def run(args):
 
     if args.move_deprecated_headers:
         fix_library_header_locations(args.include_path, args.quiet)
-        exit(0)
+        sys.exit(0)
 
     header_regex = make_header_regex(deprecated_headers)
 
