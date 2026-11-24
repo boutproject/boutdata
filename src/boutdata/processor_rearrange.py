@@ -166,9 +166,11 @@ def create_processor_layout(old_processor_layout, npes, nxpe=None, nzpe=1):
     old_processor_layout : processor_layout
         The processor layout to convert
     npes : int
-        The new total number of procesors
+        The new total number of processors
     nxpe : int, optional
-        The number of procesors in x to use
+        The number of processors in x to use
+    nzpe : int
+        The number of processors in z to use
 
     Returns
     -------
@@ -202,6 +204,9 @@ def create_processor_layout(old_processor_layout, npes, nxpe=None, nzpe=1):
             raise ValueError("ERROR: could not find a valid value for nxpe")
     elif npes % nxpe != 0:
         raise ValueError("ERROR: requested nxpe is invalid, it does not divide npes")
+
+    if npes % nzpe != 0:
+        raise ValueError(f"ERROR: requested {nzpe=} is invalid, it does not divide {npes=}")
 
     nype = int(npes / nxpe)
 

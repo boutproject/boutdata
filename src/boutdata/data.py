@@ -1334,7 +1334,7 @@ class BoutOutputs:
         else:
             return self._file0.list_file_attributes()
 
-    def redistribute(self, npes, nxpe=None, mxg=2, myg=2, mzg=2, include_restarts=True):
+    def redistribute(self, npes, nxpe=None, nzpe=1, mxg=2, myg=2, mzg=2, include_restarts=True):
         """Create a new set of dump files for npes processors.
 
         Useful for restarting simulations using more or fewer processors.
@@ -1350,6 +1350,8 @@ class BoutOutputs:
         nxpe : int, optional
             If nxpe is None (the default), then an 'optimal' number will be
             selected automatically
+        nzpe : int
+            Number of processors in Z
         mxg, myg : int, optional
             Number of guard cells in x, y (default: 2)
         include_restarts : bool, optional
@@ -1381,7 +1383,7 @@ class BoutOutputs:
 
         # calculate new processor layout
         new_processor_layout = create_processor_layout(
-            old_processor_layout, npes, nxpe=nxpe
+            old_processor_layout, npes, nxpe=nxpe, nzpe=nzpe
         )
         nxpe = new_processor_layout.nxpe
         nype = new_processor_layout.nype
@@ -1440,7 +1442,8 @@ class BoutOutputs:
             # write data
             for i in range(npes):
                 ix = i % nxpe
-                iy = int(i / nxpe)
+                iy = (i // nxpe) % nype
+                iz = i // (nxpe * nype)
                 outfile = outfile_list[i]
                 if v == "NPES":
                     outfile.write(v, npes)
@@ -1480,7 +1483,7 @@ class BoutOutputs:
                     )
                 elif ndims == 3:
                     # Field3D
-                    if data.shape[:2] != (nx + 2 * mxg, ny + 2 * myg):
+                    if data.shape != (nx + 2 * mxg, ny + 2 * myg, nz + 2 * mzg):
                         # evolving Field2D, but this case is not handled
                         # check is not perfect, fails if ny=nx and nx=nt
                         raise ValueError(
@@ -1492,7 +1495,7 @@ class BoutOutputs:
                         data[
                             ix * mxsub : (ix + 1) * mxsub + 2 * mxg,
                             iy * mysub : (iy + 1) * mysub + 2 * myg,
-                            :,
+                            iz * mzsub : (iz + 1) * mzsub + 2 * mzg,
                         ],
                     )
                 elif ndims == 4:
@@ -1502,7 +1505,7 @@ class BoutOutputs:
                             :,
                             ix * mxsub : (ix + 1) * mxsub + 2 * mxg,
                             iy * mysub : (iy + 1) * mysub + 2 * myg,
-                            :,
+                            iz * mzsub : (iz + 1) * mzsub + 2 * mzg,
                         ],
                     )
                 else:

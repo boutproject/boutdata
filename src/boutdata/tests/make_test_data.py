@@ -82,7 +82,7 @@ def make_grid_info(
     grid_info["iteration"] = 6
     grid_info["MXSUB"] = 3
     grid_info["MYSUB"] = 4
-    grid_info["MZSUB"] = 5
+    grid_info["MZSUB"] = 4
     grid_info["MXG"] = mxg
     grid_info["MYG"] = myg
     grid_info["MZG"] = 0

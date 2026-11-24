@@ -563,6 +563,7 @@ def redistribute(
     npes,
     path="data",
     nxpe=None,
+    nzpe=1,
     output=".",
     informat=None,
     outformat=None,
@@ -584,10 +585,12 @@ def redistribute(
     path : str, optional
         Path to original restart files (default: "data")
     nxpe : int, optional
-        Number of processors to use in the x-direction (determines
-        split: npes = nxpe * nype). Default is None which uses the
-        same algorithm as BoutMesh (but without topology information)
-        to determine a suitable value for nxpe.
+        Number of processors to use in the x-direction (determines split:
+        npes = nxpe * nype * nzpe). Default is None which uses the same
+        algorithm as BoutMesh (but without topology information) to
+        determine a suitable value for nxpe.
+    nzpe : int
+        Number of processors to use in the z-direction
     output : str, optional
         Location to save new restart files (default: current directory)
     informat : str, optional
@@ -657,12 +660,9 @@ def redistribute(
     if outformat is None:
         outformat = informat
 
-    try:
-        new_processor_layout = create_processor_layout(
-            old_processor_layout, npes, nxpe=nxpe
-        )
-    except ValueError as e:
-        print("Could not find valid processor split. " + e.what())
+    new_processor_layout = create_processor_layout(
+        old_processor_layout, npes, nxpe=nxpe, nzpe=nzpe
+    )
 
     old_mxg = old_processor_layout.mxg
     old_myg = old_processor_layout.myg
@@ -713,54 +713,73 @@ def redistribute(
             datafile_cache=DataFileCache,
         )
 
+        def make_slice(
+            guards: int, old_guards: int, local_size: int, npe: int
+        ) -> tuple[slice, slice]:
+            """Make slices for input and output arrays along one dimension
+
+            Parameters
+            ----------
+            guards : int
+                Number of new guard cells
+            old_guards : int
+                Number of guard cells in old layout
+            local_size : int
+                Number of interior points on one processor
+            npe : int
+                Processor index in this direction
+            """
+
+            if guards > old_guards:
+                d = guards - old_guards
+                result_slice = slice(d, -d)
+                data_slice = slice(
+                    npe * local_size, ((npe + 1) * local_size) + (2 * old_guards)
+                )
+            else:
+                d = old_guards - guards
+                result_slice = slice(None)
+                data_slice = slice(
+                    d + (npe * local_size), d + ((npe + 1) * local_size) + (2 * guards)
+                )
+
+            return result_slice, data_slice
+
         # write data
         for i in range(npes):
             ix = i % nxpe
-            iy = int(i / nxpe)
+            iy = (i // nxpe) % nype
+            iz = i // (nxpe * nype)
 
-            def get_block(data, ix=i % nxpe, iy=int(i / nxpe)):
+            def get_block(data, ix=ix, iy=iy, iz=iz):
+                result_slice_x, data_slice_x = make_slice(mxg, old_mxg, mxsub, ix)
+                result_slice_y, data_slice_y = make_slice(myg, old_myg, mysub, iy)
+                result_slice_z, data_slice_z = make_slice(mzg, old_mzg, mzsub, iz)
+
+                ndims = len(data.shape)
+                if ndims == 2:
+                    data_slice = (data_slice_x, data_slice_y)
+                    result_slice = (result_slice_x, result_slice_y)
+                elif ndims == 3:
+                    data_slice = (data_slice_x, data_slice_y, data_slice_z)
+                    result_slice = (result_slice_x, result_slice_y, result_slice_z)
+                else:
+                    raise RuntimeError(f"Unexpected number of data dimensions, expected 2 or 3, got {ndims}")
+
                 if mxg > old_mxg or myg > old_myg:
                     # need to make a new array as some boundary cell points are not
                     # present in data
                     new_shape = list(data.shape)
                     new_shape[0] = mxsub + 2 * mxg
                     new_shape[1] = mysub + 2 * myg
+                    if ndims == 3:
+                        new_shape[2] = mzsub + (2 * mzg)
                     result = np.zeros(new_shape)
-
-                    if mxg > old_mxg:
-                        d = mxg - old_mxg
-                        result_slice_x = slice(d, -d)
-                        data_slice_x = slice(ix * mxsub, (ix + 1) * mxsub + 2 * old_mxg)
-                    else:
-                        d = old_mxg - mxg
-                        result_slice_x = slice(None)
-                        data_slice_x = slice(
-                            d + ix * mxsub, d + (ix + 1) * mxsub + 2 * mxg
-                        )
-
-                    if myg > old_myg:
-                        d = myg - old_myg
-                        result_slice_y = slice(d, -d)
-                        data_slice_y = slice(iy * mysub, (iy + 1) * mysub + 2 * old_myg)
-                    else:
-                        d = old_myg - myg
-                        result_slice_y = slice(None)
-                        data_slice_y = slice(
-                            d + iy * mysub, d + (iy + 1) * mysub + 2 * myg
-                        )
-
-                    result[result_slice_x, result_slice_y] = data[
-                        data_slice_x, data_slice_y
-                    ]
+                    result[result_slice] = data[data_slice]
 
                     return result
-                else:
-                    xoffset = old_mxg - mxg
-                    yoffset = old_myg - myg
-                    return data[
-                        xoffset + ix * mxsub : xoffset + (ix + 1) * mxsub + 2 * mxg,
-                        yoffset + iy * mysub : yoffset + (iy + 1) * mysub + 2 * myg,
-                    ]
+
+                return data[data_slice]
 
             outfile = outfile_list[i]
             if v == "NPES":
@@ -787,6 +806,8 @@ def redistribute(
                 outfile.write(v, ix)
             elif v == "PE_YIND":
                 outfile.write(v, iy)
+            elif v == "PE_ZIND":
+                outfile.write(v, iz)
             elif dimensions == ("x", "y"):
                 # Field2D
                 outfile.write(v, get_block(data))
@@ -816,7 +837,10 @@ def redistribute(
                     yindex_global >= this_proc_yglobal_min
                     and yindex_global < this_proc_yglobal_max
                 ):
-                    outfile.write(v, data[ix * mxsub : (ix + 1) * mxsub + 2 * mxg, :])
+                    _, data_slice_x = make_slice(mxg, old_mxg, mxsub, ix)
+                    _, data_slice_z = make_slice(mzg, old_mzg, mzsub, iz)
+
+                    outfile.write(v, data[data_slice_x, data_slice_z])
                 else:
                     nullarray = BoutArray(
                         np.zeros([mxsub + 2 * mxg, mzsub + 2 * mzg]),
