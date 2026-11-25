@@ -32,10 +32,10 @@ pause = False
 
 def showdata(
     vars,
-    titles=[],
-    legendlabels=[],
-    surf=[],
-    polar=[],
+    titles=None,
+    legendlabels=None,
+    surf=None,
+    polar=None,
     tslice=0,
     t_array=None,
     movie=0,
@@ -43,8 +43,8 @@ def showdata(
     dpi=200,
     intv=1,
     Ncolors=25,
-    x=[],
-    y=[],
+    x=None,
+    y=None,
     global_colors=False,
     symmetric_colors=False,
     hold_aspect=False,
@@ -154,6 +154,18 @@ def showdata(
     - Figureplot
 
     """
+    if y is None:
+        y = []
+    if x is None:
+        x = []
+    if polar is None:
+        polar = []
+    if surf is None:
+        surf = []
+    if legendlabels is None:
+        legendlabels = []
+    if titles is None:
+        titles = []
     plt.ioff()
 
     # Check to see whether vars is a list or not.
@@ -168,7 +180,7 @@ def showdata(
 
     # Check to see whether each variable is a list - used for line plots only
     Nlines = []
-    for i in range(0, Nvar):
+    for i in range(Nvar):
         if isinstance(vars[i], list):
             Nlines.append(len(vars[i]))
         else:
@@ -177,7 +189,7 @@ def showdata(
 
     # Sort out titles
     if len(titles) == 0:
-        for i in range(0, Nvar):
+        for i in range(Nvar):
             titles.append(f"Var {i + 1}")
     elif len(titles) != Nvar:
         raise ValueError(
@@ -187,14 +199,14 @@ def showdata(
 
     # Sort out legend labels
     if len(legendlabels) == 0:
-        for i in range(0, Nvar):
+        for i in range(Nvar):
             legendlabels.append([])
-            for j in range(0, Nlines[i]):
+            for j in range(Nlines[i]):
                 legendlabels[i].append(chr(97 + j))
     elif isinstance(legendlabels[0], list) != 1:
         if Nvar != 1:
             check = 0
-            for i in range(0, Nvar):
+            for i in range(Nvar):
                 if len(legendlabels) != Nlines[i]:
                     check = check + 1
             if check == 0:
@@ -204,9 +216,9 @@ def showdata(
                     " Will apply labels to each plot"
                 )
                 legendlabelsdummy = []
-                for i in range(0, Nvar):
+                for i in range(Nvar):
                     legendlabelsdummy.append([])
-                    for j in range(0, Nlines[i]):
+                    for j in range(Nlines[i]):
                         legendlabelsdummy[i].append(legendlabels[j])
                 legendlabels = legendlabelsdummy
             else:
@@ -216,9 +228,9 @@ def showdata(
                     "each plot. Will default apply labels to each plot"
                 )
                 legendlabels = []
-                for i in range(0, Nvar):
+                for i in range(Nvar):
                     legendlabels.append([])
-                    for j in range(0, Nlines[i]):
+                    for j in range(Nlines[i]):
                         legendlabels[i].append(chr(97 + j))
         else:
             if Nlines[0] == len(legendlabels):
@@ -229,12 +241,12 @@ def showdata(
             "list, will continue with default values"
         )
         legendlabels = []
-        for i in range(0, Nvar):
+        for i in range(Nvar):
             legendlabels.append([])
-            for j in range(0, Nlines[i]):
+            for j in range(Nlines[i]):
                 legendlabels[i].append(chr(97 + j))
     else:
-        for i in range(0, Nvar):
+        for i in range(Nvar):
             if isinstance(legendlabels[i], list):
                 if len(legendlabels[i]) != Nlines[i]:
                     alwayswarn(
@@ -243,7 +255,7 @@ def showdata(
                         "Will continue with default values"
                     )
                 legendlabels[i] = []
-                for j in range(0, Nlines[i]):
+                for j in range(Nlines[i]):
                     legendlabels[i].append(chr(97 + j))
             else:
                 legendlabels[i] = [legendlabels[i]]
@@ -254,13 +266,13 @@ def showdata(
                     "Will continue with default values"
                 )
                 legendlabels[i] = []
-                for j in range(0, Nlines[i]):
+                for j in range(Nlines[i]):
                     legendlabels[i].append(chr(97 + j))
 
     # Sort out surf list
     if isinstance(surf, list):
         if len(surf) == Nvar:
-            for i in range(0, Nvar):
+            for i in range(Nvar):
                 if surf[i] >= 1:
                     surf[i] = 1
                 else:
@@ -274,14 +286,14 @@ def showdata(
                 for i in range(1, Nvar):
                     surf.append(surf[0])
         elif len(surf) == 0:
-            for i in range(0, Nvar):
+            for i in range(Nvar):
                 surf.append(0)
         else:
             alwayswarn(
                 "Length of surf list does not match number of variables. "
                 "Will default to no polar plots"
             )
-            for i in range(0, Nvar):
+            for i in range(Nvar):
                 surf.append(0)
 
     else:
@@ -297,7 +309,7 @@ def showdata(
     # Sort out polar list
     if isinstance(polar, list):
         if len(polar) == Nvar:
-            for i in range(0, Nvar):
+            for i in range(Nvar):
                 if polar[i] >= 1:
                     polar[i] = 1
                 else:
@@ -311,14 +323,14 @@ def showdata(
                 for i in range(1, Nvar):
                     polar.append(polar[0])
         elif len(polar) == 0:
-            for i in range(0, Nvar):
+            for i in range(Nvar):
                 polar.append(0)
         else:
             alwayswarn(
                 "Length of polar list does not match number of variables. "
                 "Will default to no polar plots"
             )
-            for i in range(0, Nvar):
+            for i in range(Nvar):
                 polar.append(0)
     else:
         polar = [polar]
@@ -335,10 +347,10 @@ def showdata(
     Ndims = []
     lineplot = []
     contour = []
-    for i in range(0, Nvar):
+    for i in range(Nvar):
         dims.append([])
         Ndims.append([])
-        for j in range(0, Nlines[i]):
+        for j in range(Nlines[i]):
             dims[i].append(array(vars[i][j].shape))
             Ndims[i].append(dims[i][j].shape[0])
             # Perform check to make sure that data is either 2D or 3D
@@ -398,11 +410,11 @@ def showdata(
     Nt = []
     Nx = []
     Ny = []
-    for i in range(0, Nvar):
+    for i in range(Nvar):
         Nt.append([])
         Nx.append([])
         Ny.append([])
-        for j in range(0, Nlines[i]):
+        for j in range(Nlines[i]):
             Nt[i].append(vars[i][j].shape[0])
             Nx[i].append(vars[i][j].shape[1])
             if Nt[i][j] != Nt[0][0]:
@@ -429,7 +441,7 @@ def showdata(
         y = [y] * Nvar  # Make list of x with length Nvar
     xnew = []
     ynew = []
-    for i in range(0, Nvar):
+    for i in range(Nvar):
         xnew.append([])
         try:
             xnew[i].append(x[i])
@@ -447,7 +459,7 @@ def showdata(
                     "variable. Shape of x should be (Nx), (Nx,Ny) or (Nt,Nx,Ny)."
                 )
         except (ValueError, IndexError):
-            for j in range(0, Nlines[i]):
+            for j in range(Nlines[i]):
                 xnew[i].append(linspace(0, Nx[i][j] - 1, Nx[i][j]))
 
         # x.append(linspace(0,Nx[i][0]-1, Nx[i][0]))
@@ -483,10 +495,10 @@ def showdata(
     dummymin = []
     clevels = []
 
-    for i in range(0, Nvar):
+    for i in range(Nvar):
         dummymax.append([])
         dummymin.append([])
-        for j in range(0, Nlines[i]):
+        for j in range(Nlines[i]):
             dummymax[i].append(max(vars[i][j]))
             dummymin[i].append(min(vars[i][j]))
 
@@ -498,7 +510,7 @@ def showdata(
             fmax[i] = absmax
             fmin[i] = -absmax
 
-        for j in range(0, Nlines[i]):
+        for j in range(Nlines[i]):
             dummymax[i][j] = max(x[i][j])
         xmax.append(max(dummymax[i]))
 
@@ -518,7 +530,7 @@ def showdata(
         if isclose(fminglobal, fmaxglobal):
             fminglobal = fminglobal - 3.0e-15 * abs(fminglobal) - 1.0e-36
             fmaxglobal = fmaxglobal + 3.0e-15 * abs(fmaxglobal) + 1.0e-36
-        for i in range(0, Nvar):
+        for i in range(Nvar):
             clevels.append(linspace(fminglobal, fmaxglobal, Ncolors))
 
     # Create figures for animation plotting
@@ -566,13 +578,13 @@ def showdata(
     theta = []
 
     # Initiate figure frame
-    for i in range(0, Nvar):
+    for i in range(Nvar):
         lines.append([])
         if lineplot[i] == 1:
             ax.append(fig.add_subplot(row, col, i + 1))
             ax[i].set_xlim((0, xmax[i]))
             ax[i].set_ylim((fmin[i], fmax[i]))
-            for j in range(0, Nlines[i]):
+            for j in range(Nlines[i]):
                 lines[i].append(ax[i].plot([], [], lw=2, label=legendlabels[i][j])[0])
                 # Need the [0] to 'unpack' the line object from tuple.  Alternatively:
                 # lines[i], = lines[i]
@@ -580,7 +592,7 @@ def showdata(
             ax[i].set_ylabel(titles[i])
             if Nlines[i] != 1:
                 legendneeded = 1
-                for k in range(0, i):
+                for k in range(i):
                     if Nlines[i] == Nlines[k]:
                         legendneeded = 0
                 if legendneeded == 1:
@@ -693,7 +705,7 @@ def showdata(
         pause ^= True
 
     def control():
-        global j, pause
+        global j
         if j == Nframes - 1:
             j = -1
         if not pause:
@@ -707,14 +719,14 @@ def showdata(
 
         index = j * intv
 
-        for j in range(0, Nvar):
+        for j in range(Nvar):
             # Default to clearing axis between frames on all plots except line plots
             if (
                 clear_between_frames is None and lineplot[j] != 1
             ) or clear_between_frames is True:
                 ax[j].cla()  # Clear axis between frames so masked arrays can be plotted
             if lineplot[j] == 1:
-                for k in range(0, Nlines[j]):
+                for k in range(Nlines[j]):
                     lines[j][k].set_data(x[j][k], vars[j][k][index, :])
             elif contour[j] == 1:
                 thisx = x[j][0]
@@ -790,27 +802,13 @@ def showdata(
     if isinstance(movie, str) == 1:
         movietype = movie.split(".")[-1]
         if movietype == "mp4":
-            try:
-                anim.save(
-                    movie,
-                    writer=FFwriter,
-                    fps=fps,
-                    dpi=dpi,
-                    extra_args=["-vcodec", "libx264"],
-                )
-            except Exception:
-                # Try specifying writer by string if ffmpeg not found
-                try:
-                    anim.save(
-                        movie,
-                        writer="ffmpeg",
-                        fps=fps,
-                        dpi=dpi,
-                        extra_args=["-vcodec", "libx264"],
-                    )
-                except Exception:
-                    print("Save failed: Check ffmpeg path")
-                    raise
+            anim.save(
+                movie,
+                writer=FFwriter,
+                fps=fps,
+                dpi=dpi,
+                extra_args=["-vcodec", "libx264"],
+            )
         elif movietype == "gif":
             anim.save(movie, writer="imagemagick", fps=fps, dpi=dpi)
         else:

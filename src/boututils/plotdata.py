@@ -1,8 +1,7 @@
 import matplotlib
-import matplotlib.cm as cm
-import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import cm, mlab
 
 # Plot a data set
 

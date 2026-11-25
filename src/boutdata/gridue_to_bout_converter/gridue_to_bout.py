@@ -137,13 +137,13 @@ def importGridue(fname: str = "gridue") -> dict:
     A dict containing header and body information from the gridue file.
 
     """
-    f = open(fname)
-    values = [int(x) for x in next(f).split()]
+    with open(fname) as f:
+        values = [int(x) for x in next(f).split()]
 
-    if len(values) == 5:
-        return _importSN(values, f)
-    if len(values) == 2:
-        return _importDN(values, f)
+        if len(values) == 5:
+            return _importSN(values, f)
+        if len(values) == 2:
+            return _importDN(values, f)
 
     raise ValueError("Unrecognised gridue format")
 
@@ -380,8 +380,10 @@ def calcMetric(grd: dict, bpsign, verbose=False, ignore_checks=False):
     if np.max(np.abs(rel_error)) > 1e-6:
         if ignore_checks:
             print("WARNING: Relative error in Jacobian too large.")
-        # else:
-        #    raise ValueError(f"Relative error in Jacobian too large: {np.max(np.abs(rel_error))}")
+        else:
+            raise ValueError(
+                f"Relative error in Jacobian too large: {np.max(np.abs(rel_error))}"
+            )
 
     # We want to output contravariant components of Curl(b/B) in the
     # locally field-aligned coordinate system.
@@ -670,10 +672,35 @@ def Convert_grids(
     # Calculate curvature
     curl_bOverB_Rhat, curl_bOverB_Zhat, curl_bOverB_zetahat = calcRZCurvature(g)
 
+    # Ordering for corners
+    # (1) -- (3)
+    #  |      |
+    #  |  (0) |  -> Radial, BOUT++ "x"
+    #  |      |
+    # (2) -- (4)
+    Rxy_corners = rm[:, :, 1].T
+    Zxy_corners = zm[:, :, 1].T
+    Rxy_lower_right_corners = rm[:, :, 3].T
+    Zxy_lower_right_corners = zm[:, :, 3].T
+    Rxy_upper_right_corners = rm[:, :, 4].T
+    Zxy_upper_right_corners = zm[:, :, 4].T
+    Rxy_upper_left_corners = rm[:, :, 2].T
+    Zxy_upper_left_corners = zm[:, :, 2].T
+
     # Collect 2D variables for output
     grd = {
         "Rxy": Rxy,
         "Zxy": Zxy,
+        # corner data in Hypnotoad output variables
+        "Rxy_corners": Rxy_corners,
+        "Zxy_corners": Zxy_corners,
+        "Rxy_lower_right_corners": Rxy_lower_right_corners,
+        "Zxy_lower_right_corners": Zxy_lower_right_corners,
+        "Rxy_upper_right_corners": Rxy_upper_right_corners,
+        "Zxy_upper_right_corners": Zxy_upper_right_corners,
+        "Rxy_upper_left_corners": Rxy_upper_left_corners,
+        "Zxy_upper_left_corners": Zxy_upper_left_corners,
+        # end corner data
         "psixy": psixy,
         "dx": dx,
         "dy": np.full((nx, ny), dy),
@@ -712,8 +739,7 @@ def Convert_grids(
         ixseps2 = min(g["iyseparatrix3"] + 2, nx)  # Secondary X-point separatrix
         # Remove guard cells on either side of X-point.
         ny_inner = g["ix_inner"]
-        for name in grd:
-            var = grd[name]
+        for name, var in grd.items():
             nx, ny = var.shape
             newvar = np.zeros((nx, ny - 2))
             newvar[:, :ny_inner] = var[:, :ny_inner]
@@ -726,26 +752,38 @@ def Convert_grids(
         ixseps1 = g["iyseparatrix1"] + 2  # Lower X-point separatrix
         ixseps2 = min(g["iyseparatrix2"] + 2, nx)  # Upper X-point separatrix
         # Double null -> Remove upper Y guard cells
-        ny_inner = g["ix_inner"]
-        for name in grd:
-            var = grd[name]
-            nx, ny = var.shape
-            newvar = np.zeros((nx, ny - 2))
-            newvar[:, :ny_inner] = var[:, :ny_inner]
-            newvar[:, ny_inner:] = var[:, (ny_inner + 2) :]
-            grd[name] = newvar
-        g["ix_cut2"] = g["ix_cut2"] - 1
-        g["ix_cut3"] = g["ix_cut3"] - 3
-        g["ix_cut4"] = g["ix_cut4"] - 2
+        # check if CDN or UDN
+        if mesh_topology[1:] == "DN":
+            ny_inner = g["ix_inner"]
+            for name, var in grd.items():
+                nx, ny = var.shape
+                newvar = np.zeros((nx, ny - 2))
+                newvar[:, :ny_inner] = var[:, :ny_inner]
+                newvar[:, ny_inner:] = var[:, (ny_inner + 2) :]
+                grd[name] = newvar
+            g["ix_cut2"] = g["ix_cut2"] - 1
+            g["ix_cut3"] = g["ix_cut3"] - 3
+            g["ix_cut4"] = g["ix_cut4"] - 2
 
     # Extrapolate X (radial) boundary cells
     # Removing one cell, adding two on each X boundary
-    for name in grd:
-        var = grd[name]
+    for name, var in grd.items():
         nx, ny = var.shape
         newvar = np.zeros((nx + 2, ny))
         newvar[2:-2, :] = var[1:-1, :]
-        if name in ["Rxy", "Zxy", "psixy"]:
+        if name in [
+            "Rxy",
+            "Zxy",
+            "psixy",
+            "Rxy_corners",
+            "Zxy_corners",
+            "Rxy_lower_right_corners",
+            "Zxy_lower_right_corners",
+            "Rxy_upper_right_corners",
+            "Zxy_upper_right_corners",
+            "Rxy_upper_left_corners",
+            "Zxy_upper_left_corners",
+        ]:
             # Linear extrapolation
             newvar[1, :] = 2.0 * newvar[2, :] - newvar[3, :]
             newvar[0, :] = 2.0 * newvar[1, :] - newvar[2, :]
@@ -901,13 +939,14 @@ def Convert_grids(
         f.write("ny_inner", ny_inner)
         f.write("jyseps1_2", jyseps1_2)
         f.write("jyseps2_2", jyseps2_2)
+        f.write("y_boundary_guards", 0)
         f.write("rm", rm)
         f.write("zm", zm)
         f.write("topology", mesh_topology)
 
         # 2D fields
-        for name in grd:
-            f.write(name, grd[name])
+        for name, var in grd.items():
+            f.write(name, var)
 
         f.write("zShift", zShift)
         f.write("ShiftAngle", ShiftAngle)
@@ -952,7 +991,7 @@ def getMeshTopology(g, nx, ny):
         return "CFL"
     elif jyseps2_1 == jyseps1_2:
         return "SN"
-    elif jyseps1_2 <= ny_inner and ny_inner <= jyseps2_2:
+    elif jyseps1_2 <= ny_inner <= jyseps2_2:
         return "SF"
     elif ixseps1 == ixseps2:
         return "CDN"

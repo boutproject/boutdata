@@ -18,15 +18,8 @@ import numpy
 # These are imported to be used by 'eval' in
 # BoutOptions.evaluate_scalar() and BoutOptionsFile.evaluate().
 # Change the names to match those used by C++/BOUT++
-from numpy import abs as abs
-from numpy import arccos as acos  # noqa: F401
-from numpy import arccosh as acosh  # noqa: F401
-from numpy import arcsin as asin  # noqa: F401
-from numpy import arcsinh as asinh  # noqa: F401
-from numpy import arctan as atan  # noqa: F401
-from numpy import arctan2 as atan2  # noqa: F401
-from numpy import arctanh as atanh  # noqa: F401
 from numpy import (  # noqa: F401  # noqa: F401
+    abs,
     ceil,
     cos,
     cosh,
@@ -42,6 +35,13 @@ from numpy import (  # noqa: F401  # noqa: F401
     tan,
     tanh,
 )
+from numpy import arccos as acos  # noqa: F401
+from numpy import arccosh as acosh  # noqa: F401
+from numpy import arcsin as asin  # noqa: F401
+from numpy import arcsinh as asinh  # noqa: F401
+from numpy import arctan as atan  # noqa: F401
+from numpy import arctan2 as atan2  # noqa: F401
+from numpy import arctanh as atanh  # noqa: F401
 from numpy import power as pow  # noqa: F401
 
 from boutdata.collect import (
@@ -467,7 +467,7 @@ class BoutOptions:
             format_inline_comment(key, opts)
             f.write("\n")
 
-        for section in opts._sections.keys():
+        for section in opts._sections:
             section_name = basename + ":" + section if basename else section
             if section in opts.comments:
                 f.write("\n".join(opts.comments[section]))
@@ -757,12 +757,11 @@ class BoutOptionsFile(BoutOptions):
 
         try:
             self.recalculate_xyz(nx=nx, ny=ny, nz=nz)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             alwayswarn(
                 "While building x, y, z coordinate arrays, an "
-                "exception occured: "
-                + str(e)
-                + "\nEvaluating non-scalar options not available"
+                f"exception occured: {e}"
+                "\nEvaluating non-scalar options not available"
             )
 
     def recalculate_xyz(self, *, nx=None, ny=None, nz=None):
@@ -1216,9 +1215,8 @@ class BoutOutputs:
                 f"Passed or found inconsistent value {self._parallel} for number of processes"
             )
 
-        if self._parallel > self.grid_info["npes"]:
-            # Using current self._parallel, some workers would have no work
-            self._parallel = self.grid_info["npes"]
+        # Using current self._parallel, some workers would have no work
+        self._parallel = min(self._parallel, self.grid_info["npes"])
 
         # Open the 0'th file so we can read scalars without the worker processes
         self._root_file = DataFile(self._file_list[0])
@@ -1380,7 +1378,7 @@ class BoutOutputs:
         # create new output files
         outfile_list = []
         this_prefix = self._prefix
-        if not this_prefix[-1] == ".":
+        if this_prefix[-1] != ".":
             # ensure prefix ends with a '.'
             this_prefix = this_prefix + "."
         for i in range(npes):
@@ -1699,7 +1697,7 @@ class BoutOutputs:
         """
 
         if self._caching:
-            if name not in self._datacache.keys():
+            if name not in self._datacache:
                 item = self._collect(name)
                 if self._caching is not True:
                     itemsize = item.nbytes
@@ -1729,15 +1727,18 @@ class BoutOutputs:
         through all variables for _caching_collect
 
         """
-        yield from self.varNames
+        yield from self.keys()
 
     def __str__(self, indent=""):
         """Print a pretty version of the tree"""
         text = ""
-        for k in self.varNames:
+        for k in self.keys():
             text += indent + k + "\n"
 
         return text
+
+    def __contains__(self, key):
+        return key in self.keys()
 
 
 def BoutData(path=".", prefix="BOUT.dmp", caching=False, **kwargs):

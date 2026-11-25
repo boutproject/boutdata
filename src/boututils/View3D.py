@@ -164,7 +164,6 @@ def View3D(g, path=None, gb=None):
         iso.contour.contours[i + 1 : i + 2] = [q[i]]
 
     iso.compute_normals = True
-    #
 
     # mlab.pipeline.image_plane_widget(field2,
     #                            plane_orientation='x_axes',
@@ -184,8 +183,6 @@ def View3D(g, path=None, gb=None):
     # scp.implicit_plane.widget.enabled = False
     # scp.enable_contours = True
     # scp.contour.number_of_contours = 20
-
-    #
 
     # Magnetic Axis
 
@@ -270,7 +267,6 @@ def View3D(g, path=None, gb=None):
         scpb.implicit_plane.widget.enabled = False
         scpb.enable_contours = True
         scpb.contour.filled_contours = True
-        #
         scpb.contour.number_of_contours = 20
     #
     #
@@ -307,8 +303,6 @@ def View3D(g, path=None, gb=None):
 
     # ww = tvtk.XMLStructuredGridWriter(input=sgrid, file_name='sgrid.vts')
     # ww.write()
-
-    return
 
 
 def magnetic_field(g, X, Y, Z, rmin, rmax, zmin, zmax, Br, Bz, Btrz):

@@ -677,7 +677,7 @@ def redistribute(
     mysub = new_processor_layout.mysub
     mzsub = new_processor_layout.mz
 
-    if "jyseps2_1" not in f.keys():
+    if "jyseps2_1" not in f:
         # Workaround for older output files that are missing jyseps* values
         is_doublenull = False
     else:
@@ -708,7 +708,7 @@ def redistribute(
             ix = i % nxpe
             iy = int(i / nxpe)
 
-            def get_block(data):
+            def get_block(data, ix=i % nxpe, iy=int(i / nxpe)):
                 if mxg > old_mxg or myg > old_myg:
                     # need to make a new array as some boundary cell points are not
                     # present in data
@@ -1241,7 +1241,7 @@ def change_grid(
         ix = i % nxpe
         iy = i // nxpe
 
-        def get_block(data):
+        def get_block(data, ix=i % nxpe, iy=i // nxpe):
             sliced = np.zeros((mxsub + 2 * mxg, mysub + 2 * myg))
             sliced[:, myg:-myg] = data[
                 ix * mxsub : (ix + 1) * mxsub + 2 * mxg,
@@ -1257,12 +1257,12 @@ def change_grid(
             f.write("PE_YIND", iy)
 
             # Write the scalars
-            for k in copy_data:
-                f.write(k, copy_data[k])
+            for k, v in copy_data.items():
+                f.write(k, v)
 
             # Write fields
-            for k in interp_data:
-                f.write(k, get_block(interp_data[k]))
+            for k, v in interp_data.items():
+                f.write(k, get_block(v))
 
 
 def shift_v3_to_v4(

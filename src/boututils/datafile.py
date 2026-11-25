@@ -331,6 +331,9 @@ class DataFile:
     def __setitem__(self, key, value):
         self.impl.__setitem__(key, value)
 
+    def __contains__(self, key):
+        return key in self.keys()
+
     def attributes(self, varname):
         """Return a dictionary of attributes
 
@@ -532,7 +535,7 @@ class DataFile_netCDF(DataFile):
 
     def write(self, name, data, info=False, *, dims=None):
         if not self.writeable:
-            raise Exception("File not writeable. Open with write=True keyword")
+            raise ValueError("File not writeable. Open with write=True keyword")
 
         s = np.shape(data)
 
@@ -646,7 +649,7 @@ class DataFile_netCDF(DataFile):
             var = self.handle.createVariable(name, t, dims_tuple, **self._kwargs)
 
             if var is None:
-                raise Exception("Couldn't create variable")
+                raise RuntimeError("Couldn't create variable")
 
         # Write the data
         if t == "str":
@@ -655,7 +658,7 @@ class DataFile_netCDF(DataFile):
             try:
                 # Some libraries allow this for arrays
                 var.assignValue(data)
-            except Exception:
+            except (AttributeError, TypeError, IndexError):
                 # And some others only this
                 var[:] = data
 
@@ -707,8 +710,8 @@ class DataFile_netCDF(DataFile):
                     attributes[attrname] = var.getncattr(
                         attrname
                     )  # Get all values and insert into map
-            except Exception:
-                print(f"Error reading attributes for {varname}")
+            except (AttributeError, RuntimeError, TypeError, OSError, ValueError) as e:
+                print(f"Error reading attributes for {varname} ({e})")
                 # Result will be an empty map
 
             if "bout_type" not in attributes:
@@ -913,7 +916,7 @@ class DataFile_HDF5(DataFile):
 
     def write(self, name, data, info=False, *, dims=None):
         if not self.writeable:
-            raise Exception("File not writeable. Open with write=True keyword")
+            raise ValueError("File not writeable. Open with write=True keyword")
 
         try:
             bout_type = data.attributes["bout_type"]

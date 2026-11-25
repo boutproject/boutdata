@@ -49,7 +49,7 @@ def shell(command, pipe=False, env=None):
     """
 
     result = subprocess.run(
-        command, shell=True, capture_output=pipe, env=env, text=True
+        command, shell=True, capture_output=pipe, env=env, text=True, check=False
     )
     output = result.stdout if pipe else ""
     if result.stderr:
@@ -75,9 +75,11 @@ def determineNumberOfCPUs():
     # cpuset
     # cpuset may restrict the number of *available* processors
     try:
-        m = re.search(r"(?m)^Cpus_allowed:\s*(.*)$", open("/proc/self/status").read())
+        m = re.search(
+            r"(?m)^Cpus_allowed:\s*(.*)$", pathlib.Path("/proc/self/status").read_text()
+        )
         if m:
-            res = bin(int(m.group(1).replace(",", ""), 16)).count("1")
+            res = int(m.group(1).replace(",", ""), 16).bit_count()
             if res > 0:
                 return res
     except OSError:
@@ -133,7 +135,7 @@ def determineNumberOfCPUs():
 
     # Linux
     try:
-        res = open("/proc/cpuinfo").read().count("processor\t:")
+        res = pathlib.Path("/proc/cpuinfo").read_text().count("processor\t:")
 
         if res > 0:
             return res
@@ -158,7 +160,7 @@ def determineNumberOfCPUs():
     # Other UNIXes (heuristic)
     try:
         try:
-            dmesg = open("/var/run/dmesg.boot").read()
+            dmesg = pathlib.Path("/var/run/dmesg.boot").read_text()
         except OSError:
             dmesgProcess = subprocess.Popen(["dmesg"], stdout=subprocess.PIPE)
             dmesg = dmesgProcess.communicate()[0]
@@ -172,7 +174,7 @@ def determineNumberOfCPUs():
     except OSError:
         pass
 
-    raise Exception("Can not determine number of CPUs on this system")
+    raise RuntimeError("Can not determine number of CPUs on this system")
 
 
 def launch(

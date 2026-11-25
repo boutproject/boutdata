@@ -1,6 +1,6 @@
 import sys
 
-import numpy as numpy
+import numpy
 from pylab import clf, draw, gca, plot, savefig, show, title, xlabel, xlim, ylim
 
 from boutupgrader.common import yes_or_no as query_yes_no
@@ -352,8 +352,6 @@ def mode_structure(
             savefig("output.png")
         #  savefig('output.ps')
 
-        #
-        #
         if subset is not None:
             # get number of modes larger than 5% of the maximum
             count = numpy.size(numpy.where(fmax > 0.10 * numpy.max(fmax)))
@@ -379,7 +377,6 @@ def mode_structure(
 
                 plot([pos, pos], [0, 2.0 * numpy.max(fmax)], "--")
 
-        #
         else:
             # default - just plot everything
             gca().set_color_cycle(["black", "red"])

@@ -93,4 +93,5 @@ ignore = [
   "PLR0915",     # too-many-statements
   "PLR0912",     # too-many-branches
   "PTH123",      # builtin-open
+  "N999",        # invalid-module-name
 ]
