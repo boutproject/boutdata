@@ -5,8 +5,6 @@ Derivatives and integrals of periodic and non-periodic functions
 B.Dudson, University of York, Nov 2009
 """
 
-import numbers
-
 from numpy import arange, array, multiply, pi, sum, transpose, where, zeros
 from numpy.fft import irfft, rfft
 
