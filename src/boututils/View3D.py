@@ -12,7 +12,6 @@ https://docs.enthought.com/mayavi/mayavi/auto/example_magnetic_field.html#exampl
 
 import numpy as np
 from mayavi import mlab
-from past.utils import old_div
 from scipy import interpolate
 
 from boutdata.collect import collect
@@ -64,9 +63,7 @@ def View3D(g, path=None, gb=None):
 
     # define the x (psi) array
     xf = (
-        np.arange(np.float(g.qpsi.size))
-        * (g.sibdry - g.simagx)
-        / np.float(g.qpsi.size - 1)
+        np.arange(float(g.qpsi.size)) * (g.sibdry - g.simagx) / float(g.qpsi.size - 1)
         + g.simagx
     )
 
@@ -84,7 +81,7 @@ def View3D(g, path=None, gb=None):
 
     # calculate Toroidal field
 
-    Btrz = old_div(f(g.psi), g.r)
+    Btrz = f(g.psi) // g.r
 
     rmin = g.r[:, 0].min()
     rmax = g.r[:, 0].max()
